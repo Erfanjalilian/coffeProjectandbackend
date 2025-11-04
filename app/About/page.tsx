@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 
 export default function About() {
   return (
-    <main className="min-h-screen bg-white text-gray-800">
+    <main className=" overflow-x-hidden min-h-screen bg-white text-gray-800">
       {/* Hero Section */}
       <section className="relative w-full h-[60vh] sm:h-[70vh] overflow-hidden">
         <Image

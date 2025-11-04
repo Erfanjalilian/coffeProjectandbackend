@@ -6,7 +6,7 @@ import { Phone, Mail, MapPin } from "lucide-react";
 
 export default function Contact() {
   return (
-    <main className="min-h-screen bg-white text-gray-800">
+    <main className=" overflow-x-hidden min-h-screen bg-white text-gray-800">
       {/* Hero Section */}
       <section className="relative w-full h-[50vh] overflow-hidden">
         <Image
