@@ -5,7 +5,7 @@ import { FaShippingFast, FaCoffee, FaDollarSign, FaStar } from "react-icons/fa";
 
 interface Feature {
   id: number;
-  icon: JSX.Element;
+  icon: React.ReactNode;
   title: string;
   description: string;
 }
