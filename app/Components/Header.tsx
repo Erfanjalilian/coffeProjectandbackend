@@ -19,7 +19,7 @@ export default function Header() {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/" className="text-2xl font-bold text-amber-800">
-            CoffeeLand
+           لوگو
           </Link>
 
           {/* Desktop Menu */}
