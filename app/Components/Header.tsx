@@ -267,9 +267,9 @@ export default function Header() {
               className="fixed top-0 left-0 w-80 h-full bg-white shadow-2xl z-50 flex flex-col"
             >
               {/* Solid background container */}
-              <div className="bg-gradient-to-b from-amber-50 to-white h-full flex flex-col">
+              <div className="bg-white h-full flex flex-col">
                 {/* Header */}
-                <div className="flex justify-between items-center p-6 pb-4 border-b border-amber-200 bg-white/80">
+                <div className="flex justify-between items-center p-6 pb-4 border-b border-amber-200 bg-white">
                   <div className="flex items-center gap-3">
                     <div className="bg-gradient-to-br from-amber-600 to-amber-700 text-white w-10 h-10 flex items-center justify-center rounded-xl font-bold">
                       ق
@@ -291,11 +291,11 @@ export default function Header() {
                   initial={{ scale: 0.9, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ delay: 0.1 }}
-                  className="relative p-6 pb-4"
+                  className="relative p-6 pb-4 bg-white"
                 >
                   <input
                     type="text"
-                    placeholder="جستجوی قهوه..."
+                    placeholder="از من بپرس ..."
                     className="w-full border-2 border-amber-200 rounded-2xl py-3 px-4 pr-12 text-gray-700 focus:outline-none focus:border-amber-500 bg-white shadow-lg"
                   />
                   <FiSearch className="absolute left-10 top-7 text-amber-600" size={20} />
@@ -328,7 +328,7 @@ export default function Header() {
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.3 }}
-                  className="border-t border-amber-200 p-6 space-y-3 bg-white/80"
+                  className="border-t border-amber-200 p-6 space-y-3 bg-white"
                 >
                   <motion.button 
                     whileHover={{ scale: 1.02 }}
