@@ -85,37 +85,6 @@ export default function AboutSection() {
     }
   ];
 
-  const bestSellers: Product[] = [
-    {
-      id: 8,
-      name: "پورتافیلتر فلزی",
-      price: "۹۰,۰۰۰ تومان",
-      image: "/Images/photo-1514432324607-a09d9b4aefdd.avif",
-      rating: 4.7
-    },
-    {
-      id: 9,
-      name: "فیلتر کاغذی قهوه",
-      price: "۴۵,۰۰۰ تومان",
-      image: "/Images/photo-1592663527359-cf6642f54cff.avif",
-      rating: 4.5
-    },
-    {
-      id: 10,
-      name: "قیف پور اوور",
-      price: "۱۲۰,۰۰۰ تومان",
-      image: "/Images/photo-1594075731547-8c705bb69e50.avif",
-      rating: 4.6
-    },
-    {
-      id: 11,
-      name: "فنجان سرامیکی",
-      price: "۸۵,۰۰۰ تومان",
-      image: "/Images/photo-1525088553748-01d6e210e00b.avif",
-      rating: 4.7
-    }
-  ];
-
   // Fix for RTL scroll detection
   useEffect(() => {
     updateArrowVisibility();
@@ -169,10 +138,10 @@ export default function AboutSection() {
         >
           <div className="mb-8">
             <h3 className="text-2xl md:text-3xl font-bold text-amber-800 mb-2 font-[var(--font-yekan)]">
-              محصولات ویژه
+              پر فروش ترین محصولات
             </h3>
             <p className="text-gray-600 font-[var(--font-yekan)]">
-              بهترین محصولات قهوه و تجهیزات برای شما
+              محصولاتی که بیشترین محبوبیت را در بین مشتریان دارند
             </p>
           </div>
 
@@ -273,68 +242,6 @@ export default function AboutSection() {
               className="bg-white text-amber-700 border-2 border-amber-300 px-8 py-3 rounded-2xl font-semibold hover:bg-amber-50 transition-colors font-[var(--font-yekan)]"
             >
               مشاهده همه محصولات
-            </motion.button>
-          </div>
-        </motion.div>
-
-        {/* Best Sellers Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-3xl p-8 mb-16 border-2 border-amber-200/80"
-        >
-          <div className="mb-8">
-            <h3 className="text-2xl md:text-3xl font-bold text-amber-800 mb-2 font-[var(--font-yekan)]">
-              پرفروش‌ترین‌ها
-            </h3>
-            <p className="text-gray-600 font-[var(--font-yekan)]">
-              محصولاتی که بیشترین محبوبیت را در بین مشتریان دارند
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {bestSellers.map((product, index) => (
-              <motion.div
-                key={product.id}
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                className="bg-white rounded-2xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 group border-2 border-amber-100/80 hover:border-amber-200"
-              >
-                <div className="relative h-32 mb-4 rounded-xl overflow-hidden">
-                  <Image
-                    src={product.image}
-                    alt={product.name}
-                    fill
-                    className="object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
-                </div>
-                <h4 className="font-bold text-gray-800 mb-2 text-sm font-[var(--font-yekan)]">
-                  {product.name}
-                </h4>
-                <div className="flex items-center justify-between">
-                  <span className="text-amber-700 font-bold font-[var(--font-yekan)]">
-                    {product.price}
-                  </span>
-                  <div className="flex items-center gap-1">
-                    <svg className="w-4 h-4 text-amber-400 fill-current" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-                    </svg>
-                    <span className="text-sm text-gray-600">{product.rating}</span>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-
-          <div className="text-center">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="bg-white text-amber-700 border-2 border-amber-300 px-8 py-3 rounded-2xl font-semibold hover:bg-amber-50 transition-colors font-[var(--font-yekan)]"
-            >
-              مشاهده همه پرفروش‌ها
             </motion.button>
           </div>
         </motion.div>
