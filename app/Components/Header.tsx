@@ -43,7 +43,7 @@ export default function Header() {
     { name: "صفحه اصلی", icon: FiHome, href: "/" },
     { name: "دسته‌بندی کالا ها", icon: FiCoffee, href: "/CoffeeCategoryPage" },
     { name: "تخفیف‌های امروز", icon: FiTag, href: "/SpecialDiscountsPage" },
-    { name: "خرید باارزش", icon: FiStar, href: "/ValuablePurchasesPage" },
+    { name: "خرید با ارزش", icon: FiStar, href: "/ValuablePurchasesPage" },
     { name: "فروشنده باش", icon: FiTool, href: "/BecomeSellerPage" },
   ];
 
