@@ -191,12 +191,21 @@ export default function ProductDetailPage() {
                   }}
                   className="flex-1 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white py-4 rounded-xl font-semibold shadow-lg font-[var(--font-yekan)] transition-all flex items-center justify-center gap-2"
                 >
-                  <FiShoppingCart size={20} /> <span>افزودن به سبد خرید</span>
+                  <FiShoppingCart size={20} /> <span>اضافه کن به سبد خریدم</span>
                 </motion.button>
 
-                <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-6 py-4 rounded-xl font-semibold transition-all shadow-lg font-[var(--font-yekan)] whitespace-nowrap">
-                  <FiMessageCircle size={18} /> <span>مشاوره رایگان</span>
-                </motion.button>
+               <motion.button
+  whileHover={{ scale: 1.05 }}
+  whileTap={{ scale: 0.95 }}
+  className="flex items-center gap-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-6 py-4 rounded-xl font-semibold transition-all shadow-lg font-[var(--font-yekan)]"
+>
+  <FiMessageCircle size={22} />
+  <div className="flex flex-col leading-tight text-right">
+    <span>در موردش از من بپرس</span>
+    <span className="text-sm opacity-90">(من هوش مصنوعی‌ام)</span>
+  </div>
+</motion.button>
+
               </div>
 
               {/* Tabs */}
