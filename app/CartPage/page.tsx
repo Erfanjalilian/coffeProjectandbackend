@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import Image from "next/image";
-import { FiTrash2, FiShoppingCart, FiCheckCircle, FiTruck, FiShield, FiGift, FiClock, FiPackage, FiHeart, FiAward, FiCreditCard, FiRefreshCw, FiHeadphones, FiChevronRight, FiChevronLeft } from "react-icons/fi";
+import { FiTrash2, FiShoppingCart, FiCheckCircle, FiTruck, FiShield, FiGift, FiClock, FiPackage, FiHeart, FiAward, FiCreditCard, FiRefreshCw, FiHeadphones, FiChevronRight, FiChevronLeft, FiMessageCircle, FiZap } from "react-icons/fi";
 import { useCart, CartProduct } from "@/contaxt/CartContext";
 
 type Product = {
@@ -101,14 +101,18 @@ export default function CartPage(): React.ReactElement {
     }
   };
 
-  // Convert price from string to number for calculations
-  const totalPrice = cart.reduce((acc, item) => acc + (typeof item.price === 'string' ? parseFloat(item.price) : item.price) * item.quantity, 0);
-  const shippingCost = totalPrice > 500000 ? 0 : 30000;
-  const discountAmount = (totalPrice * discount) / 100;
-  const finalPrice = totalPrice + shippingCost - discountAmount;
+  // Calculate prices only when cart has items
+  const totalPrice = cart.length > 0 ? cart.reduce((acc, item) => acc + (typeof item.price === 'string' ? parseFloat(item.price) : item.price) * item.quantity, 0) : 0;
+  const shippingCost = cart.length > 0 ? (totalPrice > 500000 ? 0 : 30000) : 0;
+  const discountAmount = cart.length > 0 ? (totalPrice * discount) / 100 : 0;
+  const finalPrice = cart.length > 0 ? totalPrice + shippingCost - discountAmount : 0;
   const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);
 
   const applyCoupon = () => {
+    if (cart.length === 0) {
+      alert("سبد خرید شما خالی است");
+      return;
+    }
     if (couponCode === "DISCOUNT10") {
       setDiscount(10);
     } else if (couponCode === "DISCOUNT20") {
@@ -370,139 +374,185 @@ export default function CartPage(): React.ReactElement {
           </div>
 
           {/* RIGHT: Enhanced Order Summary (sidebar) */}
-          <aside className="lg:col-span-1">
+          <aside className="lg:col-span-1 space-y-6">
+            {/* Order Summary Box */}
             <div className="sticky top-28 bg-white p-6 rounded-2xl border border-amber-200 shadow-sm">
               <h3 className="text-xl font-bold text-amber-900 mb-6 pb-3 border-b border-amber-100 text-center">خلاصه سفارش</h3>
 
-              {/* Order Details */}
-              <div className="space-y-4 mb-6">
-                <div className="flex justify-between items-center p-3 bg-amber-50 rounded-lg">
-                  <span className="text-amber-700">تعداد کالاها</span>
-                  <span className="font-semibold text-amber-900">{totalItems} عدد</span>
+              {cart.length === 0 ? (
+                <div className="text-center py-8">
+                  <FiShoppingCart className="mx-auto text-amber-300 mb-4" size={48} />
+                  <p className="text-amber-600">سبد خرید شما خالی است</p>
+                  <p className="text-amber-500 text-sm mt-2">برای مشاهده خلاصه سفارش، محصولی به سبد خرید اضافه کنید</p>
                 </div>
-                
-                <div className="flex justify-between items-center">
-                  <span className="text-amber-700">جمع محصولات</span>
-                  <span className="font-semibold text-amber-900">{formatCurrency(totalPrice)}</span>
-                </div>
-                
-                {discount > 0 && (
-                  <div className="flex justify-between items-center bg-green-50 p-3 rounded-lg border border-green-200">
-                    <span className="text-green-700">تخفیف ({discount}%)</span>
-                    <span className="font-semibold text-green-700">-{formatCurrency(discountAmount)}</span>
+              ) : (
+                <>
+                  {/* Order Details */}
+                  <div className="space-y-4 mb-6">
+                    <div className="flex justify-between items-center p-3 bg-amber-50 rounded-lg">
+                      <span className="text-amber-700">تعداد کالاها</span>
+                      <span className="font-semibold text-amber-900">{totalItems} عدد</span>
+                    </div>
+                    
+                    <div className="flex justify-between items-center">
+                      <span className="text-amber-700">جمع محصولات</span>
+                      <span className="font-semibold text-amber-900">{formatCurrency(totalPrice)}</span>
+                    </div>
+                    
+                    {discount > 0 && (
+                      <div className="flex justify-between items-center bg-green-50 p-3 rounded-lg border border-green-200">
+                        <span className="text-green-700">تخفیف ({discount}%)</span>
+                        <span className="font-semibold text-green-700">-{formatCurrency(discountAmount)}</span>
+                      </div>
+                    )}
+
+                    <div className="flex justify-between items-center">
+                      <span className="text-amber-700">هزینه ارسال</span>
+                      <span className={`font-semibold ${shippingCost === 0 ? 'text-green-600' : 'text-amber-900'}`}>
+                        {shippingCost === 0 ? 'رایگان' : formatCurrency(shippingCost)}
+                      </span>
+                    </div>
+
+                    {shippingCost > 0 && (
+                      <div className="text-sm text-amber-600 bg-amber-50 p-3 rounded-lg border border-amber-200">
+                        <span className="font-medium">ارسال رایگان برای سفارش‌های بالای </span>
+                        {formatCurrency(500000)}
+                      </div>
+                    )}
+
+                    {/* Order Info */}
+                    <div className="pt-3 border-t border-amber-100 space-y-3">
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-amber-600">تعداد اقلام متفاوت</span>
+                        <span className="font-medium">{cart.length} قلم</span>
+                      </div>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-amber-600">زمان تحویل تخمینی</span>
+                        <span className="font-medium text-green-600">۲-۳ روز کاری</span>
+                      </div>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-amber-600">امکان بازگشت کالا</span>
+                        <span className="font-medium text-green-600">تا ۷ روز</span>
+                      </div>
+                    </div>
                   </div>
-                )}
 
-                <div className="flex justify-between items-center">
-                  <span className="text-amber-700">هزینه ارسال</span>
-                  <span className={`font-semibold ${shippingCost === 0 ? 'text-green-600' : 'text-amber-900'}`}>
-                    {shippingCost === 0 ? 'رایگان' : formatCurrency(shippingCost)}
-                  </span>
-                </div>
-
-                {shippingCost > 0 && (
-                  <div className="text-sm text-amber-600 bg-amber-50 p-3 rounded-lg border border-amber-200">
-                    <span className="font-medium">ارسال رایگان برای سفارش‌های بالای </span>
-                    {formatCurrency(500000)}
+                  {/* Discount coupon */}
+                  <div className="mb-6">
+                    <label className="block text-amber-700 text-sm font-medium mb-3">کد تخفیف دارید؟</label>
+                    <div className="flex gap-2 mb-2">
+                      <input 
+                        type="text" 
+                        value={couponCode}
+                        onChange={(e) => setCouponCode(e.target.value)}
+                        placeholder="کد تخفیف را وارد کنید"
+                        className="flex-1 border border-amber-300 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                      />
+                      <button 
+                        onClick={applyCoupon}
+                        className="bg-amber-500 text-white px-4 py-3 rounded-lg text-sm hover:bg-amber-600 transition font-medium min-w-20"
+                      >
+                        اعمال
+                      </button>
+                    </div>
+                    <div className="text-xs text-amber-600">
+                      کدهای تخفیف: <span className="font-mono bg-amber-100 px-2 py-1 rounded">DISCOUNT10</span> - <span className="font-mono bg-amber-100 px-2 py-1 rounded">DISCOUNT20</span>
+                    </div>
                   </div>
-                )}
 
-                {/* Order Info */}
-                <div className="pt-3 border-t border-amber-100 space-y-3">
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-amber-600">تعداد اقلام متفاوت</span>
-                    <span className="font-medium">{cart.length} قلم</span>
+                  {/* Final Price */}
+                  <div className="flex justify-between items-center mb-6 pt-4 border-t border-amber-200 bg-amber-50 p-4 rounded-lg">
+                    <span className="text-lg font-bold text-amber-900">مبلغ قابل پرداخت</span>
+                    <span className="font-bold text-2xl text-amber-900">{formatCurrency(finalPrice)}</span>
                   </div>
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-amber-600">زمان تحویل تخمینی</span>
-                    <span className="font-medium text-green-600">۲-۳ روز کاری</span>
+
+                  {/* Trust badges */}
+                  <div className="space-y-3 mb-6">
+                    <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                      <FiShield className="text-blue-500 flex-shrink-0" size={18} />
+                      <span className="text-sm text-blue-700">ضمانت اصل بودن کالا</span>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
+                      <FiTruck className="text-green-500 flex-shrink-0" size={18} />
+                      <span className="text-sm text-green-700">ارسال اکسپرس (۲۴ ساعته)</span>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
+                      <FiPackage className="text-purple-500 flex-shrink-0" size={18} />
+                      <span className="text-sm text-purple-700">بسته‌بندی مطمئن</span>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 bg-red-50 rounded-lg border border-red-200">
+                      <FiHeart className="text-red-500 flex-shrink-0" size={18} />
+                      <span className="text-sm text-red-700">پشتیبانی ۲۴/۷</span>
+                    </div>
                   </div>
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-amber-600">امکان بازگشت کالا</span>
-                    <span className="font-medium text-green-600">تا ۷ روز</span>
+
+                  {/* Action buttons */}
+                  <div className="space-y-3">
+                    <button 
+                      className="w-full bg-gradient-to-r from-amber-600 to-amber-700 text-white py-4 rounded-xl font-semibold hover:from-amber-700 hover:to-amber-800 transition shadow-md text-lg"
+                    >
+                      ادامه فرایند خرید
+                    </button>
+
+                    <button 
+                      onClick={clearCart} 
+                      className="w-full bg-gray-500 text-white py-3 rounded-lg font-semibold hover:bg-gray-600 transition text-base"
+                    >
+                      خالی کردن سبد خرید
+                    </button>
+                    
+                    <button className="w-full border border-amber-300 text-amber-700 py-3 rounded-lg font-semibold hover:bg-amber-50 transition text-base">
+                      ادامه خرید در فروشگاه
+                    </button>
                   </div>
-                </div>
-              </div>
+                </>
+              )}
 
-              {/* Discount coupon */}
-              <div className="mb-6">
-                <label className="block text-amber-700 text-sm font-medium mb-3">کد تخفیف دارید؟</label>
-                <div className="flex gap-2 mb-2">
-                  <input 
-                    type="text" 
-                    value={couponCode}
-                    onChange={(e) => setCouponCode(e.target.value)}
-                    placeholder="کد تخفیف را وارد کنید"
-                    className="flex-1 border border-amber-300 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                  />
-                  <button 
-                    onClick={applyCoupon}
-                    className="bg-amber-500 text-white px-4 py-3 rounded-lg text-sm hover:bg-amber-600 transition font-medium min-w-20"
-                  >
-                    اعمال
-                  </button>
-                </div>
-                <div className="text-xs text-amber-600">
-                  کدهای تخفیف: <span className="font-mono bg-amber-100 px-2 py-1 rounded">DISCOUNT10</span> - <span className="font-mono bg-amber-100 px-2 py-1 rounded">DISCOUNT20</span>
-                </div>
-              </div>
-
-              {/* Final Price */}
-              <div className="flex justify-between items-center mb-6 pt-4 border-t border-amber-200 bg-amber-50 p-4 rounded-lg">
-                <span className="text-lg font-bold text-amber-900">مبلغ قابل پرداخت</span>
-                <span className="font-bold text-2xl text-amber-900">{formatCurrency(finalPrice)}</span>
-              </div>
-
-              {/* Trust badges */}
-              <div className="space-y-3 mb-6">
-                <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                  <FiShield className="text-blue-500 flex-shrink-0" size={18} />
-                  <span className="text-sm text-blue-700">ضمانت اصل بودن کالا</span>
-                </div>
-                <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
-                  <FiTruck className="text-green-500 flex-shrink-0" size={18} />
-                  <span className="text-sm text-green-700">ارسال اکسپرس (۲۴ ساعته)</span>
-                </div>
-                <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
-                  <FiPackage className="text-purple-500 flex-shrink-0" size={18} />
-                  <span className="text-sm text-purple-700">بسته‌بندی مطمئن</span>
-                </div>
-                <div className="flex items-center gap-3 p-3 bg-red-50 rounded-lg border border-red-200">
-                  <FiHeart className="text-red-500 flex-shrink-0" size={18} />
-                  <span className="text-sm text-red-700">پشتیبانی ۲۴/۷</span>
-                </div>
-              </div>
-
-              {/* Action buttons */}
-              <div className="space-y-3">
-                <button 
-                  className={`w-full bg-gradient-to-r from-amber-600 to-amber-700 text-white py-4 rounded-xl font-semibold hover:from-amber-700 hover:to-amber-800 transition shadow-md text-lg ${
-                    cart.length === 0 ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
-                  disabled={cart.length === 0}
-                >
-                  ادامه فرایند خرید
-                </button>
-
-                {cart.length > 0 && (
-                  <button 
-                    onClick={clearCart} 
-                    className="w-full bg-gray-500 text-white py-3 rounded-lg font-semibold hover:bg-gray-600 transition text-base"
-                  >
-                    خالی کردن سبد خرید
-                  </button>
-                )}
-                
-                <button className="w-full border border-amber-300 text-amber-700 py-3 rounded-lg font-semibold hover:bg-amber-50 transition text-base">
-                  ادامه خرید در فروشگاه
-                </button>
-              </div>
-
-              {/* Security notice */}
+              {/* Security notice - Always show */}
               <div className="mt-6 pt-4 border-t border-amber-100">
                 <div className="flex items-center justify-center gap-2 text-xs text-amber-600 text-center leading-relaxed">
                   <FiShield className="flex-shrink-0" size={14} />
                   اطلاعات شما نزد ما امن است و مطابق با قوانین حریم خصوصی محافظت می‌شود
+                </div>
+              </div>
+            </div>
+
+            {/* AI Assistance Box */}
+            <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
+              <div className="flex items-start gap-4">
+                <div className="bg-green-500 p-3 rounded-full flex-shrink-0">
+                  <FiZap className="text-white" size={24} />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <FiMessageCircle className="text-green-600" size={18} />
+                    <h3 className="font-bold text-green-900 text-lg">دستیار هوش مصنوعی</h3>
+                  </div>
+                  <p className="text-green-800 text-sm leading-relaxed mb-4">
+                    برای هر محصولی که می‌خواهید بخرید، می‌توانید از من کمک بگیرید. 
+                    <span className="font-semibold text-green-900"> من اینجام در خدمت شما!</span>
+                  </p>
+                  <div className="bg-white rounded-lg p-3 border border-green-200">
+                    <p className="text-green-700 text-xs mb-2 font-medium">من می‌توانم به شما کمک کنم:</p>
+                    <ul className="text-green-600 text-xs space-y-1">
+                      <li className="flex items-center gap-1">
+                        <div className="w-1 h-1 bg-green-400 rounded-full"></div>
+                        محصولات مشابه را پیشنهاد بدهم
+                      </li>
+                      <li className="flex items-center gap-1">
+                        <div className="w-1 h-1 bg-green-400 rounded-full"></div>
+                        در مقایسه محصولات کمک کنم
+                      </li>
+                      <li className="flex items-center gap-1">
+                        <div className="w-1 h-1 bg-green-400 rounded-full"></div>
+                        به سوالات شما پاسخ بدم
+                      </li>
+                    </ul>
+                  </div>
+                  <button className="w-full mt-4 bg-green-500 text-white py-2 rounded-lg font-semibold hover:bg-green-600 transition text-sm flex items-center justify-center gap-2">
+                    <FiMessageCircle size={16} />
+                    گفتگو با دستیار هوشمند
+                  </button>
                 </div>
               </div>
             </div>
@@ -557,7 +607,6 @@ export default function CartPage(): React.ReactElement {
             </div>
           </div>
         </div>
-        <br /> <br /> <br />
       </div>
     </div>
   );
