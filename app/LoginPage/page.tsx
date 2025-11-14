@@ -13,6 +13,7 @@ const AUTH_API_BASE_URL = process.env.NEXT_PUBLIC_AUTH_API_BASE_URL ?? "http://l
 // Helper to log API URL for debugging
 if (typeof window !== "undefined") {
   console.log("🔗 API Base URL:", AUTH_API_BASE_URL);
+  console.log("💡 Tip: اگر روی سیستم دیگری هستید، IP سیستم بک‌اند را در فایل .env.local تنظیم کنید");
 }
 
 type ApiResponse<T> = {
@@ -62,7 +63,11 @@ const resolveErrorMessage = (error: unknown) => {
   if (error instanceof TypeError) {
     const errorMessage = error.message.toLowerCase();
     if (errorMessage.includes("failed to fetch") || errorMessage.includes("networkerror") || errorMessage.includes("network error")) {
-      return "سرور در دسترس نیست. لطفاً مطمئن شوید که سرور بک‌اند در حال اجرا است (http://localhost:4000)";
+      const apiUrl = AUTH_API_BASE_URL;
+      return `سرور در دسترس نیست. لطفاً مطمئن شوید که:
+1. سرور بک‌اند در حال اجرا است
+2. آدرس API صحیح است: ${apiUrl}
+3. اگر روی سیستم دیگری هستید، IP سیستم بک‌اند را در فایل .env.local تنظیم کنید`;
     }
     return "مشکل اتصال به اینترنت. لطفاً اتصال خود را بررسی کنید";
   }
