@@ -319,7 +319,7 @@ export default function Header() {
                     className="flex items-center gap-3 p-4 text-gray-700 hover:text-amber-700 hover:bg-amber-100/80 rounded-xl transition-all font-[var(--font-yekan)]"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    <item.icon size={18} className="text-amber-600" />
+                    <item.icon size={18}  />
                     {item.name}
                   </Link>
                 ))}
@@ -333,7 +333,7 @@ export default function Header() {
                     className="flex items-center gap-3 p-4 text-gray-700 hover:text-amber-700 hover:bg-amber-100/80 rounded-xl transition-all font-[var(--font-yekan)]"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    <item.icon size={18} className="text-amber-600" />
+                    <item.icon size={18} />
                     {item.name}
                   </Link>
                 ))}
