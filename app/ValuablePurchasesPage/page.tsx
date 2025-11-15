@@ -132,7 +132,7 @@ export default function ValuablePurchasesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50/50 to-orange-50/30 pt-24">
+    <div className="min-h-screen bg-gradient-to-b from-amber-50/50 to-orange-50/30 pt-34">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumb */}
         <motion.div
@@ -143,8 +143,6 @@ export default function ValuablePurchasesPage() {
           <span className="hover:text-amber-700 cursor-pointer">خانه</span>
           <span className="mx-2">/</span>
           <span className="hover:text-amber-700 cursor-pointer">خریدهای باارزش</span>
-          <span className="mx-2">/</span>
-          <span className="text-amber-700 font-semibold">محصولات منتخب</span>
         </motion.div>
 
         <div className="flex flex-col lg:flex-row gap-8">

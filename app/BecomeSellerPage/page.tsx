@@ -61,7 +61,7 @@ export default function BecomeSellerPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white pt-24">
+    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white pt-34">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Breadcrumb */}
         <motion.div
@@ -74,41 +74,36 @@ export default function BecomeSellerPage() {
           <span className="text-amber-700 font-semibold">فروشنده شوید</span>
         </motion.div>
 
-        {/* Hero Section */}
+        {/* Hero Section - Updated to match Product Categories page size */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="bg-gradient-to-r from-amber-500 to-amber-600 rounded-2xl shadow-2xl p-8 mb-12 relative overflow-hidden border border-amber-400"
+          className="bg-gradient-to-r from-amber-50 to-amber-100 rounded-2xl shadow-lg border border-amber-200 p-6 mb-12"
         >
-          <div className="absolute top-0 right-0 w-48 h-48 bg-amber-400/20 rounded-full -translate-y-24 translate-x-24"></div>
-          <div className="absolute bottom-0 left-0 w-40 h-40 bg-amber-300/20 rounded-full translate-y-20 -translate-x-20"></div>
-          
-          <div className="flex flex-col lg:flex-row items-center justify-between gap-8 relative z-10">
-            <div className="flex-1 text-white">
-              <h1 className="text-3xl lg:text-4xl font-bold mb-4 font-[var(--font-yekan)]">
-                فروشنده شوید و کسب‌وکار خود را رشد دهید
-              </h1>
-              <p className="text-amber-100 text-lg leading-relaxed font-[var(--font-yekan)] mb-6">
-                به خانواده بزرگ فروشندگان قهوه ما بپیوندید و محصولات خود را به هزاران مشتری مشتاق عرضه کنید
-              </p>
-              <div className="flex flex-wrap gap-4">
-                <div className="flex items-center gap-2 bg-white/20 rounded-xl px-4 py-2 backdrop-blur-sm">
-                  <FiCheck className="text-white" />
-                  <span className="font-[var(--font-yekan)] text-sm">روند ثبت‌نام سریع</span>
-                </div>
-                <div className="flex items-center gap-2 bg-white/20 rounded-xl px-4 py-2 backdrop-blur-sm">
-                  <FiCheck className="text-white" />
-                  <span className="font-[var(--font-yekan)] text-sm">پشتیبانی تمام‌وقت</span>
-                </div>
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="bg-amber-500 rounded-full p-3">
+                <FiUser className="text-white text-xl" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-amber-800 mb-1 font-[var(--font-yekan)]">
+                  فروشنده شوید و کسب‌وکار خود را رشد دهید
+                </h3>
+                <p className="text-amber-700 font-[var(--font-yekan)] text-sm">
+                  به خانواده بزرگ فروشندگان قهوه ما بپیوندید و محصولات خود را به هزاران مشتری مشتاق عرضه کنید
+                </p>
               </div>
             </div>
             
-            <div className="flex-shrink-0">
-              <div className="bg-white/20 rounded-2xl p-6 backdrop-blur-sm border border-white/30">
-                <FiUser className="text-white text-4xl" />
-              </div>
-            </div>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="flex items-center gap-2 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white px-6 py-3 rounded-xl font-semibold transition-all shadow-lg font-[var(--font-yekan)] whitespace-nowrap"
+            >
+              <FiUser size={18} />
+              <span>ثبت‌نام فروشنده</span>
+            </motion.button>
           </div>
         </motion.div>
 

@@ -3,14 +3,14 @@
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
-import { FiFilter, FiGrid, FiList, FiStar, FiShoppingCart, FiHeart, FiChevronDown, FiX, FiMessageCircle } from "react-icons/fi";
+import { FiFilter, FiGrid, FiList, FiStar, FiChevronDown, FiX, FiMessageCircle } from "react-icons/fi";
 import Link from "next/link";
 
 interface Product {
-  id: number;
+  id: string;
   name: string;
-  price: string;
-  originalPrice?: string;
+  price: number;
+  originalPrice?: number;
   image: string;
   category: string;
   badge: string;
@@ -19,6 +19,8 @@ interface Product {
   isPrime: boolean;
   discount: number;
   type: string;
+  positiveFeature: string;
+  status: string;
 }
 
 interface Category {
@@ -32,6 +34,8 @@ interface PriceRange {
   id: number;
   label: string;
   value: string;
+  min: number;
+  max: number;
 }
 
 interface Filters {
@@ -47,6 +51,10 @@ export default function CoffeeCategoryPage() {
   const [expandedFilter, setExpandedFilter] = useState<string | null>(null);
   const [coffeeProducts, setCoffeeProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedPriceRange, setSelectedPriceRange] = useState<string>("");
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000000]);
+  const [customMinPrice, setCustomMinPrice] = useState<string>("");
+  const [customMaxPrice, setCustomMaxPrice] = useState<string>("");
   const [filters, setFilters] = useState<Filters>({ brands: [], priceRanges: [], ratings: [] });
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -59,7 +67,7 @@ export default function CoffeeCategoryPage() {
         console.log(data)
         
         // The new API returns a flat products array directly
-        setCoffeeProducts(data|| []);
+        setCoffeeProducts(data || []);
         
         // For categories and filters, we'll use static data since your mock API doesn't include them
         setCategories([
@@ -75,10 +83,11 @@ export default function CoffeeCategoryPage() {
         setFilters({
           brands: ["دیویدوف", "لاوازا", "ایلی", "استارباکس", "نسپرسو", "کمکس"],
           priceRanges: [
-            { id: 1, label: "زیر ۱۰۰ هزار تومان", value: "0-100" },
-            { id: 2, label: "۱۰۰ تا ۳۰۰ هزار تومان", value: "100-300" },
-            { id: 3, label: "۳۰۰ تا ۵۰۰ هزار تومان", value: "300-500" },
-            { id: 4, label: "بالای ۵۰۰ هزار تومان", value: "500-1000" }
+            { id: 1, label: "زیر ۱۰۰ هزار تومان", value: "0-100000", min: 0, max: 100000 },
+            { id: 2, label: "۱۰۰ تا ۳۰۰ هزار تومان", value: "100000-300000", min: 100000, max: 300000 },
+            { id: 3, label: "۳۰۰ تا ۵۰۰ هزار تومان", value: "300000-500000", min: 300000, max: 500000 },
+            { id: 4, label: "۵۰۰ هزار تا ۱ میلیون", value: "500000-1000000", min: 500000, max: 1000000 },
+            { id: 5, label: "بالای ۱ میلیون", value: "1000000-5000000", min: 1000000, max: 5000000 }
           ],
           ratings: [4, 3, 2, 1]
         });
@@ -91,6 +100,43 @@ export default function CoffeeCategoryPage() {
     
     loadData();
   }, []);
+
+  const handlePriceRangeSelect = (range: PriceRange) => {
+    setSelectedPriceRange(range.value);
+    setPriceRange([range.min, range.max]);
+    setCustomMinPrice(range.min.toString());
+    setCustomMaxPrice(range.max.toString());
+  };
+
+  const handleCustomPriceApply = () => {
+    const min = parseInt(customMinPrice) || 0;
+    const max = parseInt(customMaxPrice) || 1000000;
+    setPriceRange([min, max]);
+    setSelectedPriceRange("custom");
+  };
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('fa-IR').format(price) + " تومان";
+  };
+
+  // Helper function to add "تومان" to product prices
+  const formatProductPrice = (price: number) => {
+    return new Intl.NumberFormat('fa-IR').format(price) + " تومان";
+  };
+
+  // Helper function to get status badge styling
+  const getStatusBadgeStyle = (status: string) => {
+    switch (status) {
+      case "فروش ویژه":
+        return "bg-gradient-to-r from-red-500 to-red-600 text-white";
+      case "جدید":
+        return "bg-gradient-to-r from-green-500 to-green-600 text-white";
+      case "پر فروش":
+        return "bg-gradient-to-r from-amber-500 to-amber-600 text-white";
+      default:
+        return "bg-gradient-to-r from-amber-600 to-amber-700 text-white";
+    }
+  };
 
   // Rest of the component remains EXACTLY the same as your original design
   const FilterSection = ({ title, children, filterKey }: { title: string; children: React.ReactNode; filterKey: string }) => (
@@ -135,7 +181,7 @@ export default function CoffeeCategoryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white pt-24">
+    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white pt-34">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumb */}
         <motion.div
@@ -145,9 +191,7 @@ export default function CoffeeCategoryPage() {
         >
           <span>خانه</span>
           <span className="mx-2">/</span>
-          <span>دسته‌بندی‌ها</span>
-          <span className="mx-2">/</span>
-          <span className="text-amber-700 font-semibold">قهوه و تجهیزات</span>
+          <span>دسته‌بندی کالا ها</span>
         </motion.div>
 
         <div className="flex flex-col lg:flex-row gap-8">
@@ -195,24 +239,75 @@ export default function CoffeeCategoryPage() {
                 </div>
               </div>
 
-              {/* Price Range */}
+              {/* Modern Price Range Filter */}
               <div className="mb-6">
-                <h4 className="font-semibold text-gray-700 mb-3 font-[var(--font-yekan)]">محدوده قیمت</h4>
-                <div className="space-y-2">
+                <h4 className="font-semibold text-gray-700 mb-4 font-[var(--font-yekan)]">محدوده قیمت</h4>
+                
+                {/* Quick Price Range Buttons */}
+                <div className="space-y-2 mb-4">
                   {filters.priceRanges.map((range, index) => (
-                    <motion.label
+                    <motion.button
                       key={range.id}
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.1 }}
-                      className="flex items-center gap-2 cursor-pointer group"
+                      onClick={() => handlePriceRangeSelect(range)}
+                      className={`w-full text-right py-3 px-4 rounded-xl border transition-all duration-200 font-[var(--font-yekan)] text-sm ${
+                        selectedPriceRange === range.value
+                          ? 'bg-amber-500 text-white border-amber-500 shadow-md'
+                          : 'bg-white text-gray-700 border-amber-200 hover:bg-amber-50 hover:border-amber-300'
+                      }`}
                     >
-                      <input type="radio" name="price" className="text-amber-600 focus:ring-amber-500" />
-                      <span className="text-sm text-gray-600 group-hover:text-amber-700 transition-colors font-[var(--font-yekan)]">
-                        {range.label}
-                      </span>
-                    </motion.label>
+                      <div className="flex items-center justify-between">
+                        <span>{range.label}</span>
+                        {selectedPriceRange === range.value && (
+                          <div className="w-2 h-2 bg-white rounded-full"></div>
+                        )}
+                      </div>
+                    </motion.button>
                   ))}
+                </div>
+
+                {/* Custom Price Range Input */}
+                <div className="bg-amber-50 rounded-xl p-4 border border-amber-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm text-gray-700 font-[var(--font-yekan)]">قیمت دلخواه</span>
+                    <span className="text-xs text-amber-600 bg-amber-100 px-2 py-1 rounded-full font-[var(--font-yekan)]">
+                      {formatPrice(priceRange[0])} - {formatPrice(priceRange[1])}
+                    </span>
+                  </div>
+                  
+                  <div className="flex gap-2 mb-3">
+                    <div className="flex-1">
+                      <label className="block text-xs text-gray-500 mb-1 font-[var(--font-yekan)]">حداقل</label>
+                      <input
+                        type="text"
+                        value={customMinPrice}
+                        onChange={(e) => setCustomMinPrice(e.target.value.replace(/[^0-9]/g, ''))}
+                        placeholder="۰"
+                        className="w-full px-3 py-2 text-sm border border-amber-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 font-[var(--font-yekan)] text-left"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-xs text-gray-500 mb-1 font-[var(--font-yekan)]">حداکثر</label>
+                      <input
+                        type="text"
+                        value={customMaxPrice}
+                        onChange={(e) => setCustomMaxPrice(e.target.value.replace(/[^0-9]/g, ''))}
+                        placeholder="۱۰۰۰۰۰۰"
+                        className="w-full px-3 py-2 text-sm border border-amber-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 font-[var(--font-yekan)] text-left"
+                      />
+                    </div>
+                  </div>
+                  
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handleCustomPriceApply}
+                    className="w-full bg-amber-500 hover:bg-amber-600 text-white py-2 rounded-lg text-sm font-medium transition-all font-[var(--font-yekan)]"
+                  >
+                    اعمال محدوده
+                  </motion.button>
                 </div>
               </div>
 
@@ -385,35 +480,11 @@ export default function CoffeeCategoryPage() {
                         </div>
                       )}
                       
-                      {/* Product Badge */}
+                      {/* Status Badge - NEW */}
                       <div className="absolute top-3 right-3">
-                        <span className="bg-gradient-to-r from-amber-600 to-amber-700 text-white text-xs px-2 py-1 rounded-full font-medium">
-                          {product.badge}
+                        <span className={`text-xs px-2 py-1 rounded-full font-medium font-[var(--font-yekan)] shadow-md ${getStatusBadgeStyle(product.status)}`}>
+                          {product.status}
                         </span>
-                      </div>
-
-                      {/* Quick Actions */}
-                      <div className="absolute bottom-3 left-3 flex gap-2">
-                        <motion.button
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                          className="bg-white/90 hover:bg-white text-amber-700 p-2 rounded-full shadow-lg transition-all"
-                          onClick={(e) => {
-                            e.preventDefault();
-                          }}
-                        >
-                          <FiHeart size={16} />
-                        </motion.button>
-                        <motion.button
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                          className="bg-white/90 hover:bg-white text-amber-700 p-2 rounded-full shadow-lg transition-all"
-                          onClick={(e) => {
-                            e.preventDefault();
-                          }}
-                        >
-                          <FiShoppingCart size={16} />
-                        </motion.button>
                       </div>
                     </div>
 
@@ -439,56 +510,57 @@ export default function CoffeeCategoryPage() {
                           </span>
                         </div>
 
-                        {/* Prime Badge */}
-                        {product.isPrime && (
-                          <div className="flex items-center gap-1 mb-3">
-                            <div className="bg-gradient-to-r from-amber-600 to-amber-700 text-white text-xs px-2 py-1 rounded-full font-bold">
-                              PRIME
-                            </div>
-                            <span className="text-xs text-amber-600 font-[var(--font-yekan)]">ارسال رایگان</span>
-                          </div>
-                        )}
+                        {/* Positive Feature */}
+                        <div className="mb-3">
+                          <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full font-medium font-[var(--font-yekan)] border border-green-200">
+                            {product.positiveFeature}
+                          </span>
+                        </div>
                       </div>
 
                       {/* Price and Actions */}
-                      <div className="space-y-2 mt-3">
-                        {/* Ask Me Button */}
-                        <div className="flex justify-end">
+                      <div className="space-y-3 mt-4">
+                        {/* Price Section */}
+                        <div className="flex flex-col gap-1">
+                          {/* Original Price (if discounted) */}
+                          {product.originalPrice && (
+                            <span className="text-sm text-gray-500 line-through font-[var(--font-yekan)] text-left">
+                              {formatProductPrice(product.originalPrice)}
+                            </span>
+                          )}
+                          {/* Current Price */}
+                          <span className={`font-bold text-amber-700 font-[var(--font-yekan)] ${
+                            product.originalPrice ? 'text-lg' : 'text-xl'
+                          }`}>
+                            {formatProductPrice(product.price)}
+                          </span>
+                        </div>
+
+                        {/* Buttons Section */}
+                        <div className="flex flex-col gap-2">
+                          {/* Smart Consultation Button */}
                           <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg font-[var(--font-yekan)] whitespace-nowrap"
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            className="flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg font-[var(--font-yekan)]"
                             onClick={(e) => {
                               e.preventDefault();
                             }}
                           >
                             <FiMessageCircle size={14} />
-                            <span className="text-xs">از من بپرس — آنلاین هستم</span>
+                            <span>مشاوره هوشمند (فوری)</span>
                           </motion.button>
-                        </div>
 
-                        {/* Price and Add to Cart */}
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <span className="text-lg font-bold text-amber-700 font-[var(--font-yekan)]">
-                              {product.price}
-                            </span>
-                            {product.originalPrice && (
-                              <span className="text-sm text-gray-500 line-through font-[var(--font-yekan)]">
-                                {product.originalPrice}
-                              </span>
-                            )}
-                          </div>
-                          
+                          {/* Buy Button */}
                           <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg font-[var(--font-yekan)]"
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white px-4 py-3 rounded-xl font-semibold transition-all shadow-lg font-[var(--font-yekan)]"
                             onClick={(e) => {
                               e.preventDefault();
                             }}
                           >
-                            افزودن به سبد
+                            خرید
                           </motion.button>
                         </div>
                       </div>
@@ -582,17 +654,57 @@ export default function CoffeeCategoryPage() {
                     </div>
                   </FilterSection>
 
-                  {/* Price Range */}
+                  {/* Price Range - Updated for mobile */}
                   <FilterSection title="محدوده قیمت" filterKey="price">
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       {filters.priceRanges.map((range) => (
-                        <label key={range.id} className="flex items-center gap-2 cursor-pointer group">
-                          <input type="radio" name="price" className="text-amber-600 focus:ring-amber-500" />
-                          <span className="text-sm text-gray-600 group-hover:text-amber-700 transition-colors font-[var(--font-yekan)]">
-                            {range.label}
-                          </span>
-                        </label>
+                        <button
+                          key={range.id}
+                          onClick={() => handlePriceRangeSelect(range)}
+                          className={`w-full text-right py-3 px-4 rounded-xl border transition-all duration-200 font-[var(--font-yekan)] text-sm ${
+                            selectedPriceRange === range.value
+                              ? 'bg-amber-500 text-white border-amber-500 shadow-md'
+                              : 'bg-white text-gray-700 border-amber-200 hover:bg-amber-50 hover:border-amber-300'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span>{range.label}</span>
+                            {selectedPriceRange === range.value && (
+                              <div className="w-2 h-2 bg-white rounded-full"></div>
+                            )}
+                          </div>
+                        </button>
                       ))}
+                      
+                      {/* Custom Price Range for Mobile */}
+                      <div className="bg-amber-50 rounded-xl p-4 border border-amber-200">
+                        <div className="flex gap-2 mb-3">
+                          <div className="flex-1">
+                            <input
+                              type="text"
+                              value={customMinPrice}
+                              onChange={(e) => setCustomMinPrice(e.target.value.replace(/[^0-9]/g, ''))}
+                              placeholder="حداقل قیمت"
+                              className="w-full px-3 py-2 text-sm border border-amber-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 font-[var(--font-yekan)] text-left"
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <input
+                              type="text"
+                              value={customMaxPrice}
+                              onChange={(e) => setCustomMaxPrice(e.target.value.replace(/[^0-9]/g, ''))}
+                              placeholder="حداکثر قیمت"
+                              className="w-full px-3 py-2 text-sm border border-amber-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 font-[var(--font-yekan)] text-left"
+                            />
+                          </div>
+                        </div>
+                        <button
+                          onClick={handleCustomPriceApply}
+                          className="w-full bg-amber-500 hover:bg-amber-600 text-white py-2 rounded-lg text-sm font-medium transition-all font-[var(--font-yekan)]"
+                        >
+                          اعمال محدوده
+                        </button>
+                      </div>
                     </div>
                   </FilterSection>
 

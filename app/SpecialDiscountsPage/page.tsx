@@ -171,7 +171,7 @@ export default function SpecialDiscountsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white pt-24">
+    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white pt-34">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumb */}
         <motion.div
@@ -181,46 +181,39 @@ export default function SpecialDiscountsPage() {
         >
           <span>خانه</span>
           <span className="mx-2">/</span>
-          <span>تخفیف‌ها و پیشنهادها</span>
-          <span className="mx-2">/</span>
-          <span className="text-amber-700 font-semibold">تخفیف‌های ویژه</span>
+          <span>تخفیف های امروز</span>
         </motion.div>
 
-        {/* Hero Banner */}
+        {/* Hero Banner - Updated to match Product Categories page size */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="relative bg-gradient-to-r from-amber-600 to-orange-600 rounded-3xl overflow-hidden shadow-2xl mb-8"
+          className="bg-gradient-to-r from-amber-50 to-amber-100 rounded-2xl shadow-lg border border-amber-200 p-6 mb-6"
         >
-          <div className="absolute inset-0 bg-black/20"></div>
-          <div className="relative px-8 py-12 text-center text-white">
-            <motion.h1
-              initial={{ scale: 0.9 }}
-              animate={{ scale: 1 }}
-              transition={{ duration: 0.8 }}
-              className="text-4xl md:text-5xl font-bold mb-4 font-[var(--font-yekan)]"
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="bg-amber-500 rounded-full p-3">
+                <FiZap className="text-white text-xl" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-amber-800 mb-1 font-[var(--font-yekan)]">
+                  تخفیف‌های ویژه امروز
+                </h3>
+                <p className="text-amber-700 font-[var(--font-yekan)] text-sm">
+                  تا ۵۰٪ تخفیف روی بهترین محصولات قهوه - فرصت را از دست ندهید!
+                </p>
+              </div>
+            </div>
+            
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="flex items-center gap-2 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white px-6 py-3 rounded-xl font-semibold transition-all shadow-lg font-[var(--font-yekan)] whitespace-nowrap"
             >
-              تخفیف‌های شگفت‌انگیز
-            </motion.h1>
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="text-xl md:text-2xl mb-6 font-[var(--font-yekan)]"
-            >
-              تا ۵۰٪ تخفیف روی بهترین محصولات قهوه
-            </motion.p>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-              className="flex flex-wrap justify-center gap-4 text-sm"
-            >
-              <div className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">⚡ پیشنهادهای لحظه‌ای</div>
-              <div className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">⭐ فروش ویژه</div>
-              <div className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">🕒 تخفیف پایان فصل</div>
-            </motion.div>
+              <FiZap size={18} />
+              <span>مشاهده همه تخفیف‌ها</span>
+            </motion.button>
           </div>
         </motion.div>
 

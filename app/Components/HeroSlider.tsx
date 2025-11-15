@@ -86,7 +86,7 @@ export default function HeroSection() {
   ];
 
   return (
-    <section className="w-full bg-gradient-to-br from-amber-50 via-white to-amber-100 py-16 px-4 md:px-10 lg:px-20 mt-24">
+    <section className="w-full bg-gradient-to-br from-amber-50 via-white to-amber-100 py-16 px-4 md:px-10 lg:px-20 mt-34">
       <div className="max-w-7xl mx-auto">
         {/* Section Header */}
      
