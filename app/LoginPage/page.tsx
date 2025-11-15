@@ -8,12 +8,11 @@ import { useAuth } from "@/contaxt/AuthContext";
 import type { User } from "@/contaxt/AuthContext";
 import { useRouter } from "next/navigation";
 
-const AUTH_API_BASE_URL = process.env.NEXT_PUBLIC_AUTH_API_BASE_URL ?? "http://localhost:4000/api/v1/auth";
+const AUTH_API_BASE_URL = process.env.NEXT_PUBLIC_AUTH_API_BASE_URL ?? "https://coffee-shop-backend-k3un.onrender.com/api/v1/auth";
 
 // Helper to log API URL for debugging
 if (typeof window !== "undefined") {
   console.log("🔗 API Base URL:", AUTH_API_BASE_URL);
-  console.log("💡 Tip: اگر روی سیستم دیگری هستید، IP سیستم بک‌اند را در فایل .env.local تنظیم کنید");
 }
 
 type ApiResponse<T> = {
@@ -63,11 +62,7 @@ const resolveErrorMessage = (error: unknown) => {
   if (error instanceof TypeError) {
     const errorMessage = error.message.toLowerCase();
     if (errorMessage.includes("failed to fetch") || errorMessage.includes("networkerror") || errorMessage.includes("network error")) {
-      const apiUrl = AUTH_API_BASE_URL;
-      return `سرور در دسترس نیست. لطفاً مطمئن شوید که:
-1. سرور بک‌اند در حال اجرا است
-2. آدرس API صحیح است: ${apiUrl}
-3. اگر روی سیستم دیگری هستید، IP سیستم بک‌اند را در فایل .env.local تنظیم کنید`;
+      return "سرور در حال راه‌اندازی است. لطفاً چند ثانیه صبر کنید و دوباره تلاش کنید";
     }
     return "مشکل اتصال به اینترنت. لطفاً اتصال خود را بررسی کنید";
   }
@@ -114,7 +109,7 @@ const resolveErrorMessage = (error: unknown) => {
   if (error instanceof Error) {
     const errorMessage = error.message.toLowerCase();
     if (errorMessage.includes("network") || errorMessage.includes("fetch")) {
-      return "سرور در دسترس نیست. لطفاً مطمئن شوید که سرور بک‌اند در حال اجرا است";
+      return "سرور در دسترس نیست. لطفاً دوباره تلاش کنید";
     }
     return error.message || defaultMessage;
   }
@@ -164,30 +159,55 @@ export default function LoginPage() {
     setInfoMessage("");
 
     try {
-      const response = await fetch(`${AUTH_API_BASE_URL}/send`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ phone: normalizedPhone }),
-      });
+      console.log("📤 Sending OTP request to:", `${AUTH_API_BASE_URL}/send`);
+      console.log("📱 Phone:", normalizedPhone);
+      
+      // Retry mechanism for Render sleep mode (free tier)
+      // Render free tier sleeps after 15 min, first request may take 30-60 seconds
+      let response: Response;
+      let retries = 0;
+      const maxRetries = 2;
+      
+      while (retries <= maxRetries) {
+        try {
+          response = await fetch(`${AUTH_API_BASE_URL}/send`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ phone: normalizedPhone }),
+          });
+          break; // Success, exit retry loop
+        } catch (fetchError) {
+          retries++;
+          if (retries > maxRetries) {
+            throw fetchError; // Re-throw if all retries failed
+          }
+          // Wait before retry (exponential backoff: 2s, 4s)
+          await new Promise(resolve => setTimeout(resolve, 2000 * retries));
+          console.log(`🔄 Retry attempt ${retries}/${maxRetries}... (Render may be waking up)`);
+        }
+      }
+
+      console.log("📥 Response status:", response!.status);
+      console.log("📥 Response ok:", response!.ok);
 
       // Check if response is ok before trying to parse JSON
       let data: ApiResponse<SendOtpResponse>;
       try {
-        data = (await response.json()) as ApiResponse<SendOtpResponse>;
+        data = (await response!.json()) as ApiResponse<SendOtpResponse>;
       } catch {
         // If response is not JSON, it's likely a network/server error
         throw createApiError(
-          `سرور پاسخ معتبری ارسال نکرد (کد وضعیت: ${response.status})`,
-          response.status
+          `سرور پاسخ معتبری ارسال نکرد (کد وضعیت: ${response!.status})`,
+          response!.status
         );
       }
 
-      if (!response.ok || !data.success) {
+      if (!response!.ok || !data.success) {
         throw createApiError(
           data.error || "خطا در ارسال کد تأیید",
-          data.status ?? response.status
+          data.status ?? response!.status
         );
       }
 
