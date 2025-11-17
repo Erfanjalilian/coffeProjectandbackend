@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/contaxt/AuthContext";
-import UserProfileSidebar from "../Components/UserProfileSidebar";
+import UserProfileSidebarD from "@/app/Components/userProfileSidebarD";
 import { motion } from "framer-motion";
 import { FiCoffee, FiUser, FiHeart, FiMapPin, FiCreditCard, FiMessageCircle, FiEdit, FiShield, FiTruck } from "react-icons/fi";
 import { useEffect, useState } from "react";
@@ -43,16 +43,24 @@ export default function DashboardPage() {
     return null;
   }
 
-  // Get user's full name or fallback to username
+  // Get user's display name for personal information section
   const getUserDisplayName = () => {
     if (user?.firstName && user?.lastName) {
       return `${user.firstName} ${user.lastName}`;
     }
-    return user?.username || "کاربر";
+    return "نام کامل وارد نشده";
+  };
+
+  // Get user's display name for welcome message and sidebar (can show phone number)
+  const getUserWelcomeName = () => {
+    if (user?.firstName && user?.lastName) {
+      return `${user.firstName} ${user.lastName}`;
+    }
+    return user?.phone || "کاربر";
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-amber-100 pt-24 pb-12">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-amber-100 pt-44 pb-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header Section - Amazon Style */}
         <motion.div
@@ -71,10 +79,11 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Sidebar - Right Side (1/4 width) */}
           <div className="lg:col-span-1">
-            <UserProfileSidebar
-              userName={getUserDisplayName()}
+            <UserProfileSidebarD
+              userName={getUserWelcomeName()}
               userRole={user?.roles?.[0]}
               onLogout={logout}
+              activePage="dashboard"
             />
           </div>
 
@@ -90,7 +99,7 @@ export default function DashboardPage() {
               <div className="bg-white rounded-2xl shadow-lg border border-amber-200 p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-bold text-gray-800 font-[var(--font-yekan)]">
-                    خوش آمدید، {getUserDisplayName()}!
+                    خوش آمدید، {getUserWelcomeName()}!
                   </h2>
                   <div className="bg-amber-100 p-2 rounded-full">
                     <FiCoffee className="text-amber-600 text-xl" />
@@ -138,9 +147,9 @@ export default function DashboardPage() {
                       </span>
                     </div>
                     <div className="flex justify-between items-center py-2 border-b border-amber-100">
-                      <span className="text-gray-600 font-[var(--font-yekan)] text-sm">شماره موبایل:</span>
+                      <span className="text-gray-600 font-[var(--font-yekan)] text-sm">نام کاربری:</span>
                       <span className="text-gray-800 font-[var(--font-yekan)] font-semibold">
-                        {user?.phone}
+                        {user?.username || "نام کاربری وارد نشده"}
                       </span>
                     </div>
                     <div className="flex justify-between items-center py-2">
@@ -150,7 +159,7 @@ export default function DashboardPage() {
                       </span>
                     </div>
                   </div>
-                  <Link href="/dashboard/profile">
+                  <Link href="/DashboardPage/profile">
                     <button className="w-full mt-4 bg-amber-100 hover:bg-amber-200 text-amber-700 py-2 rounded-xl font-[var(--font-yekan)] font-semibold transition-colors flex items-center justify-center gap-2">
                       <FiEdit size={16} />
                       ویرایش اطلاعات
@@ -172,18 +181,24 @@ export default function DashboardPage() {
                     </h3>
                   </div>
                   <div className="space-y-3">
-                    <button className="w-full text-right py-3 px-4 bg-amber-50 hover:bg-amber-100 rounded-xl transition-colors font-[var(--font-yekan)] text-gray-700 flex items-center justify-between">
-                      <span>سفارش‌های اخیر</span>
-                      <div className="bg-amber-200 text-amber-700 text-xs px-2 py-1 rounded-full">۰</div>
-                    </button>
-                    <button className="w-full text-right py-3 px-4 bg-amber-50 hover:bg-amber-100 rounded-xl transition-colors font-[var(--font-yekan)] text-gray-700 flex items-center justify-between">
-                      <span>پیگیری سفارش</span>
-                      <FiTruck className="text-amber-600" />
-                    </button>
-                    <button className="w-full text-right py-3 px-4 bg-amber-50 hover:bg-amber-100 rounded-xl transition-colors font-[var(--font-yekan)] text-gray-700 flex items-center justify-between">
-                      <span>پشتیبانی آنلاین</span>
-                      <FiMessageCircle className="text-amber-600" />
-                    </button>
+                    <Link href="/dashboard/orders">
+                      <button className="w-full text-right py-3 px-4 bg-amber-50 hover:bg-amber-100 rounded-xl transition-colors font-[var(--font-yekan)] text-gray-700 flex items-center justify-between">
+                        <span>سفارش‌های اخیر</span>
+                        <div className="bg-amber-200 text-amber-700 text-xs px-2 py-1 rounded-full">۰</div>
+                      </button>
+                    </Link>
+                    <Link href="/dashboard/track-order">
+                      <button className="w-full text-right py-3 px-4 bg-amber-50 hover:bg-amber-100 rounded-xl transition-colors font-[var(--font-yekan)] text-gray-700 flex items-center justify-between">
+                        <span>پیگیری سفارش</span>
+                        <FiTruck className="text-amber-600" />
+                      </button>
+                    </Link>
+                    <Link href="/dashboard/support">
+                      <button className="w-full text-right py-3 px-4 bg-amber-50 hover:bg-amber-100 rounded-xl transition-colors font-[var(--font-yekan)] text-gray-700 flex items-center justify-between">
+                        <span>پشتیبانی آنلاین</span>
+                        <FiMessageCircle className="text-amber-600" />
+                      </button>
+                    </Link>
                   </div>
                 </motion.div>
               </div>
@@ -234,7 +249,7 @@ export default function DashboardPage() {
                     <p className="text-gray-500 font-[var(--font-yekan)] text-sm">
                       هیچ آدرسی ثبت نشده است
                     </p>
-                    <Link href="/dashboard/addresses">
+                    <Link href="/DashboardPage/addresses">
                       <button className="mt-4 text-amber-600 hover:text-amber-700 font-[var(--font-yekan)] text-sm font-semibold">
                         افزودن آدرس جدید →
                       </button>
@@ -242,35 +257,27 @@ export default function DashboardPage() {
                   </div>
                 </motion.div>
 
-                {/* Security Card */}
+                {/* Bank Accounts Card */}
                 <motion.div
                   whileHover={{ y: -4 }}
                   className="bg-white rounded-2xl shadow-lg border border-amber-200 p-6 hover:shadow-xl transition-all duration-300"
                 >
                   <div className="flex items-center gap-3 mb-4">
                     <div className="bg-amber-100 p-2 rounded-full">
-                      <FiShield className="text-amber-600 text-lg" />
+                      <FiCreditCard className="text-amber-600 text-lg" />
                     </div>
                     <h3 className="text-lg font-bold text-gray-800 font-[var(--font-yekan)]">
-                      امنیت حساب
+                      حساب‌های بانکی
                     </h3>
                   </div>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between py-2">
-                      <span className="text-gray-600 font-[var(--font-yekan)] text-sm">وضعیت حساب:</span>
-                      <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-[var(--font-yekan)]">
-                        فعال
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between py-2">
-                      <span className="text-gray-600 font-[var(--font-yekan)] text-sm">تأیید موبایل:</span>
-                      <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-[var(--font-yekan)]">
-                        تأیید شده
-                      </span>
-                    </div>
-                    <Link href="/dashboard/security">
-                      <button className="w-full mt-4 bg-amber-100 hover:bg-amber-200 text-amber-700 py-2 rounded-xl font-[var(--font-yekan)] font-semibold transition-colors">
-                        تغییر رمز عبور
+                  <div className="text-center py-8">
+                    <FiCreditCard className="text-gray-300 text-4xl mx-auto mb-3" />
+                    <p className="text-gray-500 font-[var(--font-yekan)] text-sm">
+                      هیچ حساب بانکی ثبت نشده است
+                    </p>
+                    <Link href="/DashboardPage/BankAccountsPage">
+                      <button className="mt-4 text-amber-600 hover:text-amber-700 font-[var(--font-yekan)] text-sm font-semibold">
+                        افزودن حساب بانکی →
                       </button>
                     </Link>
                   </div>

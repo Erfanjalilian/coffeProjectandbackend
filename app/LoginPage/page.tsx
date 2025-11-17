@@ -9,7 +9,7 @@ import type { User } from "@/contaxt/AuthContext";
 import { useRouter } from "next/navigation";
 
 const AUTH_API_BASE_URL = process.env.NEXT_PUBLIC_AUTH_API_BASE_URL ?? "https://coffee-shop-backend-k3un.onrender.com/api/v1/auth";
-
+console.log(AUTH_API_BASE_URL)
 // Helper to log API URL for debugging
 if (typeof window !== "undefined") {
   console.log("🔗 API Base URL:", AUTH_API_BASE_URL);
