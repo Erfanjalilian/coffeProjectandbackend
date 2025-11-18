@@ -2,12 +2,16 @@
 
 import { useAuth } from "@/contaxt/AuthContext";
 import UserProfileSidebarD from "@/app/Components/userProfileSidebarD";
-import { motion } from "framer-motion";
-import { FiCreditCard, FiPlus, FiEdit, FiTrash2, FiCopy } from "react-icons/fi";
-import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { FiCreditCard, FiPlus, FiEdit, FiTrash2, FiCopy, FiSettings } from "react-icons/fi";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function BankAccountsPage() {
-  const { user, logout, isLoading } = useAuth();
+  const { user, logout, isLoading, isAuthenticated } = useAuth();
+  const router = useRouter();
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   // State for bank accounts and form
   const [bankAccounts, setBankAccounts] = useState<any[]>([]);
@@ -22,6 +26,20 @@ export default function BankAccountsPage() {
     accountHolderName: "",
     isDefault: false
   });
+
+  // Check authentication on component mount
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.push("/login");
+    } else if (!isLoading) {
+      setIsCheckingAuth(false);
+    }
+  }, [isAuthenticated, isLoading, router]);
+
+  // Close mobile menu when route changes
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [router]);
 
   // Get user's display name for sidebar
   const getUserDisplayName = () => {
@@ -159,9 +177,9 @@ export default function BankAccountsPage() {
   };
 
   // Show loading while checking authentication
-  if (isLoading) {
+  if (isLoading || isCheckingAuth) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-amber-50 to-amber-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-amber-50 to-amber-100 flex items-center justify-center" dir="rtl">
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -174,9 +192,50 @@ export default function BankAccountsPage() {
     );
   }
 
+  // If not authenticated, redirect (handled by useEffect in parent)
+  if (!isAuthenticated) {
+    return null;
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-amber-100 pt-44 pb-12">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-amber-100 pt-44 pb-12" dir="rtl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Mobile Menu Button - Only visible on mobile */}
+        <div className="lg:hidden fixed top-24 right-4 z-40">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setIsMobileMenuOpen(true)}
+            className="bg-gradient-to-r from-amber-600 to-amber-700 text-white py-3 px-4 rounded-xl shadow-lg flex items-center gap-2 font-[var(--font-yekan)]"
+          >
+            <FiSettings size={18} />
+            <span>منوی کاربری</span>
+          </motion.button>
+        </div>
+
+        {/* Mobile Menu Overlay */}
+        <AnimatePresence>
+          {isMobileMenuOpen && (
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: "spring", damping: 30, stiffness: 300 }}
+              className="fixed top-0 right-0 h-full w-80 max-w-full bg-white z-50 lg:hidden shadow-2xl"
+              dir="rtl"
+            >
+              <UserProfileSidebarD
+                userName={getUserDisplayName()}
+                userRole={user?.roles?.[0]}
+                onLogout={logout}
+                activePage="bank-accounts"
+                isMobile={true}
+                onNavigate={() => setIsMobileMenuOpen(false)}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Header Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -185,14 +244,14 @@ export default function BankAccountsPage() {
         >
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-800 mb-2 font-[var(--font-yekan)]">
+              <h1 className="text-3xl font-bold text-gray-800 mb-2 font-[var(--font-yekan)] text-center lg:text-right">
                 حساب‌های بانکی
               </h1>
-              <p className="text-gray-600 font-[var(--font-yekan)]">
+              <p className="text-gray-600 font-[var(--font-yekan)] text-center lg:text-right">
                 مدیریت حساب‌های بانکی و کارت‌های اعتباری
               </p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="hidden lg:flex items-center gap-3">
               {!isAddingAccount && bankAccounts.length > 0 && (
                 <button
                   onClick={() => setIsAddingAccount(true)}
@@ -207,8 +266,8 @@ export default function BankAccountsPage() {
         </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Sidebar - Right Side */}
-          <div className="lg:col-span-1">
+          {/* Sidebar - Left Side (1/4 width) - Hidden on mobile */}
+          <div className="hidden lg:block lg:col-span-1">
             <UserProfileSidebarD
               userName={getUserDisplayName()}
               userRole={user?.roles?.[0]}
@@ -217,10 +276,10 @@ export default function BankAccountsPage() {
             />
           </div>
 
-          {/* Main Content - Left Side */}
+          {/* Main Content - Right Side (3/4 width) */}
           <div className="lg:col-span-3">
             <motion.div
-              initial={{ opacity: 0, x: 20 }}
+              initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2 }}
             >

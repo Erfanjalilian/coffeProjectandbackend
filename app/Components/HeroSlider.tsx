@@ -7,12 +7,12 @@ export default function HeroSection() {
   const categories = [
     {
       id: 1,
-      title: "نوشیدنی خودت رو بخر",
+      title: "دانه قهوه اسپرسو",
       items: [
-        { name: "قهوه اسپرسو", image: "/Images/premium_photo-1674407009848-4da7a12b6b25.avif" },
-        { name: "قهوه ترک", image: "/Images/premium_photo-1674327105076-36c4419864cf.avif" },
-        { name: "قهوه عربیکا", image: "/Images/premium_photo-1673545518947-ddf3240090b1.avif" },
-        { name: "قهوه فوری", image: "/Images/premium_photo-1671559021551-95106555ee19.avif" }
+        { name: "اسپشیال", image: "/Images/premium_photo-1674407009848-4da7a12b6b25.avif" },
+        { name: "عربیکا", image: "/Images/premium_photo-1674327105076-36c4419864cf.avif" },
+        { name: "دوبوستا", image: "/Images/premium_photo-1673545518947-ddf3240090b1.avif" },
+        { name: "ترکیبی", image: "/Images/premium_photo-1671559021551-95106555ee19.avif" }
       ],
       gradient: "from-amber-500 to-orange-500",
       bgGradient: "from-amber-50 to-orange-50",
@@ -20,12 +20,12 @@ export default function HeroSection() {
     },
     {
       id: 2,
-      title: "محصولات ویژه",
+      title: "قهوه های ترکیبی",
       items: [
-        { name: "قهوه برزیل", image: "/Images/premium_photo-1671379526961-1aebb82b317b.avif" },
-        { name: "قهوه کلمبیا", image: "/Images/premium_photo-1669687924558-386bff1a0469.avif" },
-        { name: "قهوه کنیا", image: "/Images/premium_photo-1664970900335-a7c99062bc51.avif" },
-        { name: "قهوه ترکیبی", image: "/Images/photo-1621135177072-57c9b6242e7a.avif" }
+        { name: "ترکیب آریو", image: "/Images/premium_photo-1671379526961-1aebb82b317b.avif" },
+        { name: "", image: "/Images/premium_photo-1669687924558-386bff1a0469.avif" },
+        { name: "ترکیب فول کافئین", image: "/Images/premium_photo-1664970900335-a7c99062bc51.avif" },
+        { name: "ترکیب ۱۰۰٪ عربیکا", image: "/Images/photo-1621135177072-57c9b6242e7a.avif" }
       ],
       gradient: "from-emerald-500 to-teal-600",
       bgGradient: "from-emerald-50 to-teal-50",
@@ -33,12 +33,12 @@ export default function HeroSection() {
     },
     {
       id: 3,
-      title: "تجهیزات دم‌آوری",
+      title: "اکسسوری قهوه",
       items: [
-        { name: "فرنچ‌پرس", image: "/Images/photo-1596098823457-74e360fcd023.avif" },
+        { name: "تجهیزات اسپرسو", image: "/Images/photo-1596098823457-74e360fcd023.avif" },
         { name: "موکاپات", image: "/Images/photo-1594075731547-8c705bb69e50.avif" },
         { name: "آسیاب قهوه", image: "/Images/photo-1592663527359-cf6642f54cff.avif" },
-        { name: "پورتافیلتر", image: "/Images/photo-1514432324607-a09d9b4aefdd.avif" }
+        { name: "تجهیزات کافه", image: "/Images/photo-1514432324607-a09d9b4aefdd.avif" }
       ],
       gradient: "from-blue-500 to-indigo-600",
       bgGradient: "from-blue-50 to-indigo-50",
@@ -46,12 +46,12 @@ export default function HeroSection() {
     },
     {
       id: 4,
-      title: "دانه‌های خاص",
+      title: "دستگاه اسپرسو ساز",
       items: [
-        { name: "بلو مانتین", image: "/Images/photo-1514066558159-fc8c737ef259.avif" },
-        { name: "گواتمالا", image: "/Images/photo-1503481766315-7a586b20f66d.avif" },
-        { name: "اتیوپی", image: "/Images/photo-1525088553748-01d6e210e00b.avif" },
-        { name: "کاستاریکا", image: "/Images/premium_photo-1674407009848-4da7a12b6b25.avif" }
+        { name: "اسپروساز خانگی", image: "/Images/photo-1514066558159-fc8c737ef259.avif" },
+        { name: "نیمه صنعتی", image: "/Images/photo-1503481766315-7a586b20f66d.avif" },
+        { name: "فرانسه", image: "/Images/photo-1525088553748-01d6e210e00b.avif" },
+        { name: "ترک ساز", image: "/Images/premium_photo-1674407009848-4da7a12b6b25.avif" }
       ],
       gradient: "from-purple-500 to-pink-500",
       bgGradient: "from-purple-50 to-pink-50",
@@ -72,12 +72,12 @@ export default function HeroSection() {
     },
     {
       id: 6,
-      title: "اکسسوری قهوه",
+      title: "دمنوش و شکلات",
       items: [
-        { name: "فنجان سرامیک", image: "/Images/photo-1596098823457-74e360fcd023.avif" },
-        { name: "قاشق مخصوص", image: "/Images/photo-1594075731547-8c705bb69e50.avif" },
-        { name: "ترازو قهوه", image: "/Images/photo-1592663527359-cf6642f54cff.avif" },
-        { name: "تمپر قهوه", image: "/Images/photo-1514432324607-a09d9b4aefdd.avif" }
+        { name: "تلخ", image: "/Images/photo-1596098823457-74e360fcd023.avif" },
+        { name: "دست ساز", image: "/Images/photo-1594075731547-8c705bb69e50.avif" },
+        { name: "سس شکلات", image: "/Images/photo-1592663527359-cf6642f54cff.avif" },
+        { name: "دمنوش", image: "/Images/photo-1514432324607-a09d9b4aefdd.avif" }
       ],
       gradient: "from-cyan-500 to-blue-600",
       bgGradient: "from-cyan-50 to-blue-50",
@@ -88,13 +88,10 @@ export default function HeroSection() {
   return (
     <section className="w-full bg-gradient-to-br from-amber-50 via-white to-amber-100 py-16 px-4 md:px-10 lg:px-20 mt-34">
       <div className="max-w-7xl mx-auto">
-        {/* Section Header */}
-     
-
         {/* Categories Grid - 3 columns on desktop */}
         <motion.div
           initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
+          animate={{ opacity: 1 }}
           transition={{ duration: 0.8 }}
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
         >
@@ -102,7 +99,7 @@ export default function HeroSection() {
             <motion.div
               key={cat.id}
               initial={{ opacity: 0, y: 20, scale: 0.95 }}
-              whileInView={{ opacity: 1, y: 0, scale: 1 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
               whileHover={{ y: -5, scale: 1.02 }}
               transition={{ 
                 duration: 0.6, 
@@ -149,7 +146,7 @@ export default function HeroSection() {
                     <motion.div
                       key={itemIndex}
                       initial={{ opacity: 0, scale: 0.8 }}
-                      whileInView={{ opacity: 1, scale: 1 }}
+                      animate={{ opacity: 1, scale: 1 }}
                       whileHover={{ 
                         scale: 1.08,
                         y: -2,
@@ -201,7 +198,7 @@ export default function HeroSection() {
         {/* Call to Action */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.5 }}
           className="text-center mt-12"
         >

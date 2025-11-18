@@ -2,9 +2,9 @@
 
 import { useAuth } from "@/contaxt/AuthContext";
 import UserProfileSidebarD from "@/app/Components/userProfileSidebarD";
-import { motion } from "framer-motion";
-import { FiUser, FiSave, FiArrowRight, FiCheck, FiEdit } from "react-icons/fi";
-import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { FiUser, FiSave, FiCheck, FiSettings } from "react-icons/fi";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -75,23 +75,41 @@ const resolveErrorMessage = (error: unknown) => {
 export default function ProfilePage() {
   const { user, logout, isAuthenticated, isLoading, updateUser } = useAuth();
   const router = useRouter();
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   // Parse the full name from user data
   const getUserFullName = () => {
     return user?.name || "";
   };
 
-  // State for form fields - only name (combined first + last) and username
+  // State for form fields
   const [formData, setFormData] = useState({
     name: getUserFullName(),
     username: user?.username || "",
     phone: user?.phone || ""
   });
 
-  const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+
+  // Check authentication on component mount
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.push("/login");
+    } else if (!isLoading) {
+      setIsCheckingAuth(false);
+    }
+  }, [isAuthenticated, isLoading, router]);
+
+  // Close mobile menu when route changes
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [router]);
+
+  // Track if form has been modified
+  const isFormModified = formData.name !== getUserFullName() || formData.username !== (user?.username || "");
 
   // Get user's display name for sidebar
   const getUserDisplayName = () => {
@@ -114,6 +132,14 @@ export default function ProfilePage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Don't save if no changes were made
+    if (!isFormModified) {
+      setSuccessMessage("هیچ تغییری اعمال نشده است");
+      setTimeout(() => setSuccessMessage(""), 3000);
+      return;
+    }
+
     setIsSaving(true);
     setError("");
     setSuccessMessage("");
@@ -127,7 +153,7 @@ export default function ProfilePage() {
       console.log("📤 Sending profile update request to:", `${API_BASE_URL}/users/profile`);
       console.log("📝 Update data:", formData);
 
-      // Retry mechanism for Render sleep mode (similar to login component)
+      // Retry mechanism for Render sleep mode
       let response: Response;
       let retries = 0;
       const maxRetries = 2;
@@ -143,16 +169,14 @@ export default function ProfilePage() {
             body: JSON.stringify({
               name: formData.name,
               username: formData.username
-              // Only sending name and username, no firstName/lastName
             }),
           });
-          break; // Success, exit retry loop
+          break;
         } catch (fetchError) {
           retries++;
           if (retries > maxRetries) {
-            throw fetchError; // Re-throw if all retries failed
+            throw fetchError;
           }
-          // Wait before retry (exponential backoff: 2s, 4s)
           await new Promise(resolve => setTimeout(resolve, 2000 * retries));
           console.log(`🔄 Retry attempt ${retries}/${maxRetries}... (Render may be waking up)`);
         }
@@ -166,7 +190,6 @@ export default function ProfilePage() {
       try {
         data = (await response!.json()) as ApiResponse<any>;
       } catch {
-        // If response is not JSON, it's likely a network/server error
         throw createApiError(
           `سرور پاسخ معتبری ارسال نکرد (کد وضعیت: ${response!.status})`,
           response!.status
@@ -186,7 +209,6 @@ export default function ProfilePage() {
       }
 
       setSuccessMessage("اطلاعات پروفایل با موفقیت به‌روزرسانی شد");
-      setIsEditing(false);
       
       // Clear success message after 3 seconds
       setTimeout(() => {
@@ -201,21 +223,20 @@ export default function ProfilePage() {
     }
   };
 
-  const handleCancel = () => {
+  const handleReset = () => {
     setFormData({
       name: getUserFullName(),
       username: user?.username || "",
       phone: user?.phone || ""
     });
-    setIsEditing(false);
     setError("");
     setSuccessMessage("");
   };
 
   // Show loading while checking authentication
-  if (isLoading) {
+  if (isLoading || isCheckingAuth) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-amber-50 to-amber-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-amber-50 to-amber-100 flex items-center justify-center" dir="rtl">
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -234,8 +255,44 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-amber-100 pt-44 pb-12">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-amber-100 pt-44 pb-12" dir="rtl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Mobile Menu Button - Only visible on mobile */}
+        <div className="lg:hidden fixed top-24 right-4 z-40">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setIsMobileMenuOpen(true)}
+            className="bg-gradient-to-r from-amber-600 to-amber-700 text-white py-3 px-4 rounded-xl shadow-lg flex items-center gap-2 font-[var(--font-yekan)]"
+          >
+            <FiSettings size={18} />
+            <span>منوی کاربری</span>
+          </motion.button>
+        </div>
+
+        {/* Mobile Menu Overlay */}
+        <AnimatePresence>
+          {isMobileMenuOpen && (
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: "spring", damping: 30, stiffness: 300 }}
+              className="fixed top-0 right-0 h-full w-80 max-w-full bg-white z-50 lg:hidden shadow-2xl"
+              dir="rtl"
+            >
+              <UserProfileSidebarD
+                userName={getUserDisplayName()}
+                userRole={user?.roles?.[0]}
+                onLogout={logout}
+                activePage="profile"
+                isMobile={true}
+                onNavigate={() => setIsMobileMenuOpen(false)}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Header Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -244,30 +301,19 @@ export default function ProfilePage() {
         >
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-800 mb-2 font-[var(--font-yekan)]">
+              <h1 className="text-3xl font-bold text-gray-800 mb-2 font-[var(--font-yekan)] text-center lg:text-right">
                 اطلاعات شخصی
               </h1>
-              <p className="text-gray-600 font-[var(--font-yekan)]">
+              <p className="text-gray-600 font-[var(--font-yekan)] text-center lg:text-right">
                 مدیریت و به‌روزرسانی اطلاعات حساب کاربری
               </p>
-            </div>
-            <div className="flex items-center gap-3">
-              {!isEditing && (
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="bg-amber-600 hover:bg-amber-700 text-white px-6 py-3 rounded-xl font-[var(--font-yekan)] font-semibold transition-colors flex items-center gap-2"
-                >
-                  <FiEdit size={18} />
-                  ویرایش اطلاعات
-                </button>
-              )}
             </div>
           </div>
         </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Sidebar - Right Side */}
-          <div className="lg:col-span-1">
+          {/* Sidebar - Left Side (1/4 width) - Hidden on mobile */}
+          <div className="hidden lg:block lg:col-span-1">
             <UserProfileSidebarD
               userName={getUserDisplayName()}
               userRole={user?.roles?.[0]}
@@ -276,10 +322,10 @@ export default function ProfilePage() {
             />
           </div>
 
-          {/* Main Content - Left Side */}
+          {/* Main Content - Right Side (3/4 width) */}
           <div className="lg:col-span-3">
             <motion.div
-              initial={{ opacity: 0, x: 20 }}
+              initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2 }}
             >
@@ -333,8 +379,7 @@ export default function ProfilePage() {
                         name="name"
                         value={formData.name}
                         onChange={handleInputChange}
-                        disabled={!isEditing}
-                        className="w-full px-4 py-3 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 font-[var(--font-yekan)] disabled:bg-gray-50 disabled:text-gray-500"
+                        className="w-full px-4 py-3 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 font-[var(--font-yekan)] bg-white"
                         placeholder="نام و نام خانوادگی خود را وارد کنید"
                       />
                       {!formData.name && (
@@ -354,8 +399,7 @@ export default function ProfilePage() {
                         name="username"
                         value={formData.username}
                         onChange={handleInputChange}
-                        disabled={!isEditing}
-                        className="w-full px-4 py-3 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 font-[var(--font-yekan)] disabled:bg-gray-50 disabled:text-gray-500"
+                        className="w-full px-4 py-3 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 font-[var(--font-yekan)] bg-white"
                         placeholder="نام کاربری خود را وارد کنید"
                       />
                     </div>
@@ -391,40 +435,41 @@ export default function ProfilePage() {
                       </div>
                     </div>
 
-                    {/* Action Buttons */}
-                    {isEditing && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="flex gap-3 pt-4"
+                    {/* Action Buttons - Always visible but disabled when no changes */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="flex gap-3 pt-4"
+                    >
+                      <button
+                        type="submit"
+                        disabled={isSaving || !isFormModified}
+                        className="flex-1 bg-amber-600 hover:bg-amber-700 disabled:bg-amber-400 disabled:cursor-not-allowed text-white py-3 rounded-xl font-[var(--font-yekan)] font-semibold transition-colors flex items-center justify-center gap-2"
                       >
-                        <button
-                          type="submit"
-                          disabled={isSaving}
-                          className="flex-1 bg-amber-600 hover:bg-amber-700 disabled:bg-amber-400 text-white py-3 rounded-xl font-[var(--font-yekan)] font-semibold transition-colors flex items-center justify-center gap-2"
-                        >
-                          {isSaving ? (
-                            <>
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                              در حال ذخیره...
-                            </>
-                          ) : (
-                            <>
-                              <FiSave size={18} />
-                              ذخیره تغییرات
-                            </>
-                          )}
-                        </button>
+                        {isSaving ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            در حال ذخیره...
+                          </>
+                        ) : (
+                          <>
+                            <FiSave size={18} />
+                            {isFormModified ? "ذخیره تغییرات" : "تغییری اعمال نشده"}
+                          </>
+                        )}
+                      </button>
+                      
+                      {isFormModified && (
                         <button
                           type="button"
-                          onClick={handleCancel}
+                          onClick={handleReset}
                           disabled={isSaving}
                           className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-xl font-[var(--font-yekan)] font-semibold transition-colors"
                         >
-                          انصراف
+                          بازنشانی
                         </button>
-                      </motion.div>
-                    )}
+                      )}
+                    </motion.div>
                   </div>
                 </form>
               </div>
@@ -447,7 +492,7 @@ export default function ProfilePage() {
                     <ul className="text-gray-700 space-y-2 font-[var(--font-yekan)] text-sm">
                       <li className="flex items-start gap-2">
                         <span className="text-amber-600 mt-1">•</span>
-                        <span>اطلاعات شخصی شما برای بهبود تجربه خرید و ارائه خدمات بهتر استفاده می‌شود</span>
+                        <span>می‌توانید مستقیماً اطلاعات خود را ویرایش کرده و سپس دکمه ذخیره را بزنید</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-amber-600 mt-1">•</span>
@@ -456,6 +501,10 @@ export default function ProfilePage() {
                       <li className="flex items-start gap-2">
                         <span className="text-amber-600 mt-1">•</span>
                         <span>شماره موبایل برای ورود به حساب و بازیابی رمز عبور استفاده می‌شود</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-amber-600 mt-1">•</span>
+                        <span>دکمه ذخیره تنها زمانی فعال می‌شود که تغییری در اطلاعات ایجاد کرده باشید</span>
                       </li>
                     </ul>
                   </div>

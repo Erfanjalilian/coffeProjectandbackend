@@ -188,8 +188,8 @@ export default function LatestNewsAndDiscoveries() {
         {/* Latest News Section with Horizontal Scroll */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
           className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-3xl p-8 mb-16 border-2 border-amber-200/80 relative"
         >
           <div className="mb-8">
@@ -242,8 +242,8 @@ export default function LatestNewsAndDiscoveries() {
               <motion.div
                 key={article.id}
                 initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3, delay: index * 0.05 }}
                 className="flex-shrink-0 w-64 bg-white rounded-2xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 group border-2 border-amber-100/80 hover:border-amber-200 cursor-pointer"
                 dir="rtl"
                 onClick={() => window.location.href = `/articles/${article.id}`}
@@ -257,7 +257,11 @@ export default function LatestNewsAndDiscoveries() {
                   />
                   
                   {/* Article Badge */}
-                  
+                  <div className="absolute top-2 left-2">
+                    <span className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs px-2 py-1 rounded-full font-bold font-[var(--font-yekan)]">
+                      {article.badge}
+                    </span>
+                  </div>
 
                   {/* Featured Badge */}
                   {article.isFeatured && (
@@ -321,8 +325,8 @@ export default function LatestNewsAndDiscoveries() {
         {/* Main Call to Action */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
           className="text-center"
         >
      
