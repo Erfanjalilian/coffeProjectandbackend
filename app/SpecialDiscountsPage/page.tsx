@@ -412,60 +412,7 @@ export default function SpecialDiscountsPage() {
               </div>
             </motion.div>
 
-            {/* Header with Sort and View Options */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="bg-white rounded-2xl shadow-lg border border-amber-200 p-6 mb-6"
-            >
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                  <h2 className="text-2xl font-bold text-amber-800 mb-1 font-[var(--font-yekan)]">
-                    تخفیف‌های ویژه امروز
-                  </h2>
-                  <p className="text-gray-600 font-[var(--font-yekan)]">
-                    نمایش ۱-۱۲ از {discountProducts.length} محصول تخفیف‌دار
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-4">
-                  {/* View Mode Toggle */}
-                  <div className="flex items-center gap-2 bg-amber-50 rounded-xl p-1">
-                    <button
-                      onClick={() => setViewMode('grid')}
-                      className={`p-2 rounded-lg transition-all ${
-                        viewMode === 'grid' ? 'bg-white shadow-md text-amber-700' : 'text-gray-500'
-                      }`}
-                    >
-                      <FiGrid size={18} />
-                    </button>
-                    <button
-                      onClick={() => setViewMode('list')}
-                      className={`p-2 rounded-lg transition-all ${
-                        viewMode === 'list' ? 'bg-white shadow-md text-amber-700' : 'text-gray-500'
-                      }`}
-                    >
-                      <FiList size={18} />
-                    </button>
-                  </div>
-
-                  {/* Sort Options */}
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    className="bg-white border border-amber-200 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 font-[var(--font-yekan)]"
-                  >
-                    <option value="popular">پربازدیدترین</option>
-                    <option value="discount-high">بیشترین تخفیف</option>
-                    <option value="discount-low">کمترین تخفیف</option>
-                    <option value="price-low">قیمت: کم به زیاد</option>
-                    <option value="price-high">قیمت: زیاد به کم</option>
-                    <option value="ending-soon">زودتر تمام می‌شود</option>
-                  </select>
-                </div>
-              </div>
-            </motion.div>
+            {/* REMOVED: The redundant "Today's Special Discounts" box has been removed */}
 
             {/* NEW: Quick Filter Buttons (Same as Categories Page) */}
             <motion.div
