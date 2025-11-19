@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import { motion } from "framer-motion";
 
 export default function HeroSection() {
   const categories = [
@@ -89,49 +88,14 @@ export default function HeroSection() {
     <section className="w-full bg-gradient-to-br from-amber-50 via-white to-amber-100 py-16 px-4 md:px-10 lg:px-20 mt-34">
       <div className="max-w-7xl mx-auto">
         {/* Categories Grid - 3 columns on desktop */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-        >
-          {categories.map((cat, index) => (
-            <motion.div
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {categories.map((cat) => (
+            <div
               key={cat.id}
-              initial={{ opacity: 0, y: 20, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              whileHover={{ y: -5, scale: 1.02 }}
-              transition={{ 
-                duration: 0.6, 
-                delay: index * 0.1,
-                type: "spring",
-                stiffness: 300
-              }}
-              className={`relative bg-gradient-to-br ${cat.bgGradient} border border-white rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-all duration-500 group overflow-hidden min-h-[320px] w-full`}
+              className={`relative bg-gradient-to-br ${cat.bgGradient} border border-white rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 group overflow-hidden min-h-[320px] w-full`}
             >
-              {/* Animated Background Elements */}
-              <div className={`absolute inset-0 bg-gradient-to-br ${cat.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-500`}></div>
-              
-              {/* Floating particles animation */}
-              <div className="absolute inset-0 overflow-hidden">
-                {[...Array(3)].map((_, i) => (
-                  <motion.div
-                    key={i}
-                    className={`absolute w-20 h-20 ${cat.gradient} rounded-full opacity-0 group-hover:opacity-[0.03]`}
-                    initial={{ x: -20, y: -20 }}
-                    whileHover={{
-                      x: ["0%", "100%", "0%"],
-                      y: ["0%", "50%", "0%"],
-                      opacity: [0.03, 0.08, 0.03],
-                    }}
-                    transition={{
-                      duration: 8,
-                      repeat: Infinity,
-                      delay: i * 2,
-                    }}
-                  />
-                ))}
-              </div>
+              {/* Background Elements */}
+              <div className={`absolute inset-0 bg-gradient-to-br ${cat.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}></div>
 
               <div className="relative z-10 h-full flex flex-col">
                 <div className="flex items-center mb-6">
@@ -143,20 +107,9 @@ export default function HeroSection() {
                 
                 <div className="grid grid-cols-2 gap-4 flex-1">
                   {cat.items.map((item, itemIndex) => (
-                    <motion.div
+                    <div
                       key={itemIndex}
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      whileHover={{ 
-                        scale: 1.08,
-                        y: -2,
-                        boxShadow: "0 15px 30px -10px rgba(0, 0, 0, 0.2)"
-                      }}
-                      transition={{ 
-                        duration: 0.3,
-                        delay: (index * 0.1) + (itemIndex * 0.1)
-                      }}
-                      className="relative bg-white/80 backdrop-blur-sm border border-white rounded-2xl overflow-hidden cursor-pointer shadow-md hover:shadow-xl group/item"
+                      className="relative bg-white/80 backdrop-blur-sm border border-white rounded-2xl overflow-hidden cursor-pointer shadow-md hover:shadow-xl transition-all duration-300 group/item"
                     >
                       {/* Image Container */}
                       <div className="relative h-20 w-full overflow-hidden">
@@ -164,7 +117,7 @@ export default function HeroSection() {
                           src={item.image}
                           alt={item.name}
                           fill
-                          className="object-cover group-hover/item:scale-110 transition-transform duration-500"
+                          className="object-cover group-hover/item:scale-110 transition-transform duration-300"
                           onError={(e) => {
                             // Fallback for missing images
                             e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23f59e0b' opacity='0.2'/%3E%3Cpath d='M35 40L45 50L35 60' stroke='%23f59e0b' stroke-width='3' fill='none'/%3E%3Cpath d='M55 40L65 50L55 60' stroke='%23f59e0b' stroke-width='3' fill='none'/%3E%3C/svg%3E";
@@ -183,33 +136,24 @@ export default function HeroSection() {
 
                       {/* Hover gradient border effect */}
                       <div className={`absolute inset-0 rounded-2xl bg-gradient-to-r ${cat.gradient} opacity-0 group-hover/item:opacity-100 transition-opacity duration-300 -z-10`}></div>
-                    </motion.div>
+                    </div>
                   ))}
                 </div>
               </div>
 
-              {/* Animated corner accents */}
-              <div className={`absolute top-0 right-0 w-16 h-16 ${cat.accent} opacity-0 group-hover:opacity-10 rounded-bl-3xl transition-opacity duration-500`}></div>
-              <div className={`absolute bottom-0 left-0 w-16 h-16 ${cat.accent} opacity-0 group-hover:opacity-10 rounded-tr-3xl transition-opacity duration-500`}></div>
-            </motion.div>
+              {/* Corner accents */}
+              <div className={`absolute top-0 right-0 w-16 h-16 ${cat.accent} opacity-0 group-hover:opacity-10 rounded-bl-3xl transition-opacity duration-300`}></div>
+              <div className={`absolute bottom-0 left-0 w-16 h-16 ${cat.accent} opacity-0 group-hover:opacity-10 rounded-tr-3xl transition-opacity duration-300`}></div>
+            </div>
           ))}
-        </motion.div>
+        </div>
 
         {/* Call to Action */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.5 }}
-          className="text-center mt-12"
-        >
-          <motion.button
-            whileHover={{ scale: 1.05, boxShadow: "0 10px 25px -5px rgba(245, 158, 11, 0.3)" }}
-            whileTap={{ scale: 0.95 }}
-            className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-semibold py-4 px-8 rounded-2xl shadow-lg transition-all duration-300 font-[var(--font-yekan)] text-lg"
-          >
+        <div className="text-center mt-12">
+          <button className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-semibold py-4 px-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 font-[var(--font-yekan)] text-lg">
             مشاهده همه دسته‌بندی‌ها
-          </motion.button>
-        </motion.div>
+          </button>
+        </div>
       </div>
 
       {/* Background decorations */}

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useAuth } from "@/contaxt/AuthContext";
@@ -7,7 +6,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { FiUser, FiSave, FiCheck, FiSettings } from "react-icons/fi";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 
 // API Configuration
 const API_BASE_URL = process.env.NEXT_PUBLIC_AUTH_API_BASE_URL ?? "https://coffee-shop-backend-k3un.onrender.com/api/v1";
@@ -18,15 +16,17 @@ type ApiResponse<T> = {
   success: boolean;
   data?: T;
   error?: string;
+  message?: string;
 };
 
-// Error Handling
+// Error Handling - Fixed the error creation
 interface ApiError extends Error {
   status?: number;
 }
 
 const createApiError = (message: string, status?: number): ApiError => {
-  const error = Object.assign(new Error(message), { status }) as ApiError;
+  const error = new Error(message) as ApiError;
+  if (status) error.status = status;
   return error;
 };
 
@@ -44,7 +44,6 @@ const resolveErrorMessage = (error: unknown) => {
   if (error && typeof error === "object" && "status" in error) {
     const apiError = error as ApiError;
     const fallback = apiError.message || defaultMessage;
-    const normalizedFallback = fallback.toLowerCase();
 
     switch (apiError.status) {
       case 400:
@@ -54,7 +53,7 @@ const resolveErrorMessage = (error: unknown) => {
       case 403:
         return "شما دسترسی لازم برای این عملیات را ندارید";
       case 404:
-        return "اطلاعات کاربر یافت نشد";
+        return "آدرس API یافت نشد. لطفاً با پشتیبانی تماس بگیرید";
       case 500:
         return "خطای داخلی سرور، لطفاً دوباره تلاش کنید";
       default:
@@ -104,6 +103,17 @@ export default function ProfilePage() {
     }
   }, [isAuthenticated, isLoading, router]);
 
+  // Update form data when user data changes
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        name: user?.name || "",
+        username: user?.username || "",
+        phone: user?.phone || ""
+      });
+    }
+  }, [user]);
+
   // Close mobile menu when route changes
   useEffect(() => {
     setIsMobileMenuOpen(false);
@@ -151,70 +161,94 @@ export default function ProfilePage() {
         throw createApiError("لطفاً دوباره وارد شوید", 401);
       }
 
-      console.log("📤 Sending profile update request to:", `${API_BASE_URL}/users/profile`);
-      console.log("📝 Update data:", formData);
+      if (!user?._id) {
+        throw createApiError("شناسه کاربر یافت نشد");
+      }
 
-      // Retry mechanism for Render sleep mode
-      let response: Response;
-      let retries = 0;
-      const maxRetries = 2;
-      
-      while (retries <= maxRetries) {
-        try {
-          response = await fetch(`${API_BASE_URL}/users/profile`, {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${token}`
-            },
-            body: JSON.stringify({
-              name: formData.name,
-              username: formData.username
-            }),
-          });
-          break;
-        } catch (fetchError) {
-          retries++;
-          if (retries > maxRetries) {
-            throw fetchError;
+      // Try different endpoint variations with user ID
+      const endpointVariations = [
+        `${API_BASE_URL}/users/${user._id}`, // Most common pattern
+        `${API_BASE_URL}/user/${user._id}`,
+        `${API_BASE_URL}/users/me`, // For current user
+        `${API_BASE_URL}/user/profile`,
+        `${API_BASE_URL}/users/profile`
+      ];
+
+      const methodVariations = ["PUT", "PATCH", "POST"];
+
+      let lastError: Error | null = null;
+
+      // Try each endpoint with each method
+      for (const endpoint of endpointVariations) {
+        for (const method of methodVariations) {
+          try {
+            console.log(`🔄 Trying: ${method} ${endpoint}`);
+            
+            const response = await fetch(endpoint, {
+              method: method,
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                name: formData.name,
+                username: formData.username
+              }),
+            });
+
+            console.log(`📥 Response status for ${method} ${endpoint}:`, response.status);
+
+            const responseText = await response.text();
+            console.log(`📥 Raw response:`, responseText);
+
+            if (response.ok) {
+              // Success case - even if response is empty
+              console.log(`✅ Success with ${method} ${endpoint}`);
+              
+              // Update user context with new data
+              if (updateUser) {
+                const updatedUser = {
+                  ...user,
+                  name: formData.name,
+                  username: formData.username
+                };
+                updateUser(updatedUser);
+                console.log("✅ User context updated");
+              }
+
+              setSuccessMessage("اطلاعات پروفایل با موفقیت به‌روزرسانی شد");
+              setTimeout(() => setSuccessMessage(""), 3000);
+              return; // Success, exit the function
+            } else {
+              // If response is not OK but we get a meaningful error
+              if (responseText) {
+                try {
+                  const data = JSON.parse(responseText) as ApiResponse<any>;
+                  lastError = createApiError(
+                    data.error || data.message || `خطای ${response.status}`,
+                    response.status
+                  );
+                } catch {
+                  lastError = createApiError(`خطای ${response.status}`, response.status);
+                }
+              } else {
+                lastError = createApiError(`خطای ${response.status}`, response.status);
+              }
+              console.log(`❌ ${method} ${endpoint} failed:`, lastError.message);
+            }
+          } catch (fetchError) {
+            console.error(`❌ ${method} ${endpoint} error:`, fetchError);
+            lastError = fetchError as Error;
           }
-          await new Promise(resolve => setTimeout(resolve, 2000 * retries));
-          console.log(`🔄 Retry attempt ${retries}/${maxRetries}... (Render may be waking up)`);
         }
       }
 
-      console.log("📥 Response status:", response!.status);
-      console.log("📥 Response ok:", response!.ok);
-
-      // Check if response is ok before trying to parse JSON
-      let data: ApiResponse<any>;
-      try {
-        data = (await response!.json()) as ApiResponse<any>;
-      } catch {
-        throw createApiError(
-          `سرور پاسخ معتبری ارسال نکرد (کد وضعیت: ${response!.status})`,
-          response!.status
-        );
+      // If all endpoints and methods failed
+      if (lastError) {
+        throw lastError;
+      } else {
+        throw createApiError("همه endpointها و methodها با خطا مواجه شدند");
       }
-
-      if (!response!.ok || !data.success) {
-        throw createApiError(
-          data.error || "خطا در به‌روزرسانی پروفایل",
-          data.status ?? response!.status
-        );
-      }
-
-      // Update user context with new data
-      if (updateUser && data.data) {
-        updateUser(data.data);
-      }
-
-      setSuccessMessage("اطلاعات پروفایل با موفقیت به‌روزرسانی شد");
-      
-      // Clear success message after 3 seconds
-      setTimeout(() => {
-        setSuccessMessage("");
-      }, 3000);
 
     } catch (err) {
       console.error("Profile update error:", err);

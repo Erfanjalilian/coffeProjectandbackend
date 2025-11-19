@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import { motion } from "framer-motion";
 import { useRef, useState, useEffect } from "react";
 
 interface Article {
@@ -186,12 +185,7 @@ export default function LatestNewsAndDiscoveries() {
     <section className="w-full bg-gradient-to-b from-amber-50 to-white py-20 px-4 md:px-10 lg:px-20" dir="rtl">
       <div className="max-w-7xl mx-auto">
         {/* Latest News Section with Horizontal Scroll */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-3xl p-8 mb-16 border-2 border-amber-200/80 relative"
-        >
+        <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-3xl p-8 mb-16 border-2 border-amber-200/80 relative">
           <div className="mb-8">
             <h3 className="text-2xl md:text-3xl font-bold text-amber-800 mb-2 font-[var(--font-yekan)]">
              بروز ترین اخبار و یافته ها
@@ -203,31 +197,27 @@ export default function LatestNewsAndDiscoveries() {
 
           {/* Scroll Arrows */}
           {showLeftArrow && (
-            <motion.button
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+            <button
               onClick={() => scroll('left')}
-              className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white text-amber-700 w-10 h-10 rounded-full shadow-lg flex items-center justify-center z-10 transition-all duration-300 hover:scale-110 border border-amber-200"
+              className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white text-amber-700 w-10 h-10 rounded-full shadow-lg flex items-center justify-center z-10 transition-all duration-300 border border-amber-200"
               aria-label="Scroll left"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
-            </motion.button>
+            </button>
           )}
 
           {showRightArrow && (
-            <motion.button
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+            <button
               onClick={() => scroll('right')}
-              className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white text-amber-700 w-10 h-10 rounded-full shadow-lg flex items-center justify-center z-10 transition-all duration-300 hover:scale-110 border border-amber-200"
+              className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white text-amber-700 w-10 h-10 rounded-full shadow-lg flex items-center justify-center z-10 transition-all duration-300 border border-amber-200"
               aria-label="Scroll right"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
-            </motion.button>
+            </button>
           )}
 
           {/* Horizontal Scroll Container */}
@@ -239,11 +229,8 @@ export default function LatestNewsAndDiscoveries() {
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
             {featuredArticles.map((article, index) => (
-              <motion.div
+              <div
                 key={article.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3, delay: index * 0.05 }}
                 className="flex-shrink-0 w-64 bg-white rounded-2xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 group border-2 border-amber-100/80 hover:border-amber-200 cursor-pointer"
                 dir="rtl"
                 onClick={() => window.location.href = `/articles/${article.id}`}
@@ -253,7 +240,7 @@ export default function LatestNewsAndDiscoveries() {
                     src={article.image}
                     alt={article.title}
                     fill
-                    className="object-cover group-hover:scale-110 transition-transform duration-500"
+                    className="object-cover group-hover:scale-110 transition-transform duration-300"
                   />
                   
                   {/* Article Badge */}
@@ -305,32 +292,25 @@ export default function LatestNewsAndDiscoveries() {
                 <div className="mt-2 text-xs text-amber-600 font-[var(--font-yekan)]">
                   نویسنده: {article.author}
                 </div>
-              </motion.div>
+              </div>
             ))}
           </div>
 
           {/* View All Articles Button */}
           <div className="text-center mt-6">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+            <button
               className="bg-white text-amber-700 border-2 border-amber-300 px-8 py-3 rounded-2xl font-semibold hover:bg-amber-50 transition-colors font-[var(--font-yekan)]"
               onClick={() => window.location.href = '/articles'}
             >
               مشاهده همه مطالب
-            </motion.button>
+            </button>
           </div>
-        </motion.div>
+        </div>
 
         {/* Main Call to Action */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="text-center"
-        >
-     
-        </motion.div>
+        <div className="text-center">
+          {/* Empty div - removed extra content */}
+        </div>
       </div>
 
       <style jsx>{`
