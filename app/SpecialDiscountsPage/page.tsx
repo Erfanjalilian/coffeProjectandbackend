@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
-import { FiFilter, FiGrid, FiList, FiStar, FiChevronDown, FiX, FiZap, FiClock } from "react-icons/fi";
+import { FiFilter, FiGrid, FiList, FiStar, FiChevronDown, FiX, FiMessageCircle } from "react-icons/fi";
 import Link from "next/link";
 
 interface Product {
@@ -122,6 +122,10 @@ export default function SpecialDiscountsPage() {
     return new Intl.NumberFormat('fa-IR').format(price) + " تومان";
   };
 
+  const formatProductPrice = (price: number) => {
+    return new Intl.NumberFormat('fa-IR').format(price) + " تومان";
+  };
+
   const getStatusBadgeStyle = (status: string) => {
     switch (status) {
       case "فروش ویژه":
@@ -190,41 +194,8 @@ export default function SpecialDiscountsPage() {
           <span>تخفیف های امروز</span>
         </motion.div>
 
-        {/* Hero Banner */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="bg-gradient-to-r from-amber-50 to-amber-100 rounded-2xl shadow-lg border border-amber-200 p-6 mb-6"
-        >
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="bg-amber-500 rounded-full p-3">
-                <FiZap className="text-white text-xl" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-amber-800 mb-1 font-[var(--font-yekan)]">
-                  تخفیف‌های ویژه امروز
-                </h3>
-                <p className="text-amber-700 font-[var(--font-yekan)] text-sm">
-                  تا ۵۰٪ تخفیف روی بهترین محصولات قهوه - فرصت را از دست ندهید!
-                </p>
-              </div>
-            </div>
-            
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="flex items-center gap-2 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white px-6 py-3 rounded-xl font-semibold transition-all shadow-lg font-[var(--font-yekan)] whitespace-nowrap"
-            >
-              <FiZap size={18} />
-              <span>مشاهده همه تخفیف‌ها</span>
-            </motion.button>
-          </div>
-        </motion.div>
-
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* Desktop Sidebar Filters */}
+          {/* Desktop Sidebar Filters - Same as Categories Page */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -234,7 +205,7 @@ export default function SpecialDiscountsPage() {
             <div className="bg-white rounded-2xl shadow-lg border border-amber-200 p-6 sticky top-32">
               <div className="flex items-center gap-2 mb-6">
                 <FiFilter className="text-amber-600" />
-                <h3 className="font-bold text-gray-800 font-[var(--font-yekan)]">فیلتر تخفیف‌ها</h3>
+                <h3 className="font-bold text-gray-800 font-[var(--font-yekan)]">فیلترها</h3>
               </div>
 
               {/* Categories */}
@@ -272,6 +243,7 @@ export default function SpecialDiscountsPage() {
               <div className="mb-6">
                 <h4 className="font-semibold text-gray-700 mb-4 font-[var(--font-yekan)]">محدوده قیمت</h4>
                 
+                {/* Quick Price Range Buttons */}
                 <div className="space-y-2 mb-4">
                   {filters.priceRanges.map((range, index) => (
                     <motion.button
@@ -336,32 +308,6 @@ export default function SpecialDiscountsPage() {
                   >
                     اعمال محدوده
                   </motion.button>
-                </div>
-              </div>
-
-              {/* Discount Range */}
-              <div className="mb-6">
-                <h4 className="font-semibold text-gray-700 mb-3 font-[var(--font-yekan)]">میزان تخفیف</h4>
-                <div className="space-y-2">
-                  {[
-                    { id: 1, label: "۱۰٪ تا ۲۰٪ تخفیف", value: "10-20" },
-                    { id: 2, label: "۲۰٪ تا ۳۰٪ تخفیف", value: "20-30" },
-                    { id: 3, label: "بالای ۳۰٪ تخفیف", value: "30-100" },
-                    { id: 4, label: "فقط کالاهای تخفیف‌دار", value: "any" }
-                  ].map((discount, index) => (
-                    <motion.label
-                      key={discount.id}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="flex items-center gap-2 cursor-pointer group"
-                    >
-                      <input type="radio" name="discount" className="text-amber-600 focus:ring-amber-500" />
-                      <span className="text-sm text-gray-600 group-hover:text-amber-700 transition-colors font-[var(--font-yekan)]">
-                        {discount.label}
-                      </span>
-                    </motion.label>
-                  ))}
                 </div>
               </div>
 
@@ -433,6 +379,39 @@ export default function SpecialDiscountsPage() {
               </motion.button>
             </div>
 
+            {/* UPDATED: Consultation Banner (Same as Categories Page) */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="bg-gradient-to-r from-amber-50 to-amber-100 rounded-2xl shadow-lg border border-amber-200 p-6 mb-6"
+            >
+              <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="bg-amber-500 rounded-full p-3">
+                    <FiMessageCircle className="text-white text-xl" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-amber-800 mb-1 font-[var(--font-yekan)]">
+                      نیاز به مشاوره دارید؟
+                    </h3>
+                    <p className="text-amber-700 font-[var(--font-yekan)] text-sm">
+                      برای دریافت راهنمایی تخصصی در انتخاب محصول، روی دکمه "از من بپرس" کلیک کنید
+                    </p>
+                  </div>
+                </div>
+                
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="flex items-center gap-2 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white px-6 py-3 rounded-xl font-semibold transition-all shadow-lg font-[var(--font-yekan)] whitespace-nowrap"
+                >
+                  <FiMessageCircle size={18} />
+                  <span>از من بپرس</span>
+                </motion.button>
+              </div>
+            </motion.div>
+
             {/* Header with Sort and View Options */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -488,6 +467,32 @@ export default function SpecialDiscountsPage() {
               </div>
             </motion.div>
 
+            {/* NEW: Quick Filter Buttons (Same as Categories Page) */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="flex flex-wrap gap-3 mb-6"
+            >
+              {['توصیه شده ها', 'تخفیف دارها'].map((filter, index) => (
+                <motion.button
+                  key={filter}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.4, delay: index * 0.1 }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all font-[var(--font-yekan)] ${
+                    index === 0
+                      ? 'bg-amber-600 text-white shadow-lg'
+                      : 'bg-white text-gray-700 border border-amber-200 hover:bg-amber-50 hover:text-amber-700'
+                  }`}
+                >
+                  {filter}
+                </motion.button>
+              ))}
+            </motion.div>
+
             {/* Products Grid/List */}
             <motion.div
               initial={{ opacity: 0 }}
@@ -539,7 +544,7 @@ export default function SpecialDiscountsPage() {
                       {/* Time Left Badge for Deal Products */}
                       {product.timeLeft && (
                         <div className="absolute bottom-3 left-3 bg-black/80 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
-                          <FiClock size={12} />
+                          <FiMessageCircle size={12} />
                           {product.timeLeft}
                         </div>
                       )}
@@ -582,19 +587,32 @@ export default function SpecialDiscountsPage() {
                           {/* Original Price (if discounted) */}
                           {product.originalPrice && (
                             <span className="text-sm text-gray-500 line-through font-[var(--font-yekan)]">
-                              {formatPrice(product.originalPrice)}
+                              {formatProductPrice(product.originalPrice)}
                             </span>
                           )}
                           {/* Current Price */}
                           <span className={`font-bold text-amber-700 font-[var(--font-yekan)] ${
                             product.originalPrice ? 'text-lg' : 'text-xl'
                           }`}>
-                            {formatPrice(product.price)}
+                            {formatProductPrice(product.price)}
                           </span>
                         </div>
 
-                        {/* Buttons Section */}
+                        {/* Buttons Section - UPDATED: Added consultation button */}
                         <div className="flex flex-col gap-2">
+                          {/* Smart Consultation Button */}
+                          <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            className="flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg font-[var(--font-yekan)]"
+                            onClick={(e) => {
+                              e.preventDefault();
+                            }}
+                          >
+                            <FiMessageCircle size={14} />
+                            <span>مشاوره سریع (هوشمند)</span>
+                          </motion.button>
+
                           {/* Buy Button */}
                           <motion.button
                             whileHover={{ scale: 1.02 }}
@@ -641,7 +659,7 @@ export default function SpecialDiscountsPage() {
         </div>
       </div>
 
-      {/* Mobile Filters Modal */}
+      {/* Mobile Filters Modal - Same as Categories Page */}
       <AnimatePresence>
         {showMobileFilters && (
           <>
@@ -749,25 +767,6 @@ export default function SpecialDiscountsPage() {
                           اعمال محدوده
                         </button>
                       </div>
-                    </div>
-                  </FilterSection>
-
-                  {/* Discount Range */}
-                  <FilterSection title="میزان تخفیف" filterKey="discount">
-                    <div className="space-y-2">
-                      {[
-                        { id: 1, label: "۱۰٪ تا ۲۰٪ تخفیف", value: "10-20" },
-                        { id: 2, label: "۲۰٪ تا ۳۰٪ تخفیف", value: "20-30" },
-                        { id: 3, label: "بالای ۳۰٪ تخفیف", value: "30-100" },
-                        { id: 4, label: "فقط کالاهای تخفیف‌دار", value: "any" }
-                      ].map((discount) => (
-                        <label key={discount.id} className="flex items-center gap-2 cursor-pointer group">
-                          <input type="radio" name="discount" className="text-amber-600 focus:ring-amber-500" />
-                          <span className="text-sm text-gray-600 group-hover:text-amber-700 transition-colors font-[var(--font-yekan)]">
-                            {discount.label}
-                          </span>
-                        </label>
-                      ))}
                     </div>
                   </FilterSection>
 
