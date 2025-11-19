@@ -117,37 +117,6 @@ const resolveErrorMessage = (error: unknown) => {
   return defaultMessage;
 };
 
-// Helper function to translate API messages to Persian
-const translateApiMessage = (message?: string): string => {
-  if (!message) return "کد تأیید ارسال شد";
-  
-  const messageLower = message.toLowerCase();
-  
-  // Success messages
-  if (messageLower.includes("otp sent") || 
-      messageLower.includes("sent successfully") ||
-      messageLower.includes("code sent")) {
-    return "کد تأیید با موفقیت ارسال شد";
-  }
-  
-  if (messageLower.includes("verified") || 
-      messageLower.includes("verification successful")) {
-    return "کد تأیید با موفقیت تأیید شد";
-  }
-  
-  // Countdown messages - extract time but show Persian text
-  if (messageLower.includes("please wait") || messageLower.includes("try again")) {
-    const timeMatch = message.match(/(\d+)/);
-    if (timeMatch) {
-      return `لطفاً ${timeMatch[1]} ثانیه دیگر مجدداً تلاش کنید`;
-    }
-    return "لطفاً چند ثانیه دیگر مجدداً تلاش کنید";
-  }
-  
-  // Default fallback - return original message but you can add more translations as needed
-  return message;
-};
-
 export default function LoginPage() {
   const [formData, setFormData] = useState({
     phone: "",
@@ -245,8 +214,7 @@ export default function LoginPage() {
       const nextCountdown = extractCountdownSeconds(data.data?.message) ?? 120;
       setCountdown(nextCountdown);
       setOtpSent(true);
-      // Use translation function here
-      setInfoMessage(translateApiMessage(data.data?.message) || "کد تأیید ارسال شد");
+      setInfoMessage(data.data?.message ?? "کد تأیید ارسال شد");
     } catch (err) {
       console.error("OTP sending error:", err);
       setError(resolveErrorMessage(err));
@@ -333,9 +301,6 @@ export default function LoginPage() {
         throw createApiError("توکن معتبر از سرور دریافت نشد", data.status ?? response.status);
       }
 
-      // Show success message for verification
-      setInfoMessage(translateApiMessage(data.data.message) || "ورود موفقیت‌آمیز بود");
-      
       login(user, token);
       router.push("/DashboardPage");
     } catch (err) {

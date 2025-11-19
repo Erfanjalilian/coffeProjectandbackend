@@ -20,8 +20,15 @@ export interface User {
   }>;
   createdAt: string;
   updatedAt: string;
+
+  // -------------------------
+  // 🔥 مهم: اینها را اضافه کردیم
   firstName?: string;
   lastName?: string;
+
+  // 🔥 این فیلد باعث رفع خطای صفحه پروفایل می‌شود
+  name?: string;
+  // -------------------------
 }
 
 interface AuthContextType {
@@ -59,6 +66,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         let storedUser = localStorage.getItem(USER_STORAGE_KEY);
         let token = localStorage.getItem(TOKEN_STORAGE_KEY);
 
+        // Handle backward compatibility (old storage keys)
         if (!storedUser || !token) {
           const legacyUser = localStorage.getItem("currentUser");
           const legacyToken = localStorage.getItem("authToken");
@@ -75,11 +83,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
         if (storedUser && token) {
           const userData: User = JSON.parse(storedUser);
+
+          // 🔥 اگر name نبود، آن را از firstName + lastName می‌سازیم
+          if (!userData.name && (userData.firstName || userData.lastName)) {
+            userData.name = `${userData.firstName ?? ""} ${userData.lastName ?? ""}`.trim();
+          }
+
           setUser(userData);
         }
       } catch (error) {
         console.error("Error checking authentication:", error);
-        // Clear corrupted data
         localStorage.removeItem(USER_STORAGE_KEY);
         localStorage.removeItem(TOKEN_STORAGE_KEY);
       } finally {
@@ -91,9 +104,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   }, []);
 
   const login = (userData: User, token?: string) => {
+    // 🔥 همین‌جا نیز اگر name نبود از ترکیب firstName + lastName می‌سازیم
+    if (!userData.name && (userData.firstName || userData.lastName)) {
+      userData.name = `${userData.firstName ?? ""} ${userData.lastName ?? ""}`.trim();
+    }
+
     setUser(userData);
     localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(userData));
-    const tokenToPersist = token ?? "mock-jwt-token"; // In real app, this comes from API
+
+    const tokenToPersist = token ?? "mock-jwt-token";
     localStorage.setItem(TOKEN_STORAGE_KEY, tokenToPersist);
   };
 
@@ -101,7 +120,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setUser(null);
     localStorage.removeItem(USER_STORAGE_KEY);
     localStorage.removeItem(TOKEN_STORAGE_KEY);
-    // Optional: Redirect to home page
     window.location.href = "/";
   };
 
@@ -112,6 +130,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const updateUser = (userData: Partial<User>) => {
     if (user) {
       const updatedUser = { ...user, ...userData };
+
+      // 🔥 اگر name در آپدیت نبود اما firstName/lastName به‌روز شدند
+      if (!updatedUser.name && (updatedUser.firstName || updatedUser.lastName)) {
+        updatedUser.name = `${updatedUser.firstName ?? ""} ${updatedUser.lastName ?? ""}`.trim();
+      }
+
       setUser(updatedUser);
       localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updatedUser));
     }
@@ -127,9 +151,5 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     updateUser,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

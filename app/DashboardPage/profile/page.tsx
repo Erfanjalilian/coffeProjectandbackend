@@ -1,36 +1,124 @@
+
 "use client";
 
+import { useAuth } from "@/contaxt/AuthContext";
+import UserProfileSidebarD from "@/app/Components/userProfileSidebarD";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiUser, FiSave, FiCheck, FiSettings } from "react-icons/fi";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-// Mock user data - completely static
-const staticUser = {
-  name: "محمد احمدی",
-  username: "mohammad_ahmadi",
-  phone: "09123456789",
-  roles: ["user"],
-  createdAt: "2024-01-15T10:30:00.000Z"
+// API Configuration
+const API_BASE_URL = process.env.NEXT_PUBLIC_AUTH_API_BASE_URL ?? "https://coffee-shop-backend-k3un.onrender.com/api/v1";
+
+// API Response Type
+type ApiResponse<T> = {
+  status: number;
+  success: boolean;
+  data?: T;
+  error?: string;
+};
+
+// Error Handling
+interface ApiError extends Error {
+  status?: number;
+}
+
+const createApiError = (message: string, status?: number): ApiError => {
+  const error = Object.assign(new Error(message), { status }) as ApiError;
+  return error;
+};
+
+const resolveErrorMessage = (error: unknown) => {
+  const defaultMessage = "خطا در برقراری ارتباط با سرور";
+
+  if (error instanceof TypeError) {
+    const errorMessage = error.message.toLowerCase();
+    if (errorMessage.includes("failed to fetch") || errorMessage.includes("networkerror") || errorMessage.includes("network error")) {
+      return "سرور در حال راه‌اندازی است. لطفاً چند ثانیه صبر کنید و دوباره تلاش کنید";
+    }
+    return "مشکل اتصال به اینترنت. لطفاً اتصال خود را بررسی کنید";
+  }
+
+  if (error && typeof error === "object" && "status" in error) {
+    const apiError = error as ApiError;
+    const fallback = apiError.message || defaultMessage;
+    const normalizedFallback = fallback.toLowerCase();
+
+    switch (apiError.status) {
+      case 400:
+        return fallback || "درخواست نامعتبر است";
+      case 401:
+        return "لطفاً دوباره وارد شوید";
+      case 403:
+        return "شما دسترسی لازم برای این عملیات را ندارید";
+      case 404:
+        return "اطلاعات کاربر یافت نشد";
+      case 500:
+        return "خطای داخلی سرور، لطفاً دوباره تلاش کنید";
+      default:
+        return fallback || defaultMessage;
+    }
+  }
+
+  if (error instanceof Error) {
+    const errorMessage = error.message.toLowerCase();
+    if (errorMessage.includes("network") || errorMessage.includes("fetch")) {
+      return "سرور در دسترس نیست. لطفاً دوباره تلاش کنید";
+    }
+    return error.message || defaultMessage;
+  }
+
+  return defaultMessage;
 };
 
 export default function ProfilePage() {
+  const { user, logout, isAuthenticated, isLoading, updateUser } = useAuth();
+  const router = useRouter();
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
-  // Static form data
+  // Parse the full name from user data
+  const getUserFullName = () => {
+    return user?.name || "";
+  };
+
+  // State for form fields
   const [formData, setFormData] = useState({
-    name: staticUser.name,
-    username: staticUser.username,
-    phone: staticUser.phone
+    name: getUserFullName(),
+    username: user?.username || "",
+    phone: user?.phone || ""
   });
 
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
+  // Check authentication on component mount
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.push("/login");
+    } else if (!isLoading) {
+      setIsCheckingAuth(false);
+    }
+  }, [isAuthenticated, isLoading, router]);
+
+  // Close mobile menu when route changes
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [router]);
+
   // Track if form has been modified
-  const isFormModified = formData.name !== staticUser.name || 
-                        formData.username !== staticUser.username;
+  const isFormModified = formData.name !== getUserFullName() || formData.username !== (user?.username || "");
+
+  // Get user's display name for sidebar
+  const getUserDisplayName = () => {
+    if (user?.name) {
+      return user.name;
+    }
+    return user?.phone || "کاربر";
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -38,7 +126,7 @@ export default function ProfilePage() {
       ...prev,
       [name]: value
     }));
-    // Clear messages when user starts typing
+    // Clear errors when user starts typing
     if (error) setError("");
     if (successMessage) setSuccessMessage("");
   };
@@ -58,11 +146,70 @@ export default function ProfilePage() {
     setSuccessMessage("");
 
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw createApiError("لطفاً دوباره وارد شوید", 401);
+      }
+
+      console.log("📤 Sending profile update request to:", `${API_BASE_URL}/users/profile`);
+      console.log("📝 Update data:", formData);
+
+      // Retry mechanism for Render sleep mode
+      let response: Response;
+      let retries = 0;
+      const maxRetries = 2;
       
-      // In static version, we just show success message without actually saving
-      setSuccessMessage("اطلاعات پروفایل با موفقیت به‌روزرسانی شد (نسخه نمایشی)");
+      while (retries <= maxRetries) {
+        try {
+          response = await fetch(`${API_BASE_URL}/users/profile`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              name: formData.name,
+              username: formData.username
+            }),
+          });
+          break;
+        } catch (fetchError) {
+          retries++;
+          if (retries > maxRetries) {
+            throw fetchError;
+          }
+          await new Promise(resolve => setTimeout(resolve, 2000 * retries));
+          console.log(`🔄 Retry attempt ${retries}/${maxRetries}... (Render may be waking up)`);
+        }
+      }
+
+      console.log("📥 Response status:", response!.status);
+      console.log("📥 Response ok:", response!.ok);
+
+      // Check if response is ok before trying to parse JSON
+      let data: ApiResponse<any>;
+      try {
+        data = (await response!.json()) as ApiResponse<any>;
+      } catch {
+        throw createApiError(
+          `سرور پاسخ معتبری ارسال نکرد (کد وضعیت: ${response!.status})`,
+          response!.status
+        );
+      }
+
+      if (!response!.ok || !data.success) {
+        throw createApiError(
+          data.error || "خطا در به‌روزرسانی پروفایل",
+          data.status ?? response!.status
+        );
+      }
+
+      // Update user context with new data
+      if (updateUser && data.data) {
+        updateUser(data.data);
+      }
+
+      setSuccessMessage("اطلاعات پروفایل با موفقیت به‌روزرسانی شد");
       
       // Clear success message after 3 seconds
       setTimeout(() => {
@@ -71,7 +218,7 @@ export default function ProfilePage() {
 
     } catch (err) {
       console.error("Profile update error:", err);
-      setError("خطا در به‌روزرسانی اطلاعات (نسخه نمایشی)");
+      setError(resolveErrorMessage(err));
     } finally {
       setIsSaving(false);
     }
@@ -79,73 +226,34 @@ export default function ProfilePage() {
 
   const handleReset = () => {
     setFormData({
-      name: staticUser.name,
-      username: staticUser.username,
-      phone: staticUser.phone
+      name: getUserFullName(),
+      username: user?.username || "",
+      phone: user?.phone || ""
     });
     setError("");
     setSuccessMessage("");
   };
 
-  // Mock logout function
-  const handleLogout = () => {
-    console.log("Logout clicked (static version)");
-    // In static version, you might want to redirect to home or show a message
-  };
-
-  // Mock sidebar component - you'll need to create a static version of this too
-  const StaticUserProfileSidebar = ({ 
-    userName, 
-    userRole, 
-    onLogout, 
-    activePage,
-    isMobile = false,
-    onNavigate 
-  }: any) => (
-    <div className={`bg-white rounded-2xl shadow-lg border border-amber-200 ${isMobile ? 'h-full' : ''}`}>
-      <div className="p-6 border-b border-amber-200">
-        <div className="flex items-center gap-3">
-          <div className="bg-amber-100 p-3 rounded-full">
-            <FiUser className="text-amber-600 text-xl" />
-          </div>
-          <div>
-            <h3 className="font-bold text-gray-800 font-[var(--font-yekan)]">{userName}</h3>
-            <p className="text-gray-600 text-sm font-[var(--font-yekan)]">{userRole === 'admin' ? 'مدیر' : 'کاربر'}</p>
-          </div>
-        </div>
+  // Show loading while checking authentication
+  if (isLoading || isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-amber-50 to-amber-100 flex items-center justify-center" dir="rtl">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center"
+        >
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-amber-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 font-[var(--font-yekan)]">در حال بارگذاری...</p>
+        </motion.div>
       </div>
-      
-      <nav className="p-4">
-        <ul className="space-y-2">
-          <li>
-            <Link 
-              href="/profile" 
-              className={`flex items-center gap-3 p-3 rounded-xl font-[var(--font-yekan)] transition-colors ${
-                activePage === 'profile' 
-                  ? 'bg-amber-100 text-amber-700' 
-                  : 'text-gray-700 hover:bg-amber-50'
-              }`}
-              onClick={onNavigate}
-            >
-              <FiUser size={18} />
-              اطلاعات شخصی
-            </Link>
-          </li>
-          <li>
-            <button 
-              onClick={onLogout}
-              className="w-full flex items-center gap-3 p-3 rounded-xl text-red-600 hover:bg-red-50 font-[var(--font-yekan)] transition-colors text-right"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
-              خروج از حساب
-            </button>
-          </li>
-        </ul>
-      </nav>
-    </div>
-  );
+    );
+  }
+
+  // If not authenticated, redirect (handled by useEffect in parent)
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 to-amber-100 pt-44 pb-12" dir="rtl">
@@ -174,10 +282,10 @@ export default function ProfilePage() {
               className="fixed top-0 right-0 h-full w-80 max-w-full bg-white z-50 lg:hidden shadow-2xl"
               dir="rtl"
             >
-              <StaticUserProfileSidebar
-                userName={staticUser.name}
-                userRole={staticUser.roles[0]}
-                onLogout={handleLogout}
+              <UserProfileSidebarD
+                userName={getUserDisplayName()}
+                userRole={user?.roles?.[0]}
+                onLogout={logout}
                 activePage="profile"
                 isMobile={true}
                 onNavigate={() => setIsMobileMenuOpen(false)}
@@ -198,7 +306,7 @@ export default function ProfilePage() {
                 اطلاعات شخصی
               </h1>
               <p className="text-gray-600 font-[var(--font-yekan)] text-center lg:text-right">
-                مدیریت و به‌روزرسانی اطلاعات حساب کاربری (نسخه استاتیک)
+                مدیریت و به‌روزرسانی اطلاعات حساب کاربری
               </p>
             </div>
           </div>
@@ -207,10 +315,10 @@ export default function ProfilePage() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Sidebar - Left Side (1/4 width) - Hidden on mobile */}
           <div className="hidden lg:block lg:col-span-1">
-            <StaticUserProfileSidebar
-              userName={staticUser.name}
-              userRole={staticUser.roles[0]}
-              onLogout={handleLogout}
+            <UserProfileSidebarD
+              userName={getUserDisplayName()}
+              userRole={user?.roles?.[0]}
+              onLogout={logout}
               activePage="profile"
             />
           </div>
@@ -255,7 +363,7 @@ export default function ProfilePage() {
                       اطلاعات حساب کاربری
                     </h2>
                     <p className="text-gray-600 font-[var(--font-yekan)] text-sm mt-1">
-                      اطلاعات شخصی و هویتی شما در این بخش قابل مدیریت است (نسخه استاتیک)
+                      اطلاعات شخصی و هویتی شما در این بخش قابل مدیریت است
                     </p>
                   </div>
                 </div>
@@ -323,7 +431,7 @@ export default function ProfilePage() {
                           تاریخ عضویت:
                         </span>
                         <span className="text-gray-800 font-[var(--font-yekan)] font-semibold">
-                          {new Date(staticUser.createdAt).toLocaleDateString('fa-IR')}
+                          {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('fa-IR') : '---'}
                         </span>
                       </div>
                     </div>
@@ -380,13 +488,9 @@ export default function ProfilePage() {
                   </div>
                   <div>
                     <h3 className="text-lg font-bold text-gray-800 mb-2 font-[var(--font-yekan)]">
-                      نکات مهم (نسخه استاتیک)
+                      نکات مهم
                     </h3>
                     <ul className="text-gray-700 space-y-2 font-[var(--font-yekan)] text-sm">
-                      <li className="flex items-start gap-2">
-                        <span className="text-amber-600 mt-1">•</span>
-                        <span>این نسخه نمایشی است و اطلاعات ذخیره نمی‌شوند</span>
-                      </li>
                       <li className="flex items-start gap-2">
                         <span className="text-amber-600 mt-1">•</span>
                         <span>می‌توانید مستقیماً اطلاعات خود را ویرایش کرده و سپس دکمه ذخیره را بزنید</span>
