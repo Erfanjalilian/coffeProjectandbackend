@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useAuth } from "@/contaxt/AuthContext";
@@ -6,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { FiUser, FiSave, FiCheck, FiSettings } from "react-icons/fi";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 // API Configuration
 const API_BASE_URL = process.env.NEXT_PUBLIC_AUTH_API_BASE_URL ?? "https://coffee-shop-backend-k3un.onrender.com/api/v1";
@@ -42,6 +44,8 @@ const resolveErrorMessage = (error: unknown) => {
   if (error && typeof error === "object" && "status" in error) {
     const apiError = error as ApiError;
     const fallback = apiError.message || defaultMessage;
+    const normalizedFallback = fallback.toLowerCase();
+
     switch (apiError.status) {
       case 400:
         return fallback || "درخواست نامعتبر است";
@@ -74,10 +78,10 @@ export default function ProfilePage() {
   const router = useRouter();
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
+  
   // Parse the full name from user data
   const getUserFullName = () => {
-    return user?.username || ""; // API فعلی name ندارد، از username استفاده می‌کنیم
+    return user?.name || "";
   };
 
   // State for form fields
@@ -110,7 +114,10 @@ export default function ProfilePage() {
 
   // Get user's display name for sidebar
   const getUserDisplayName = () => {
-    return user?.username || user?.phone || "کاربر"; // نام کاربری یا شماره موبایل
+    if (user?.name) {
+      return user.name;
+    }
+    return user?.phone || "کاربر";
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -119,13 +126,15 @@ export default function ProfilePage() {
       ...prev,
       [name]: value
     }));
+    // Clear errors when user starts typing
     if (error) setError("");
     if (successMessage) setSuccessMessage("");
   };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-
+    
+    // Don't save if no changes were made
     if (!isFormModified) {
       setSuccessMessage("هیچ تغییری اعمال نشده است");
       setTimeout(() => setSuccessMessage(""), 3000);
@@ -138,34 +147,75 @@ export default function ProfilePage() {
 
     try {
       const token = localStorage.getItem('token');
-      if (!token) throw createApiError("لطفاً دوباره وارد شوید", 401);
-
-      const response = await fetch(`${API_BASE_URL}/user/${user?._id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          username: formData.username,
-          name: formData.name, // اگر backend از name پشتیبانی می‌کند
-        }),
-      });
-
-      if (!response.ok) {
-        const errData = await response.json();
-        throw createApiError(errData.error || "خطا در بروزرسانی پروفایل", response.status);
+      if (!token) {
+        throw createApiError("لطفاً دوباره وارد شوید", 401);
       }
 
-      const data = await response.json();
+      console.log("📤 Sending profile update request to:", `${API_BASE_URL}/users/profile`);
+      console.log("📝 Update data:", formData);
 
-      // بروزرسانی Context کاربر
-      if (updateUser && data?.data) {
+      // Retry mechanism for Render sleep mode
+      let response: Response;
+      let retries = 0;
+      const maxRetries = 2;
+      
+      while (retries <= maxRetries) {
+        try {
+          response = await fetch(`${API_BASE_URL}/users/profile`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              name: formData.name,
+              username: formData.username
+            }),
+          });
+          break;
+        } catch (fetchError) {
+          retries++;
+          if (retries > maxRetries) {
+            throw fetchError;
+          }
+          await new Promise(resolve => setTimeout(resolve, 2000 * retries));
+          console.log(`🔄 Retry attempt ${retries}/${maxRetries}... (Render may be waking up)`);
+        }
+      }
+
+      console.log("📥 Response status:", response!.status);
+      console.log("📥 Response ok:", response!.ok);
+
+      // Check if response is ok before trying to parse JSON
+      let data: ApiResponse<any>;
+      try {
+        data = (await response!.json()) as ApiResponse<any>;
+      } catch {
+        throw createApiError(
+          `سرور پاسخ معتبری ارسال نکرد (کد وضعیت: ${response!.status})`,
+          response!.status
+        );
+      }
+
+      if (!response!.ok || !data.success) {
+        throw createApiError(
+          data.error || "خطا در به‌روزرسانی پروفایل",
+          data.status ?? response!.status
+        );
+      }
+
+      // Update user context with new data
+      if (updateUser && data.data) {
         updateUser(data.data);
       }
 
       setSuccessMessage("اطلاعات پروفایل با موفقیت به‌روزرسانی شد");
-      setTimeout(() => setSuccessMessage(""), 3000);
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setSuccessMessage("");
+      }, 3000);
+
     } catch (err) {
       console.error("Profile update error:", err);
       setError(resolveErrorMessage(err));
@@ -184,10 +234,15 @@ export default function ProfilePage() {
     setSuccessMessage("");
   };
 
+  // Show loading while checking authentication
   if (isLoading || isCheckingAuth) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-amber-50 to-amber-100 flex items-center justify-center" dir="rtl">
-        <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="text-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center"
+        >
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-amber-600 mx-auto mb-4"></div>
           <p className="text-gray-600 font-[var(--font-yekan)]">در حال بارگذاری...</p>
         </motion.div>
@@ -195,11 +250,15 @@ export default function ProfilePage() {
     );
   }
 
-  if (!isAuthenticated) return null;
+  // If not authenticated, redirect (handled by useEffect in parent)
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 to-amber-100 pt-44 pb-12" dir="rtl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Mobile Menu Button - Only visible on mobile */}
         <div className="lg:hidden fixed top-24 right-4 z-40">
           <motion.button
             whileHover={{ scale: 1.05 }}
@@ -212,6 +271,7 @@ export default function ProfilePage() {
           </motion.button>
         </div>
 
+        {/* Mobile Menu Overlay */}
         <AnimatePresence>
           {isMobileMenuOpen && (
             <motion.div
@@ -235,7 +295,11 @@ export default function ProfilePage() {
         </AnimatePresence>
 
         {/* Header Section */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-800 mb-2 font-[var(--font-yekan)] text-center lg:text-right">
@@ -249,6 +313,7 @@ export default function ProfilePage() {
         </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Sidebar - Left Side (1/4 width) - Hidden on mobile */}
           <div className="hidden lg:block lg:col-span-1">
             <UserProfileSidebarD
               userName={getUserDisplayName()}
@@ -258,27 +323,45 @@ export default function ProfilePage() {
             />
           </div>
 
+          {/* Main Content - Right Side (3/4 width) */}
           <div className="lg:col-span-3">
-            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              {/* Error Message */}
               {error && (
-                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4">
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4"
+                >
                   <p className="text-red-700 text-sm font-[var(--font-yekan)] text-center">{error}</p>
                 </motion.div>
               )}
 
+              {/* Success Message */}
               {successMessage && (
-                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6 bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mb-6 bg-emerald-50 border border-emerald-200 rounded-xl p-4"
+                >
                   <p className="text-emerald-700 text-sm font-[var(--font-yekan)] text-center">{successMessage}</p>
                 </motion.div>
               )}
 
+              {/* Profile Information Card */}
               <div className="bg-white rounded-2xl shadow-lg border border-amber-200 p-6 mb-6">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="bg-amber-100 p-3 rounded-full">
                     <FiUser className="text-amber-600 text-xl" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold text-gray-800 font-[var(--font-yekan)]">اطلاعات حساب کاربری</h2>
+                    <h2 className="text-xl font-bold text-gray-800 font-[var(--font-yekan)]">
+                      اطلاعات حساب کاربری
+                    </h2>
                     <p className="text-gray-600 font-[var(--font-yekan)] text-sm mt-1">
                       اطلاعات شخصی و هویتی شما در این بخش قابل مدیریت است
                     </p>
@@ -289,7 +372,9 @@ export default function ProfilePage() {
                   <div className="space-y-6">
                     {/* Full Name Field */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2 font-[var(--font-yekan)]">نام کامل</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2 font-[var(--font-yekan)]">
+                        نام کامل
+                      </label>
                       <input
                         type="text"
                         name="name"
@@ -299,13 +384,17 @@ export default function ProfilePage() {
                         placeholder="نام و نام خانوادگی خود را وارد کنید"
                       />
                       {!formData.name && (
-                        <p className="text-amber-600 text-xs mt-2 font-[var(--font-yekan)]">نام کامل شما هنوز ثبت نشده است</p>
+                        <p className="text-amber-600 text-xs mt-2 font-[var(--font-yekan)]">
+                          نام کامل شما هنوز ثبت نشده است
+                        </p>
                       )}
                     </div>
 
                     {/* Username Field */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2 font-[var(--font-yekan)]">نام کاربری</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2 font-[var(--font-yekan)]">
+                        نام کاربری
+                      </label>
                       <input
                         type="text"
                         name="username"
@@ -318,7 +407,9 @@ export default function ProfilePage() {
 
                     {/* Phone Number Field */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2 font-[var(--font-yekan)]">شماره موبایل</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2 font-[var(--font-yekan)]">
+                        شماره موبایل
+                      </label>
                       <input
                         type="tel"
                         name="phone"
@@ -328,21 +419,29 @@ export default function ProfilePage() {
                         className="w-full px-4 py-3 border border-amber-200 rounded-xl bg-gray-50 text-gray-500 font-[var(--font-yekan)]"
                         placeholder="09xxxxxxxxx"
                       />
-                      <p className="text-gray-500 text-xs mt-2 font-[var(--font-yekan)]">شماره موبایل قابل تغییر نیست</p>
+                      <p className="text-gray-500 text-xs mt-2 font-[var(--font-yekan)]">
+                        شماره موبایل قابل تغییر نیست
+                      </p>
                     </div>
 
                     {/* Membership Date */}
                     <div className="bg-amber-50 rounded-xl p-4 border border-amber-200">
                       <div className="flex items-center justify-between">
-                        <span className="text-gray-700 font-[var(--font-yekan)] text-sm">تاریخ عضویت:</span>
+                        <span className="text-gray-700 font-[var(--font-yekan)] text-sm">
+                          تاریخ عضویت:
+                        </span>
                         <span className="text-gray-800 font-[var(--font-yekan)] font-semibold">
                           {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('fa-IR') : '---'}
                         </span>
                       </div>
                     </div>
 
-                    {/* Action Buttons */}
-                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex gap-3 pt-4">
+                    {/* Action Buttons - Always visible but disabled when no changes */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="flex gap-3 pt-4"
+                    >
                       <button
                         type="submit"
                         disabled={isSaving || !isFormModified}
@@ -360,7 +459,7 @@ export default function ProfilePage() {
                           </>
                         )}
                       </button>
-
+                      
                       {isFormModified && (
                         <button
                           type="button"
@@ -377,13 +476,20 @@ export default function ProfilePage() {
               </div>
 
               {/* Information Box */}
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl p-6 border border-amber-200">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl p-6 border border-amber-200"
+              >
                 <div className="flex items-start gap-4">
                   <div className="bg-amber-100 p-2 rounded-full mt-1">
                     <FiCheck className="text-amber-600 text-lg" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-gray-800 mb-2 font-[var(--font-yekan)]">نکات مهم</h3>
+                    <h3 className="text-lg font-bold text-gray-800 mb-2 font-[var(--font-yekan)]">
+                      نکات مهم
+                    </h3>
                     <ul className="text-gray-700 space-y-2 font-[var(--font-yekan)] text-sm">
                       <li className="flex items-start gap-2">
                         <span className="text-amber-600 mt-1">•</span>
