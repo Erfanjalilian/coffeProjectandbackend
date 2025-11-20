@@ -126,12 +126,11 @@ export default function CartPage(): React.ReactElement {
   const formatCurrency = (n: number) =>
     n.toLocaleString("fa-IR") + " تومان";
 
-  const convertToCartProduct = (product: Product): Omit<CartProduct, "quantity"> => ({
-    id: product.id,
-    name: product.name,
-    price: product.price.toString(),
-    image: product.image
-  });
+const convertToCartProduct = (product: Product): Omit<CartProduct, "quantity"> => ({
+  id: product.id.toString(),   // تبدیل به رشته
+  name: product.name,
+  price: product.price          // حتما عدد باشد
+});
 
   return (
     <div dir="rtl" className="min-h-screen bg-gradient-to-b from-amber-50 to-amber-100 pt-54 font-[var(--font-yekan)]">
@@ -245,9 +244,7 @@ export default function CartPage(): React.ReactElement {
                       </div>
 
                       {/* RIGHT: image */}
-                      <div className="order-2 md:order-none relative w-full h-32 rounded-xl overflow-hidden self-center">
-                        <Image src={item.image} alt={item.name} fill className="object-cover" />
-                      </div>
+                     
                     </div>
                   );
                 })

@@ -127,7 +127,6 @@ export default function HeroSection() {
     title: `دسته‌بندی ${index + 1}`,
     description: 'توضیحات دسته‌بندی',
     items: fallbackItems,
-    image: '/Images/coffee-placeholder.jpg',
     ...scheme
   }));
 
