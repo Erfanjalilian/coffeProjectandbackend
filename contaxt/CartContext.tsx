@@ -3,9 +3,9 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
 export interface CartProduct {
-  id: number;
+  id: string; // Changed from number to string to match backend _id
   name: string;
-  price: string;
+  price: number; // Changed from string to number to match backend price
   image: string;
   quantity: number;
 }
@@ -13,8 +13,8 @@ export interface CartProduct {
 interface CartContextType {
   cart: CartProduct[];
   addToCart: (product: Omit<CartProduct, "quantity">, quantity?: number) => void;
-  removeFromCart: (id: number) => void;
-  updateQuantity: (id: number, quantity: number) => void;
+  removeFromCart: (id: string) => void; // Changed from number to string
+  updateQuantity: (id: string, quantity: number) => void; // Changed from number to string
   clearCart: () => void;
 }
 
@@ -33,7 +33,12 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const storedCart = localStorage.getItem("cart");
     if (storedCart) {
-      setCart(JSON.parse(storedCart));
+      try {
+        setCart(JSON.parse(storedCart));
+      } catch (error) {
+        console.error("Error parsing cart from localStorage:", error);
+        setCart([]);
+      }
     }
   }, []);
 
@@ -57,12 +62,16 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  const removeFromCart = (id: number) => {
+  const removeFromCart = (id: string) => {
     setCart(prev => prev.filter(p => p.id !== id));
   };
 
-  const updateQuantity = (id: number, quantity: number) => {
-    if (quantity < 1) return;
+  const updateQuantity = (id: string, quantity: number) => {
+    if (quantity < 1) {
+      // If quantity becomes 0, remove the item from cart
+      removeFromCart(id);
+      return;
+    }
     setCart(prev => prev.map(p => (p.id === id ? { ...p, quantity } : p)));
   };
 

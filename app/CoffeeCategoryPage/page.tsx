@@ -44,6 +44,40 @@ interface Filters {
   ratings: number[];
 }
 
+interface ApiResponse {
+  status: number;
+  success: boolean;
+  data: {
+    products: Array<{
+      _id: string;
+      name: string;
+      description: string;
+      positiveFeature: string;
+      category: string | null;
+      badge: string;
+      images: string[];
+      image: string;
+      status: string;
+      price: number;
+      originalPrice: number;
+      discount: number;
+      rating: number;
+      reviews: number;
+      isPrime: boolean;
+      isPremium: boolean;
+      features: string[];
+      priceAfterDiscount: number;
+      id: string;
+    }>;
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      pages: number;
+    };
+  };
+}
+
 export default function CoffeeCategoryPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState('popular');
@@ -57,19 +91,48 @@ export default function CoffeeCategoryPage() {
   const [customMaxPrice, setCustomMaxPrice] = useState<string>("");
   const [filters, setFilters] = useState<Filters>({ brands: [], priceRanges: [], ratings: [] });
   const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadData() {
       try {
         setLoading(true);
-        const response = await fetch('https://6810ff2827f2fdac24139dec.mockapi.io/Product');
-        const data = await response.json();
-        console.log(data)
+        setError(null);
         
-        // The new API returns a flat products array directly
-        setCoffeeProducts(data || []);
+        const response = await fetch('https://coffee-shop-backend-k3un.onrender.com/api/v1/product');
         
-        // For categories and filters, we'll use static data since your mock API doesn't include them
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result: ApiResponse = await response.json();
+        console.log('Backend API Response:', result);
+        
+        if (result.success && result.data.products) {
+          // Map backend products to component structure
+          const mappedProducts = result.data.products.map((product) => ({
+            id: product._id,
+            name: product.name,
+            price: product.priceAfterDiscount || product.price,
+            originalPrice: product.originalPrice,
+            image: `https://coffee-shop-backend-k3un.onrender.com/${product.image}`,
+            category: product.category || 'قهوه',
+            badge: product.badge,
+            rating: product.rating,
+            reviews: product.reviews,
+            isPrime: product.isPrime,
+            discount: product.discount,
+            type: 'regular',
+            positiveFeature: product.positiveFeature,
+            status: getStatusFromBadge(product.badge)
+          }));
+          
+          setCoffeeProducts(mappedProducts);
+        } else {
+          throw new Error('Failed to fetch products from backend');
+        }
+        
+        // Static categories and filters (unchanged)
         setCategories([
           { id: 1, name: "همه دسته‌بندی‌ها", count: 45, active: true },
           { id: 2, name: "قهوه اسپرسو", count: 12, active: false },
@@ -93,6 +156,8 @@ export default function CoffeeCategoryPage() {
         });
       } catch (error) {
         console.error('Error loading data:', error);
+        setError('خطا در دریافت محصولات. لطفا دوباره تلاش کنید.');
+        setCoffeeProducts([]);
       } finally {
         setLoading(false);
       }
@@ -100,6 +165,20 @@ export default function CoffeeCategoryPage() {
     
     loadData();
   }, []);
+
+  // Helper function to convert badge to status
+  const getStatusFromBadge = (badge: string): string => {
+    switch (badge) {
+      case "پرفروش":
+        return "پر فروش";
+      case "جدید":
+        return "جدید";
+      case "ویژه":
+        return "فروش ویژه";
+      default:
+        return "جدید";
+    }
+  };
 
   const handlePriceRangeSelect = (range: PriceRange) => {
     setSelectedPriceRange(range.value);
@@ -175,6 +254,22 @@ export default function CoffeeCategoryPage() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto"></div>
           <p className="mt-4 text-gray-600 font-[var(--font-yekan)]">در حال بارگذاری محصولات...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white pt-24 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-amber-600 text-lg font-[var(--font-yekan)] mb-4">{error}</div>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-amber-500 hover:bg-amber-600 text-white px-6 py-2 rounded-xl font-[var(--font-yekan)]"
+          >
+            تلاش مجدد
+          </button>
         </div>
       </div>
     );
@@ -466,12 +561,7 @@ export default function CoffeeCategoryPage() {
                   >
                     {/* Product Image */}
                     <div className={`relative ${viewMode === 'list' ? 'w-48 flex-shrink-0' : 'h-48'}`}>
-                      <Image
-                        src={product.image}
-                        alt={product.name}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
+                     
                       
                       {/* Discount Badge */}
                       {product.discount > 0 && (
@@ -480,7 +570,7 @@ export default function CoffeeCategoryPage() {
                         </div>
                       )}
                       
-                      {/* Status Badge - NEW */}
+                      {/* Status Badge */}
                       <div className="absolute top-3 right-3">
                         <span className={`text-xs px-2 py-1 rounded-full font-medium font-[var(--font-yekan)] shadow-md ${getStatusBadgeStyle(product.status)}`}>
                           {product.status}
@@ -523,14 +613,14 @@ export default function CoffeeCategoryPage() {
                         {/* Price Section */}
                         <div className="flex flex-col gap-1">
                           {/* Original Price (if discounted) */}
-                          {product.originalPrice && (
+                          {product.originalPrice && product.originalPrice > product.price && (
                             <span className="text-sm text-gray-500 line-through font-[var(--font-yekan)]">
                               {formatProductPrice(product.originalPrice)}
                             </span>
                           )}
                           {/* Current Price */}
                           <span className={`font-bold text-amber-700 font-[var(--font-yekan)] ${
-                            product.originalPrice ? 'text-lg' : 'text-xl'
+                            product.originalPrice && product.originalPrice > product.price ? 'text-lg' : 'text-xl'
                           }`}>
                             {formatProductPrice(product.price)}
                           </span>
@@ -570,29 +660,16 @@ export default function CoffeeCategoryPage() {
               ))}
             </motion.div>
 
-            {/* Pagination */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.5 }}
-              className="flex justify-center items-center gap-2 mt-12"
-            >
-              {[1, 2, 3, 4, 5].map((page) => (
-                <button
-                  key={page}
-                  className={`w-10 h-10 rounded-xl transition-all font-[var(--font-yekan)] ${
-                    page === 1
-                      ? 'bg-amber-600 text-white shadow-lg'
-                      : 'bg-white text-gray-700 border border-amber-200 hover:bg-amber-50'
-                  }`}
-                >
-                  {page}
-                </button>
-              ))}
-              <button className="w-10 h-10 rounded-xl bg-white text-gray-700 border border-amber-200 hover:bg-amber-50 transition-all font-[var(--font-yekan)]">
-                ...
-              </button>
-            </motion.div>
+            {/* No Products Message */}
+            {coffeeProducts.length === 0 && !loading && (
+              <div className="text-center py-12">
+                <p className="text-gray-600 font-[var(--font-yekan)] text-lg">
+                  محصولی برای نمایش وجود ندارد.
+                </p>
+              </div>
+            )}
+
+            {/* Pagination Section REMOVED */}
           </div>
         </div>
       </div>

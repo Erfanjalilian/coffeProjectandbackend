@@ -4,16 +4,32 @@ import Image from "next/image";
 import { useRef, useState, useEffect } from "react";
 
 interface Article {
-  id: number;
+  _id: string;
   title: string;
   excerpt: string;
-  date: string;
-  image: string;
-  category: string;
+  cover: string;
+  href: string;
   badge: string;
   readTime: string;
   author: string;
+  date: string;
+  publish: number;
+  category?: string;
   isFeatured?: boolean;
+}
+
+interface ApiResponse {
+  status: number;
+  success: boolean;
+  data: {
+    articles: Article[];
+    pagination: {
+      page: number;
+      limit: number;
+      totalPage: number;
+      totalArticles: number;
+    };
+  };
 }
 
 export default function LatestNewsAndDiscoveries() {
@@ -22,97 +38,47 @@ export default function LatestNewsAndDiscoveries() {
   const [showRightArrow, setShowRightArrow] = useState<boolean>(true);
   const [featuredArticles, setFeaturedArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Static data for articles and news
+  // Fetch articles from API
   useEffect(() => {
-    // Simulate loading delay
-    const timer = setTimeout(() => {
-      const articlesData: Article[] = [
-        {
-          id: 1,
-          title: "راهنمای کامل انتخاب قهوه مناسب",
-          excerpt: "در این مقاله به بررسی انواع دانه های قهوه و روش های انتخاب بهترین نوع برای سلیقه شما می پردازیم.",
-          date: "۱۴۰۲/۱۰/۱۵",
-          image: "/Images/coffe1.webp",
-          category: "آموزشی",
-          badge: "جدید",
-          readTime: "۵ دقیقه",
-          author: "محمد رضایی",
-          isFeatured: true
-        },
-        {
-          id: 2,
-          title: "تازه ترین trends در دنیای قهوه",
-          excerpt: "آشنایی با جدیدترین ترندها و روش های دم کردن قهوه در سال ۲۰۲۴",
-          date: "۱۴۰۲/۱۰/۱۲",
-          image: "/Images/coffe2.avif",
-          category: "اخبار",
-          badge: "پربازدید",
-          readTime: "۳ دقیقه",
-          author: "سارا محمدی"
-        },
-        {
-          id: 3,
-          title: "خواص شگفت انگیز قهوه برای سلامت",
-          excerpt: "بررسی علمی فواید مصرف متعادل قهوه بر روی سلامت جسم و روان",
-          date: "۱۴۰۲/۱۰/۱۰",
-          image: "/Images/coffe3.jpg",
-          category: "سلامتی",
-          badge: "محبوب",
-          readTime: "۷ دقیقه",
-          author: "دکتر علی نوری"
-        },
-        {
-          id: 4,
-          title: "تاریخچه قهوه در ایران",
-          excerpt: "سفر در زمان و بررسی تاریخچه ورود و محبوبیت قهوه در فرهنگ ایرانی",
-          date: "۱۴۰۲/۱۰/۰۸",
-          image: "/Images/coffe4.jpg",
-          category: "تاریخچه",
-          badge: "ویژه",
-          readTime: "۸ دقیقه",
-          author: "رضا کریمی"
-        },
-        {
-          id: 5,
-          title: "طرز تهیه ۵ نوع قهوه محبوب",
-          excerpt: "آموزش مرحله به مرحله تهیه محبوب ترین نوشیدنی های قهوه در خانه",
-          date: "۱۴۰۲/۱۰/۰۵",
-          image: "/Images/coffee5.png",
-          category: "آموزشی",
-          badge: "اقتصادی",
-          readTime: "۶ دقیقه",
-          author: "نازنین احمدی"
-        },
-        {
-          id: 6,
-          title: "ابزارهای ضروری برای بارistas خانگی",
-          excerpt: "معرفی ابزارهای ضروری و حرفه ای برای علاقه مندان به قهوه در خانه",
-          date: "۱۴۰۲/۱۰/۰۳",
-          image: "/Images/coffee6.jpg",
-          category: "تجهیزات",
-          badge: "کاربردی",
-          readTime: "۴ دقیقه",
-          author: "امیر حسینی"
-        },
-        {
-          id: 7,
-          title: "قهوه و محیط زیست",
-          excerpt: "بررسی تاثیر تولید و مصرف قهوه بر محیط زیست و راهکارهای پایدار",
-          date: "۱۴۰۲/۱۰/۰۱",
-          image: "/Images/coffee7.webp",
-          category: "محیط زیست",
-          badge: "مهم",
-          readTime: "۹ دقیقه",
-          author: "پرستو جعفری"
+    const fetchArticles = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const response = await fetch('https://coffee-shop-backend-k3un.onrender.com/api/v1/article');
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
-      ];
-      
-      setFeaturedArticles(articlesData);
-      setLoading(false);
-    }, 1000);
+        
+        const result: ApiResponse = await response.json();
+        
+        if (result.success && result.data.articles) {
+          // Filter only published articles and map to include isFeatured for the first article
+          const publishedArticles = result.data.articles
+            .filter(article => article.publish === 1)
+            .map((article, index) => ({
+              ...article,
+              isFeatured: index === 0 // Make first article featured
+            }));
+          
+          setFeaturedArticles(publishedArticles);
+        } else {
+          throw new Error('Failed to fetch articles');
+        }
+      } catch (err) {
+        console.error('Error fetching articles:', err);
+        setError('خطا در دریافت مقالات. لطفا دوباره تلاش کنید.');
+        // Fallback to empty array to prevent crashes
+        setFeaturedArticles([]);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    return () => clearTimeout(timer);
+    fetchArticles();
   }, []);
 
   // Fix for RTL scroll detection
@@ -150,7 +116,22 @@ export default function LatestNewsAndDiscoveries() {
     }
   };
 
-  // Loading skeleton
+  // Format date to Persian format (you can enhance this function as needed)
+  const formatDate = (dateString: string): string => {
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('fa-IR');
+    } catch {
+      return '۱۴۰۲/۱۰/۱۵'; // Fallback date
+    }
+  };
+
+  // Handle article click
+  const handleArticleClick = (article: Article) => {
+    window.location.href = `/articles/${article.href}`;
+  };
+
+  // Loading skeleton (unchanged from your original)
   if (loading) {
     return (
       <section className="w-full bg-gradient-to-b from-amber-50 to-white py-20 px-4 md:px-10 lg:px-20" dir="rtl">
@@ -181,6 +162,27 @@ export default function LatestNewsAndDiscoveries() {
     );
   }
 
+  // Error state
+  if (error) {
+    return (
+      <section className="w-full bg-gradient-to-b from-amber-50 to-white py-20 px-4 md:px-10 lg:px-20" dir="rtl">
+        <div className="max-w-7xl mx-auto">
+          <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-3xl p-8 mb-16 border-2 border-amber-200/80 text-center">
+            <div className="text-amber-600 text-lg font-[var(--font-yekan)] mb-4">
+              {error}
+            </div>
+            <button
+              onClick={() => window.location.reload()}
+              className="bg-white text-amber-700 border-2 border-amber-300 px-6 py-2 rounded-2xl font-semibold hover:bg-amber-50 transition-colors font-[var(--font-yekan)]"
+            >
+              تلاش مجدد
+            </button>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="w-full bg-gradient-to-b from-amber-50 to-white py-20 px-4 md:px-10 lg:px-20" dir="rtl">
       <div className="max-w-7xl mx-auto">
@@ -188,7 +190,7 @@ export default function LatestNewsAndDiscoveries() {
         <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-3xl p-8 mb-16 border-2 border-amber-200/80 relative">
           <div className="mb-8">
             <h3 className="text-2xl md:text-3xl font-bold text-amber-800 mb-2 font-[var(--font-yekan)]">
-             بروز ترین اخبار و یافته ها
+              بروز ترین اخبار و یافته ها
             </h3>
             <p className="text-gray-600 font-[var(--font-yekan)]">
               تازه ترین مقالات و اخبار دنیای قهوه را اینجا بخوانید
@@ -230,18 +232,13 @@ export default function LatestNewsAndDiscoveries() {
           >
             {featuredArticles.map((article, index) => (
               <div
-                key={article.id}
+                key={article._id}
                 className="flex-shrink-0 w-64 bg-white rounded-2xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 group border-2 border-amber-100/80 hover:border-amber-200 cursor-pointer"
                 dir="rtl"
-                onClick={() => window.location.href = `/articles/${article.id}`}
+                onClick={() => handleArticleClick(article)}
               >
                 <div className="relative h-32 mb-4 rounded-xl overflow-hidden">
-                  <Image
-                    src={article.image}
-                    alt={article.title}
-                    fill
-                    className="object-cover group-hover:scale-110 transition-transform duration-300"
-                  />
+                 
                   
                   {/* Article Badge */}
                   <div className="absolute top-2 left-2">
@@ -260,10 +257,10 @@ export default function LatestNewsAndDiscoveries() {
                   )}
                 </div>
 
-                {/* Category */}
+                {/* Category - Using badge as fallback since category might be null */}
                 <div className="mb-2">
                   <span className="text-xs text-amber-600 bg-amber-100 px-2 py-1 rounded-full font-[var(--font-yekan)]">
-                    {article.category}
+                    {article.category || article.badge}
                   </span>
                 </div>
 
@@ -285,7 +282,7 @@ export default function LatestNewsAndDiscoveries() {
                     </svg>
                     <span className="font-[var(--font-yekan)]">{article.readTime}</span>
                   </div>
-                  <span className="font-[var(--font-yekan)]">{article.date}</span>
+                  <span className="font-[var(--font-yekan)]">{formatDate(article.date)}</span>
                 </div>
 
                 {/* Author */}
@@ -296,15 +293,26 @@ export default function LatestNewsAndDiscoveries() {
             ))}
           </div>
 
-          {/* View All Articles Button */}
-          <div className="text-center mt-6">
-            <button
-              className="bg-white text-amber-700 border-2 border-amber-300 px-8 py-3 rounded-2xl font-semibold hover:bg-amber-50 transition-colors font-[var(--font-yekan)]"
-              onClick={() => window.location.href = '/articles'}
-            >
-              مشاهده همه مطالب
-            </button>
-          </div>
+          {/* View All Articles Button - Show only if there are articles */}
+          {featuredArticles.length > 0 && (
+            <div className="text-center mt-6">
+              <button
+                className="bg-white text-amber-700 border-2 border-amber-300 px-8 py-3 rounded-2xl font-semibold hover:bg-amber-50 transition-colors font-[var(--font-yekan)]"
+                onClick={() => window.location.href = '/articles'}
+              >
+                مشاهده همه مطالب
+              </button>
+            </div>
+          )}
+
+          {/* No articles message */}
+          {featuredArticles.length === 0 && !loading && (
+            <div className="text-center py-8">
+              <p className="text-gray-600 font-[var(--font-yekan)]">
+                مقاله ای برای نمایش وجود ندارد.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Main Call to Action */}
