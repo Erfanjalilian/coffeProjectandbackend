@@ -173,22 +173,7 @@ export default function ProductDetailPage() {
         </motion.button>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-          {/* Product Image */}
-          <motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} className="space-y-4">
-            <div className="bg-white rounded-2xl shadow-lg border border-amber-200 p-4">
-              <div className="relative h-96 w-full rounded-xl overflow-hidden">
-               
-                {product.badge && (
-                  <div className="absolute top-4 left-4">
-                    <span className="bg-gradient-to-r from-amber-600 to-amber-700 text-white px-3 py-1 rounded-full text-sm font-bold">{product.badge}</span>
-                  </div>
-                )}
-                {product.discount > 0 && (
-                  <div className="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold">{product.discount}% تخفیف</div>
-                )}
-              </div>
-            </div>
-          </motion.div>
+        
 
           {/* Product Info */}
           <motion.div initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">

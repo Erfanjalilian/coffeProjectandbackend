@@ -612,23 +612,7 @@ export default function CoffeeCategoryPage() {
                     }`}
                   >
                     {/* Product Image */}
-                    <div className={`relative ${viewMode === 'list' ? 'w-48 flex-shrink-0' : 'h-48'}`}>
-                     
-                      
-                      {/* Discount Badge */}
-                      {product.discount > 0 && (
-                        <div className="absolute top-3 left-3 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold">
-                          {product.discount}% تخفیف
-                        </div>
-                      )}
-                      
-                      {/* Status Badge */}
-                      <div className="absolute top-3 right-3">
-                        <span className={`text-xs px-2 py-1 rounded-full font-medium font-[var(--font-yekan)] shadow-md ${getStatusBadgeStyle(product.status)}`}>
-                          {product.status}
-                        </span>
-                      </div>
-                    </div>
+                    
 
                     {/* Product Info */}
                     <div className={`p-4 flex-1 ${viewMode === 'list' ? 'flex flex-col justify-between' : ''}`}>
