@@ -117,7 +117,6 @@ export default function HeroSection() {
       title: category.name,
       description: category.description,
       items: fallbackItems, // Using fallback items since API doesn't provide sub-items
-      image: `https://coffee-shop-backend-k3un.onrender.com/${category.images}`,
       ...colorScheme
     };
   });

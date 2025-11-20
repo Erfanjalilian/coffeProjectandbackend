@@ -6,7 +6,7 @@ export interface CartProduct {
   id: string; // Changed from number to string to match backend _id
   name: string;
   price: number; // Changed from string to number to match backend price
-  image: string;
+  
   quantity: number;
 }
 

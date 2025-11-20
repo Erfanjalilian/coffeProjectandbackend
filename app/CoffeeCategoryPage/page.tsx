@@ -179,7 +179,6 @@ export default function CoffeeCategoryPage() {
             name: product.name,
             price: product.priceAfterDiscount || product.price,
             originalPrice: product.originalPrice,
-            image: `https://coffee-shop-backend-k3un.onrender.com/${product.image}`,
             category: product.category || 'قهوه',
             badge: product.badge,
             rating: product.rating,
@@ -191,7 +190,7 @@ export default function CoffeeCategoryPage() {
             status: getStatusFromBadge(product.badge)
           }));
           
-          setCoffeeProducts(mappedProducts);
+          
         }
         
         // Static filters (unchanged)

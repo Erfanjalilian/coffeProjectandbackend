@@ -97,7 +97,7 @@ export default function ProductDetailPage() {
             .slice(0, 4)
             .map(p => ({
               ...p,
-              image: `https://coffee-shop-backend-k3un.onrender.com/${p.image}`
+              
             }));
           
           setRelatedProducts(related);
@@ -146,7 +146,6 @@ export default function ProductDetailPage() {
   );
 
   // Build proper image URL
-  const productImage = `https://coffee-shop-backend-k3un.onrender.com/${product.image}`;
   const displayPrice = product.priceAfterDiscount || product.price;
   const displayOriginalPrice = product.originalPrice && product.originalPrice > displayPrice ? product.originalPrice : undefined;
 
@@ -244,7 +243,6 @@ export default function ProductDetailPage() {
                         id: product._id,
                         name: product.name,
                         price: displayPrice,
-                        image: productImage,
                       }, quantity);
                     }
                   }}
