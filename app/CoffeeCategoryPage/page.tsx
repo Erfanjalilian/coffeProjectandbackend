@@ -24,7 +24,7 @@ interface Product {
 }
 
 interface Category {
-  id: number;
+  id: string;
   name: string;
   count: number;
   active: boolean;
@@ -44,7 +44,30 @@ interface Filters {
   ratings: number[];
 }
 
-interface ApiResponse {
+interface CategoriesApiResponse {
+  status: number;
+  success: boolean;
+  data: {
+    categories: Array<{
+      _id: string;
+      name: string;
+      description: string;
+      images: string;
+      color: string;
+      isActive: boolean;
+      showOnHomepage: boolean;
+      productsCount: number;
+    }>;
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      pages: number;
+    };
+  };
+}
+
+interface ProductsApiResponse {
   status: number;
   success: boolean;
   data: {
@@ -67,7 +90,6 @@ interface ApiResponse {
       isPremium: boolean;
       features: string[];
       priceAfterDiscount: number;
-      id: string;
     }>;
     pagination: {
       page: number;
@@ -91,25 +113,67 @@ export default function CoffeeCategoryPage() {
   const [customMaxPrice, setCustomMaxPrice] = useState<string>("");
   const [filters, setFilters] = useState<Filters>({ brands: [], priceRanges: [], ratings: [] });
   const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const [categoriesLoading, setCategoriesLoading] = useState<boolean>(true);
 
+  // Fetch categories from API
   useEffect(() => {
-    async function loadData() {
+    async function loadCategories() {
+      try {
+        setCategoriesLoading(true);
+        const response = await fetch('https://coffee-shop-backend-k3un.onrender.com/api/v1/category');
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result: CategoriesApiResponse = await response.json();
+        
+        if (result.success && result.data.categories) {
+          // Map backend categories to our component structure
+          const mappedCategories = result.data.categories
+            .filter(cat => cat.isActive) // Only active categories
+            .map((category, index) => ({
+              id: category._id,
+              name: category.name,
+              count: category.productsCount || 0, // Use actual count from API or 0
+              active: index === 0 // Make first category active by default
+            }));
+          
+          setCategories(mappedCategories);
+        } else {
+          throw new Error('Failed to fetch categories from backend');
+        }
+      } catch (error) {
+        console.error('Error loading categories:', error);
+        // Fallback to static categories if API fails
+        setCategories([
+          { id: "1", name: "همه دسته‌بندی‌ها", count: 0, active: true },
+          { id: "2", name: "قهوه اسپرسو", count: 0, active: false },
+          { id: "3", name: "قهوه ترک", count: 0, active: false },
+          { id: "4", name: "دانه قهوه", count: 0, active: false }
+        ]);
+      } finally {
+        setCategoriesLoading(false);
+      }
+    }
+    
+    loadCategories();
+  }, []);
+
+  // Fetch products from API
+  useEffect(() => {
+    async function loadProducts() {
       try {
         setLoading(true);
-        setError(null);
-        
         const response = await fetch('https://coffee-shop-backend-k3un.onrender.com/api/v1/product');
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         
-        const result: ApiResponse = await response.json();
-        console.log('Backend API Response:', result);
+        const result: ProductsApiResponse = await response.json();
         
         if (result.success && result.data.products) {
-          // Map backend products to component structure
           const mappedProducts = result.data.products.map((product) => ({
             id: product._id,
             name: product.name,
@@ -128,21 +192,9 @@ export default function CoffeeCategoryPage() {
           }));
           
           setCoffeeProducts(mappedProducts);
-        } else {
-          throw new Error('Failed to fetch products from backend');
         }
         
-        // Static categories and filters (unchanged)
-        setCategories([
-          { id: 1, name: "همه دسته‌بندی‌ها", count: 45, active: true },
-          { id: 2, name: "قهوه اسپرسو", count: 12, active: false },
-          { id: 3, name: "قهوه ترک", count: 8, active: false },
-          { id: 4, name: "دانه قهوه", count: 15, active: false },
-          { id: 5, name: "قهوه فوری", count: 5, active: false },
-          { id: 6, name: "تجهیزات دم‌آوری", count: 25, active: false },
-          { id: 7, name: "اکسسوری قهوه", count: 18, active: false }
-        ]);
-        
+        // Static filters (unchanged)
         setFilters({
           brands: ["دیویدوف", "لاوازا", "ایلی", "استارباکس", "نسپرسو", "کمکس"],
           priceRanges: [
@@ -155,15 +207,14 @@ export default function CoffeeCategoryPage() {
           ratings: [4, 3, 2, 1]
         });
       } catch (error) {
-        console.error('Error loading data:', error);
-        setError('خطا در دریافت محصولات. لطفا دوباره تلاش کنید.');
+        console.error('Error loading products:', error);
         setCoffeeProducts([]);
       } finally {
         setLoading(false);
       }
     }
     
-    loadData();
+    loadProducts();
   }, []);
 
   // Helper function to convert badge to status
@@ -198,12 +249,10 @@ export default function CoffeeCategoryPage() {
     return new Intl.NumberFormat('fa-IR').format(price) + " تومان";
   };
 
-  // Helper function to add "تومان" to product prices
   const formatProductPrice = (price: number) => {
     return new Intl.NumberFormat('fa-IR').format(price) + " تومان";
   };
 
-  // Helper function to get status badge styling
   const getStatusBadgeStyle = (status: string) => {
     switch (status) {
       case "فروش ویژه":
@@ -217,7 +266,14 @@ export default function CoffeeCategoryPage() {
     }
   };
 
-  // Rest of the component remains EXACTLY the same as your original design
+  // Toggle category active state
+  const toggleCategoryActive = (categoryId: string) => {
+    setCategories(prev => prev.map(cat => ({
+      ...cat,
+      active: cat.id === categoryId
+    })));
+  };
+
   const FilterSection = ({ title, children, filterKey }: { title: string; children: React.ReactNode; filterKey: string }) => (
     <div className="border-b border-amber-200 last:border-b-0">
       <button
@@ -259,22 +315,6 @@ export default function CoffeeCategoryPage() {
     );
   }
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white pt-24 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-amber-600 text-lg font-[var(--font-yekan)] mb-4">{error}</div>
-          <button
-            onClick={() => window.location.reload()}
-            className="bg-amber-500 hover:bg-amber-600 text-white px-6 py-2 rounded-xl font-[var(--font-yekan)]"
-          >
-            تلاش مجدد
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white pt-34">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -303,38 +343,51 @@ export default function CoffeeCategoryPage() {
                 <h3 className="font-bold text-gray-800 font-[var(--font-yekan)]">فیلترها</h3>
               </div>
 
-              {/* Categories */}
+              {/* Categories - NOW DYNAMIC */}
               <div className="mb-6">
                 <h4 className="font-semibold text-gray-700 mb-3 font-[var(--font-yekan)]">دسته‌بندی‌ها</h4>
                 <div className="space-y-2">
-                  {categories.map((category, index) => (
-                    <motion.label
-                      key={category.id}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="flex items-center justify-between cursor-pointer group"
-                    >
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={category.active}
-                          onChange={() => {}}
-                          className="rounded border-amber-300 text-amber-600 focus:ring-amber-500"
-                        />
-                        <span className="text-sm text-gray-600 group-hover:text-amber-700 transition-colors font-[var(--font-yekan)]">
-                          {category.name}
-                        </span>
+                  {categoriesLoading ? (
+                    // Loading skeleton for categories
+                    [...Array(4)].map((_, index) => (
+                      <div key={index} className="flex items-center justify-between animate-pulse">
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 bg-amber-200 rounded"></div>
+                          <div className="h-4 bg-amber-200 rounded w-24"></div>
+                        </div>
+                        <div className="w-8 h-6 bg-amber-200 rounded-full"></div>
                       </div>
-                      <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full">
-                        {category.count}
-                      </span>
-                    </motion.label>
-                  ))}
+                    ))
+                  ) : (
+                    categories.map((category, index) => (
+                      <motion.label
+                        key={category.id}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                        className="flex items-center justify-between cursor-pointer group"
+                      >
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={category.active}
+                            onChange={() => toggleCategoryActive(category.id)}
+                            className="rounded border-amber-300 text-amber-600 focus:ring-amber-500"
+                          />
+                          <span className="text-sm text-gray-600 group-hover:text-amber-700 transition-colors font-[var(--font-yekan)]">
+                            {category.name}
+                          </span>
+                        </div>
+                        <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full">
+                          {category.count}
+                        </span>
+                      </motion.label>
+                    ))
+                  )}
                 </div>
               </div>
 
-              {/* Modern Price Range Filter */}
+              {/* Modern Price Range Filter - REMAINS STATIC */}
               <div className="mb-6">
                 <h4 className="font-semibold text-gray-700 mb-4 font-[var(--font-yekan)]">محدوده قیمت</h4>
                 
@@ -406,7 +459,7 @@ export default function CoffeeCategoryPage() {
                 </div>
               </div>
 
-              {/* Brands */}
+              {/* Brands - REMAINS STATIC */}
               <div className="mb-6">
                 <h4 className="font-semibold text-gray-700 mb-3 font-[var(--font-yekan)]">برندها</h4>
                 <div className="space-y-2">
@@ -427,7 +480,7 @@ export default function CoffeeCategoryPage() {
                 </div>
               </div>
 
-              {/* Ratings */}
+              {/* Ratings - REMAINS STATIC */}
               <div>
                 <h4 className="font-semibold text-gray-700 mb-3 font-[var(--font-yekan)]">امتیاز</h4>
                 <div className="space-y-2">
@@ -668,13 +721,11 @@ export default function CoffeeCategoryPage() {
                 </p>
               </div>
             )}
-
-            {/* Pagination Section REMOVED */}
           </div>
         </div>
       </div>
 
-      {/* Mobile Filters Modal */}
+      {/* Mobile Filters Modal - Updated with dynamic categories */}
       <AnimatePresence>
         {showMobileFilters && (
           <>
@@ -707,27 +758,39 @@ export default function CoffeeCategoryPage() {
               {/* Filters Content */}
               <div className="flex-1 overflow-y-auto p-4">
                 <div className="bg-white rounded-2xl border border-amber-200">
-                  {/* Categories */}
+                  {/* Categories - NOW DYNAMIC in mobile too */}
                   <FilterSection title="دسته‌بندی‌ها" filterKey="categories">
                     <div className="space-y-2">
-                      {categories.map((category) => (
-                        <label key={category.id} className="flex items-center justify-between cursor-pointer group">
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="checkbox"
-                              checked={category.active}
-                              onChange={() => {}}
-                              className="rounded border-amber-300 text-amber-600 focus:ring-amber-500"
-                            />
-                            <span className="text-sm text-gray-600 group-hover:text-amber-700 transition-colors font-[var(--font-yekan)]">
-                              {category.name}
-                            </span>
+                      {categoriesLoading ? (
+                        [...Array(4)].map((_, index) => (
+                          <div key={index} className="flex items-center justify-between animate-pulse">
+                            <div className="flex items-center gap-2">
+                              <div className="w-4 h-4 bg-amber-200 rounded"></div>
+                              <div className="h-4 bg-amber-200 rounded w-24"></div>
+                            </div>
+                            <div className="w-8 h-6 bg-amber-200 rounded-full"></div>
                           </div>
-                          <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full">
-                            {category.count}
-                          </span>
-                        </label>
-                      ))}
+                        ))
+                      ) : (
+                        categories.map((category) => (
+                          <label key={category.id} className="flex items-center justify-between cursor-pointer group">
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                checked={category.active}
+                                onChange={() => toggleCategoryActive(category.id)}
+                                className="rounded border-amber-300 text-amber-600 focus:ring-amber-500"
+                              />
+                              <span className="text-sm text-gray-600 group-hover:text-amber-700 transition-colors font-[var(--font-yekan)]">
+                                {category.name}
+                              </span>
+                            </div>
+                            <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full">
+                              {category.count}
+                            </span>
+                          </label>
+                        ))
+                      )}
                     </div>
                   </FilterSection>
 

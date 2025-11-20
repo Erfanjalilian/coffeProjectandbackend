@@ -1,95 +1,196 @@
 "use client";
 
 import Image from "next/image";
+import { useState, useEffect } from "react";
+
+interface Category {
+  _id: string;
+  name: string;
+  description: string;
+  images: string;
+  color: string;
+  isActive: boolean;
+  showOnHomepage: boolean;
+  productsCount: number;
+}
+
+interface ApiResponse {
+  status: number;
+  success: boolean;
+  data: {
+    categories: Category[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      pages: number;
+    };
+  };
+}
+
+// Predefined color schemes for categories (fallback if API doesn't provide enough categories)
+const predefinedColorSchemes = [
+  {
+    gradient: "from-amber-500 to-orange-500",
+    bgGradient: "from-amber-50 to-orange-50",
+    accent: "bg-gradient-to-r from-amber-500 to-orange-500"
+  },
+  {
+    gradient: "from-emerald-500 to-teal-600",
+    bgGradient: "from-emerald-50 to-teal-50",
+    accent: "bg-gradient-to-r from-emerald-500 to-teal-600"
+  },
+  {
+    gradient: "from-blue-500 to-indigo-600",
+    bgGradient: "from-blue-50 to-indigo-50",
+    accent: "bg-gradient-to-r from-blue-500 to-indigo-600"
+  },
+  {
+    gradient: "from-purple-500 to-pink-500",
+    bgGradient: "from-purple-50 to-pink-50",
+    accent: "bg-gradient-to-r from-purple-500 to-pink-500"
+  },
+  {
+    gradient: "from-rose-500 to-pink-600",
+    bgGradient: "from-rose-50 to-pink-50",
+    accent: "bg-gradient-to-r from-rose-500 to-pink-600"
+  },
+  {
+    gradient: "from-cyan-500 to-blue-600",
+    bgGradient: "from-cyan-50 to-blue-50",
+    accent: "bg-gradient-to-r from-cyan-500 to-blue-600"
+  },
+];
+
+// Fallback items for each category (since API doesn't provide sub-items)
+const fallbackItems = [
+  { name: "محصول ویژه", image: "/Images/premium_photo-1674407009848-4da7a12b6b25.avif" },
+  { name: "پرفروش‌ها", image: "/Images/premium_photo-1674327105076-36c4419864cf.avif" },
+  { name: "جدیدترین‌ها", image: "/Images/premium_photo-1673545518947-ddf3240090b1.avif" },
+  { name: "تخفیف دار", image: "/Images/premium_photo-1671559021551-95106555ee19.avif" }
+];
 
 export default function HeroSection() {
-  const categories = [
-    {
-      id: 1,
-      title: "دانه قهوه اسپرسو",
-      items: [
-        { name: "اسپشیال", image: "/Images/premium_photo-1674407009848-4da7a12b6b25.avif" },
-        { name: "عربیکا", image: "/Images/premium_photo-1674327105076-36c4419864cf.avif" },
-        { name: "دوبوستا", image: "/Images/premium_photo-1673545518947-ddf3240090b1.avif" },
-        { name: "ترکیبی", image: "/Images/premium_photo-1671559021551-95106555ee19.avif" }
-      ],
-      gradient: "from-amber-500 to-orange-500",
-      bgGradient: "from-amber-50 to-orange-50",
-      accent: "bg-gradient-to-r from-amber-500 to-orange-500"
-    },
-    {
-      id: 2,
-      title: "قهوه های ترکیبی",
-      items: [
-        { name: "ترکیب آریو", image: "/Images/premium_photo-1671379526961-1aebb82b317b.avif" },
-        { name: "", image: "/Images/premium_photo-1669687924558-386bff1a0469.avif" },
-        { name: "ترکیب فول کافئین", image: "/Images/premium_photo-1664970900335-a7c99062bc51.avif" },
-        { name: "ترکیب ۱۰۰٪ عربیکا", image: "/Images/photo-1621135177072-57c9b6242e7a.avif" }
-      ],
-      gradient: "from-emerald-500 to-teal-600",
-      bgGradient: "from-emerald-50 to-teal-50",
-      accent: "bg-gradient-to-r from-emerald-500 to-teal-600"
-    },
-    {
-      id: 3,
-      title: "اکسسوری قهوه",
-      items: [
-        { name: "تجهیزات اسپرسو", image: "/Images/photo-1596098823457-74e360fcd023.avif" },
-        { name: "موکاپات", image: "/Images/photo-1594075731547-8c705bb69e50.avif" },
-        { name: "آسیاب قهوه", image: "/Images/photo-1592663527359-cf6642f54cff.avif" },
-        { name: "تجهیزات کافه", image: "/Images/photo-1514432324607-a09d9b4aefdd.avif" }
-      ],
-      gradient: "from-blue-500 to-indigo-600",
-      bgGradient: "from-blue-50 to-indigo-50",
-      accent: "bg-gradient-to-r from-blue-500 to-indigo-600"
-    },
-    {
-      id: 4,
-      title: "دستگاه اسپرسو ساز",
-      items: [
-        { name: "اسپروساز خانگی", image: "/Images/photo-1514066558159-fc8c737ef259.avif" },
-        { name: "نیمه صنعتی", image: "/Images/photo-1503481766315-7a586b20f66d.avif" },
-        { name: "فرانسه", image: "/Images/photo-1525088553748-01d6e210e00b.avif" },
-        { name: "ترک ساز", image: "/Images/premium_photo-1674407009848-4da7a12b6b25.avif" }
-      ],
-      gradient: "from-purple-500 to-pink-500",
-      bgGradient: "from-purple-50 to-pink-50",
-      accent: "bg-gradient-to-r from-purple-500 to-pink-500"
-    },
-    {
-      id: 5,
-      title: "قهوه‌های فصلی",
-      items: [
-        { name: "قهوه زمستانی", image: "/Images/premium_photo-1674407009848-4da7a12b6b25.avif" },
-        { name: "بلند دم", image: "/Images/premium_photo-1674327105076-36c4419864cf.avif" },
-        { name: "کوتاه دم", image: "/Images/premium_photo-1673545518947-ddf3240090b1.avif" },
-        { name: "مخلوط ویژه", image: "/Images/premium_photo-1671559021551-95106555ee19.avif" }
-      ],
-      gradient: "from-rose-500 to-pink-600",
-      bgGradient: "from-rose-50 to-pink-50",
-      accent: "bg-gradient-to-r from-rose-500 to-pink-600"
-    },
-    {
-      id: 6,
-      title: "دمنوش و شکلات",
-      items: [
-        { name: "تلخ", image: "/Images/photo-1596098823457-74e360fcd023.avif" },
-        { name: "دست ساز", image: "/Images/photo-1594075731547-8c705bb69e50.avif" },
-        { name: "سس شکلات", image: "/Images/photo-1592663527359-cf6642f54cff.avif" },
-        { name: "دمنوش", image: "/Images/photo-1514432324607-a09d9b4aefdd.avif" }
-      ],
-      gradient: "from-cyan-500 to-blue-600",
-      bgGradient: "from-cyan-50 to-blue-50",
-      accent: "bg-gradient-to-r from-cyan-500 to-blue-600"
-    },
-  ];
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const response = await fetch('https://coffee-shop-backend-k3un.onrender.com/api/v1/category');
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result: ApiResponse = await response.json();
+        
+        if (result.success && result.data.categories) {
+          // Filter only active categories
+          const activeCategories = result.data.categories.filter(cat => cat.isActive);
+          setCategories(activeCategories);
+        } else {
+          throw new Error('Failed to fetch categories from backend');
+        }
+      } catch (err) {
+        console.error('Error fetching categories:', err);
+        setError('خطا در دریافت دسته‌بندی‌ها. لطفا دوباره تلاش کنید.');
+        setCategories([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  // Combine API categories with predefined color schemes and fallback items
+  const displayCategories = categories.map((category, index) => {
+    const colorScheme = predefinedColorSchemes[index % predefinedColorSchemes.length];
+    
+    return {
+      id: category._id,
+      title: category.name,
+      description: category.description,
+      items: fallbackItems, // Using fallback items since API doesn't provide sub-items
+      image: `https://coffee-shop-backend-k3un.onrender.com/${category.images}`,
+      ...colorScheme
+    };
+  });
+
+  // If no categories from API, use fallback categories to maintain design
+  const finalCategories = displayCategories.length > 0 ? displayCategories : predefinedColorSchemes.map((scheme, index) => ({
+    id: `fallback-${index}`,
+    title: `دسته‌بندی ${index + 1}`,
+    description: 'توضیحات دسته‌بندی',
+    items: fallbackItems,
+    image: '/Images/coffee-placeholder.jpg',
+    ...scheme
+  }));
+
+  if (loading) {
+    return (
+      <section className="w-full bg-gradient-to-br from-amber-50 via-white to-amber-100 py-16 px-4 md:px-10 lg:px-20 mt-34">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, index) => (
+              <div
+                key={index}
+                className="relative bg-gradient-to-br from-amber-50 to-orange-50 border border-white rounded-3xl p-6 shadow-xl min-h-[320px] w-full animate-pulse"
+              >
+                <div className="relative z-10 h-full flex flex-col">
+                  <div className="flex items-center mb-6">
+                    <div className="w-3 h-10 bg-amber-200 rounded-full ml-4"></div>
+                    <div className="h-6 bg-amber-200 rounded w-32"></div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4 flex-1">
+                    {[...Array(4)].map((_, itemIndex) => (
+                      <div
+                        key={itemIndex}
+                        className="relative bg-white/80 backdrop-blur-sm border border-white rounded-2xl overflow-hidden h-20"
+                      >
+                        <div className="w-full h-full bg-amber-200 animate-pulse"></div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (error && finalCategories.length === 0) {
+    return (
+      <section className="w-full bg-gradient-to-br from-amber-50 via-white to-amber-100 py-16 px-4 md:px-10 lg:px-20 mt-34">
+        <div className="max-w-7xl mx-auto text-center">
+          <div className="text-amber-600 text-lg font-[var(--font-yekan)] mb-4">
+            {error}
+          </div>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-amber-500 hover:bg-amber-600 text-white px-6 py-3 rounded-xl font-[var(--font-yekan)]"
+          >
+            تلاش مجدد
+          </button>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="w-full bg-gradient-to-br from-amber-50 via-white to-amber-100 py-16 px-4 md:px-10 lg:px-20 mt-34">
       <div className="max-w-7xl mx-auto">
         {/* Categories Grid - 3 columns on desktop */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {categories.map((cat) => (
+          {finalCategories.map((cat) => (
             <div
               key={cat.id}
               className={`relative bg-gradient-to-br ${cat.bgGradient} border border-white rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 group overflow-hidden min-h-[320px] w-full`}
@@ -113,16 +214,7 @@ export default function HeroSection() {
                     >
                       {/* Image Container */}
                       <div className="relative h-20 w-full overflow-hidden">
-                        <Image
-                          src={item.image}
-                          alt={item.name}
-                          fill
-                          className="object-cover group-hover/item:scale-110 transition-transform duration-300"
-                          onError={(e) => {
-                            // Fallback for missing images
-                            e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23f59e0b' opacity='0.2'/%3E%3Cpath d='M35 40L45 50L35 60' stroke='%23f59e0b' stroke-width='3' fill='none'/%3E%3Cpath d='M55 40L65 50L55 60' stroke='%23f59e0b' stroke-width='3' fill='none'/%3E%3C/svg%3E";
-                          }}
-                        />
+                     
                         {/* Gradient Overlay */}
                         <div className={`absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 group-hover/item:opacity-100 transition-opacity duration-300`}></div>
                       </div>
