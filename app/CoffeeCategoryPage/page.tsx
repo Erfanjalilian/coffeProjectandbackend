@@ -1,6 +1,5 @@
 "use client";
 
-
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { FiFilter, FiGrid, FiList, FiStar, FiChevronDown, FiX, FiMessageCircle } from "react-icons/fi";
@@ -21,6 +20,7 @@ interface Product {
   type: string;
   positiveFeature: string;
   status: string;
+  brand?: string; // Added brand field
 }
 
 interface Category {
@@ -90,6 +90,7 @@ interface ProductsApiResponse {
       isPremium: boolean;
       features: string[];
       priceAfterDiscount: number;
+      brand?: string; // Added brand field
     }>;
     pagination: {
       page: number;
@@ -129,14 +130,13 @@ export default function CoffeeCategoryPage() {
         const result: CategoriesApiResponse = await response.json();
         
         if (result.success && result.data.categories) {
-          // Map backend categories to our component structure
           const mappedCategories = result.data.categories
-            .filter(cat => cat.isActive) // Only active categories
+            .filter(cat => cat.isActive)
             .map((category, index) => ({
               id: category._id,
               name: category.name,
-              count: category.productsCount || 0, // Use actual count from API or 0
-              active: index === 0 // Make first category active by default
+              count: category.productsCount || 0,
+              active: index === 0
             }));
           
           setCategories(mappedCategories);
@@ -145,7 +145,6 @@ export default function CoffeeCategoryPage() {
         }
       } catch (error) {
         console.error('Error loading categories:', error);
-        // Fallback to static categories if API fails
         setCategories([
           { id: "1", name: "همه دسته‌بندی‌ها", count: 0, active: true },
           { id: "2", name: "قهوه اسپرسو", count: 0, active: false },
@@ -160,7 +159,7 @@ export default function CoffeeCategoryPage() {
     loadCategories();
   }, []);
 
-  // Fetch products from API
+  // Fetch products from API and generate dynamic filters
   useEffect(() => {
     async function loadProducts() {
       try {
@@ -188,24 +187,15 @@ export default function CoffeeCategoryPage() {
             discount: product.discount,
             type: 'regular',
             positiveFeature: product.positiveFeature,
-            status: getStatusFromBadge(product.badge)
+            status: getStatusFromBadge(product.badge),
+            brand: product.brand // Map brand from API
           }));
           
           setCoffeeProducts(mappedProducts);
+          
+          // Generate dynamic filters from products data
+          generateDynamicFilters(mappedProducts);
         }
-        
-        // Static filters (unchanged)
-        setFilters({
-          brands: ["دیویدوف", "لاوازا", "ایلی", "استارباکس", "نسپرسو", "کمکس"],
-          priceRanges: [
-            { id: 1, label: "زیر ۱۰۰ هزار تومان", value: "0-100000", min: 0, max: 100000 },
-            { id: 2, label: "۱۰۰ تا ۳۰۰ هزار تومان", value: "100000-300000", min: 100000, max: 300000 },
-            { id: 3, label: "۳۰۰ تا ۵۰۰ هزار تومان", value: "300000-500000", min: 300000, max: 500000 },
-            { id: 4, label: "۵۰۰ هزار تا ۱ میلیون", value: "500000-1000000", min: 500000, max: 1000000 },
-            { id: 5, label: "بالای ۱ میلیون", value: "1000000-5000000", min: 1000000, max: 5000000 }
-          ],
-          ratings: [4, 3, 2, 1]
-        });
       } catch (error) {
         console.error('Error loading products:', error);
         setCoffeeProducts([]);
@@ -216,6 +206,74 @@ export default function CoffeeCategoryPage() {
     
     loadProducts();
   }, []);
+
+  // Generate dynamic filters based on actual product data
+  const generateDynamicFilters = (products: Product[]) => {
+    if (products.length === 0) {
+      // Fallback to static filters if no products
+      setFilters({
+        brands: ["دیویدوف", "لاوازا", "ایلی", "استارباکس", "نسپرسو", "کمکس"],
+        priceRanges: [
+          { id: 1, label: "زیر ۱۰۰ هزار تومان", value: "0-100000", min: 0, max: 100000 },
+          { id: 2, label: "۱۰۰ تا ۳۰۰ هزار تومان", value: "100000-300000", min: 100000, max: 300000 },
+          { id: 3, label: "۳۰۰ تا ۵۰۰ هزار تومان", value: "300000-500000", min: 300000, max: 500000 },
+          { id: 4, label: "۵۰۰ هزار تا ۱ میلیون", value: "500000-1000000", min: 500000, max: 1000000 },
+          { id: 5, label: "بالای ۱ میلیون", value: "1000000-5000000", min: 1000000, max: 5000000 }
+        ],
+        ratings: [4, 3, 2, 1]
+      });
+      return;
+    }
+
+    // Extract unique brands from products
+    const uniqueBrands = Array.from(new Set(products
+      .map(product => product.brand)
+      .filter(brand => brand && brand.trim() !== "")
+    ));
+
+    // Generate dynamic price ranges based on actual product prices
+    const prices = products.map(p => p.price).filter(price => price > 0);
+    const minPrice = Math.min(...prices);
+    const maxPrice = Math.max(...prices);
+    
+    const dynamicPriceRanges = generatePriceRanges(minPrice, maxPrice);
+
+   // تغییر تایپ برند به any[]
+setFilters({
+  brands: (uniqueBrands as any[])?.length > 0 ? (uniqueBrands as any[]) : ["برندهای موجود"],
+  priceRanges: dynamicPriceRanges,
+  ratings: [4, 3, 2, 1]
+});
+
+
+    // Set initial price range based on actual data
+    setPriceRange([minPrice, maxPrice]);
+    setCustomMinPrice(minPrice.toString());
+    setCustomMaxPrice(maxPrice.toString());
+  };
+
+  // Generate price ranges based on actual price data
+  const generatePriceRanges = (minPrice: number, maxPrice: number): PriceRange[] => {
+    const ranges: PriceRange[] = [];
+    const rangeCount = 5; // Number of price ranges to generate
+    
+    const step = Math.ceil((maxPrice - minPrice) / rangeCount);
+    
+    for (let i = 0; i < rangeCount; i++) {
+      const rangeMin = minPrice + (i * step);
+      const rangeMax = i === rangeCount - 1 ? maxPrice : minPrice + ((i + 1) * step);
+      
+      ranges.push({
+        id: i + 1,
+        label: `${formatPrice(rangeMin)} - ${formatPrice(rangeMax)}`,
+        value: `${rangeMin}-${rangeMax}`,
+        min: rangeMin,
+        max: rangeMax
+      });
+    }
+    
+    return ranges;
+  };
 
   // Helper function to convert badge to status
   const getStatusFromBadge = (badge: string): string => {
@@ -343,12 +401,11 @@ export default function CoffeeCategoryPage() {
                 <h3 className="font-bold text-gray-800 font-[var(--font-yekan)]">فیلترها</h3>
               </div>
 
-              {/* Categories - NOW DYNAMIC */}
+              {/* Categories - DYNAMIC */}
               <div className="mb-6">
                 <h4 className="font-semibold text-gray-700 mb-3 font-[var(--font-yekan)]">دسته‌بندی‌ها</h4>
                 <div className="space-y-2">
                   {categoriesLoading ? (
-                    // Loading skeleton for categories
                     [...Array(4)].map((_, index) => (
                       <div key={index} className="flex items-center justify-between animate-pulse">
                         <div className="flex items-center gap-2">
@@ -387,11 +444,11 @@ export default function CoffeeCategoryPage() {
                 </div>
               </div>
 
-              {/* Modern Price Range Filter - REMAINS STATIC */}
+              {/* DYNAMIC Price Range Filter */}
               <div className="mb-6">
                 <h4 className="font-semibold text-gray-700 mb-4 font-[var(--font-yekan)]">محدوده قیمت</h4>
                 
-                {/* Quick Price Range Buttons */}
+                {/* Dynamic Price Range Buttons */}
                 <div className="space-y-2 mb-4">
                   {filters.priceRanges.map((range, index) => (
                     <motion.button
@@ -459,7 +516,7 @@ export default function CoffeeCategoryPage() {
                 </div>
               </div>
 
-              {/* Brands - REMAINS STATIC */}
+              {/* DYNAMIC Brands Filter */}
               <div className="mb-6">
                 <h4 className="font-semibold text-gray-700 mb-3 font-[var(--font-yekan)]">برندها</h4>
                 <div className="space-y-2">
@@ -480,7 +537,7 @@ export default function CoffeeCategoryPage() {
                 </div>
               </div>
 
-              {/* Ratings - REMAINS STATIC */}
+              {/* Ratings - Static (as it's based on star system) */}
               <div>
                 <h4 className="font-semibold text-gray-700 mb-3 font-[var(--font-yekan)]">امتیاز</h4>
                 <div className="space-y-2">
@@ -614,7 +671,13 @@ export default function CoffeeCategoryPage() {
                   >
                     {/* Product Image */}
                     <div className={`relative ${viewMode === 'list' ? 'w-48 flex-shrink-0' : 'h-48'}`}>
-                     
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        className={`w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 ${
+                          viewMode === 'list' ? 'rounded-r-2xl' : 'rounded-t-2xl'
+                        }`}
+                      />
                       
                       {/* Discount Badge */}
                       {product.discount > 0 && (
@@ -725,7 +788,7 @@ export default function CoffeeCategoryPage() {
         </div>
       </div>
 
-      {/* Mobile Filters Modal - Updated with dynamic categories */}
+      {/* Mobile Filters Modal - Updated with dynamic filters */}
       <AnimatePresence>
         {showMobileFilters && (
           <>
@@ -758,7 +821,7 @@ export default function CoffeeCategoryPage() {
               {/* Filters Content */}
               <div className="flex-1 overflow-y-auto p-4">
                 <div className="bg-white rounded-2xl border border-amber-200">
-                  {/* Categories - NOW DYNAMIC in mobile too */}
+                  {/* Categories - DYNAMIC */}
                   <FilterSection title="دسته‌بندی‌ها" filterKey="categories">
                     <div className="space-y-2">
                       {categoriesLoading ? (
@@ -794,7 +857,7 @@ export default function CoffeeCategoryPage() {
                     </div>
                   </FilterSection>
 
-                  {/* Price Range - Updated for mobile */}
+                  {/* Price Range - DYNAMIC */}
                   <FilterSection title="محدوده قیمت" filterKey="price">
                     <div className="space-y-3">
                       {filters.priceRanges.map((range) => (
@@ -848,7 +911,7 @@ export default function CoffeeCategoryPage() {
                     </div>
                   </FilterSection>
 
-                  {/* Brands */}
+                  {/* Brands - DYNAMIC */}
                   <FilterSection title="برندها" filterKey="brands">
                     <div className="space-y-2">
                       {filters.brands.map((brand) => (
@@ -862,7 +925,7 @@ export default function CoffeeCategoryPage() {
                     </div>
                   </FilterSection>
 
-                  {/* Ratings */}
+                  {/* Ratings - Static */}
                   <FilterSection title="امتیاز" filterKey="ratings">
                     <div className="space-y-2">
                       {filters.ratings.map((rating) => (
@@ -901,4 +964,4 @@ export default function CoffeeCategoryPage() {
       </AnimatePresence>
     </div>
   );
-}  
+}
