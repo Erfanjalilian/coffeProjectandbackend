@@ -33,6 +33,11 @@ interface NavItem {
   href: string;
 }
 
+interface DropdownPosition {
+  top: number;
+  right: number;
+}
+
 export default function Header() {
   const [isLangOpen, setIsLangOpen] = useState<boolean>(false);
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
@@ -85,14 +90,29 @@ export default function Header() {
     return user?.username || user?.phone || "کاربر";
   };
 
-  // Calculate dropdown position based on button position
-  const getDropdownPosition = (buttonRef: React.RefObject<HTMLButtonElement>) => {
+  // Calculate dropdown position based on button position - FIXED FOR RESPONSIVE
+  const getDropdownPosition = (buttonRef: React.RefObject<HTMLButtonElement>, isUserMenu: boolean = false): DropdownPosition => {
     if (!buttonRef.current) return { top: 0, right: 0 };
     
     const rect = buttonRef.current.getBoundingClientRect();
+    const isMobile = window.innerWidth < 768;
+    
+    let right = window.innerWidth - rect.right;
+    
+    // For user menu on desktop, add spacing from the edge
+    if (isUserMenu && !isMobile) {
+      right = Math.max(16, right - 16); // 16px spacing from right edge
+    }
+    
+    // For mobile, ensure dropdown stays within viewport
+    if (isMobile) {
+      const dropdownWidth = isUserMenu ? 200 : 120;
+      right = Math.max(8, Math.min(right, window.innerWidth - dropdownWidth - 8));
+    }
+    
     return {
       top: rect.bottom + 8, // 8px below the button
-      right: window.innerWidth - rect.right, // align with button right edge
+      right: right,
     };
   };
 
@@ -314,14 +334,14 @@ export default function Header() {
         )}
       </AnimatePresence>
 
-      {/* User Menu Dropdown */}
+      {/* User Menu Dropdown - FIXED POSITIONING */}
       <AnimatePresence>
         {isUserMenuOpen && (
           <motion.div
             initial={{ opacity: 0, y: -10, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.9 }}
-            style={getDropdownPosition(userButtonRef)}
+            style={getDropdownPosition(userButtonRef, true)}
             className="fixed bg-white/95 backdrop-blur-lg shadow-2xl rounded-2xl overflow-hidden border border-amber-200 min-w-[200px] z-50"
           >
             <div className="p-4 border-b border-amber-100">
@@ -395,7 +415,7 @@ export default function Header() {
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed top-0 left-0 w-80 bg-white shadow-2xl z-[70] flex flex-col md:hidden"
+              className="fixed top-0 left-0 w-80 max-w-[85vw] bg-white shadow-2xl z-[70] flex flex-col md:hidden"
             >
               {/* Header */}
               <div className="flex justify-between items-center p-6 pb-4 border-b border-amber-200 bg-white">
