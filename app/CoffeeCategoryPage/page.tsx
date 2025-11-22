@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { FiFilter, FiGrid, FiList, FiStar, FiChevronDown, FiX, FiMessageCircle, FiCoffee } from "react-icons/fi";
 import Link from "next/link";
 
@@ -42,6 +42,14 @@ interface Filters {
   brands: string[];
   priceRanges: PriceRange[];
   ratings: number[];
+}
+
+interface ActiveFilters {
+  selectedBrands: string[];
+  selectedPriceRange: string;
+  selectedRatings: number[];
+  selectedCategories: string[];
+  priceRange: [number, number];
 }
 
 interface CategoriesApiResponse {
@@ -110,12 +118,18 @@ export default function CoffeeCategoryPage() {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [expandedFilter, setExpandedFilter] = useState<string | null>(null);
   const [coffeeProducts, setCoffeeProducts] = useState<Product[]>([]);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [selectedPriceRange, setSelectedPriceRange] = useState<string>("");
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000000]);
+  const [filters, setFilters] = useState<Filters>({ brands: [], priceRanges: [], ratings: [] });
+  const [activeFilters, setActiveFilters] = useState<ActiveFilters>({
+    selectedBrands: [],
+    selectedPriceRange: "",
+    selectedRatings: [],
+    selectedCategories: [],
+    priceRange: [0, 1000000]
+  });
   const [customMinPrice, setCustomMinPrice] = useState<string>("");
   const [customMaxPrice, setCustomMaxPrice] = useState<string>("");
-  const [filters, setFilters] = useState<Filters>({ brands: [], priceRanges: [], ratings: [] });
   const [loading, setLoading] = useState<boolean>(true);
   const [categoriesLoading, setCategoriesLoading] = useState<boolean>(true);
 
@@ -181,7 +195,7 @@ export default function CoffeeCategoryPage() {
             name: product.name,
             price: product.priceAfterDiscount || product.price,
             originalPrice: product.originalPrice,
-            image: product.image, // Keep as is for now - placeholder will be handled
+            image: product.image,
             category: product.category?.name || 'قهوه',
             badge: product.badge,
             rating: product.rating || 0,
@@ -194,13 +208,14 @@ export default function CoffeeCategoryPage() {
             brand: product.brand
           }));
           
+          setAllProducts(mappedProducts);
           setCoffeeProducts(mappedProducts);
           
-          // Generate dynamic filters from products data
           generateDynamicFilters(mappedProducts);
         }
       } catch (error) {
         console.error('Error loading products:', error);
+        setAllProducts([]);
         setCoffeeProducts([]);
       } finally {
         setLoading(false);
@@ -210,10 +225,14 @@ export default function CoffeeCategoryPage() {
     loadProducts();
   }, []);
 
+  // Apply filters whenever activeFilters change
+  useEffect(() => {
+    applyFilters();
+  }, [activeFilters, allProducts]);
+
   // Generate dynamic filters based on actual product data
   const generateDynamicFilters = (products: Product[]) => {
     if (products.length === 0) {
-      // Fallback to static filters if no products
       setFilters({
         brands: ["برندهای موجود"],
         priceRanges: [
@@ -228,26 +247,22 @@ export default function CoffeeCategoryPage() {
       return;
     }
 
-    // Extract unique brands from products
     const uniqueBrands = Array.from(new Set(products
       .map(product => product.brand)
       .filter(brand => brand && brand.trim() !== "")
     ));
 
-    // Generate dynamic price ranges based on actual product prices
     const prices = products.map(p => p.price).filter(price => price > 0);
     const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
     const maxPrice = prices.length > 0 ? Math.max(...prices) : 1000000;
     
     const dynamicPriceRanges = generatePriceRanges(minPrice, maxPrice);
 
-    // Generate dynamic ratings based on actual product ratings
     const availableRatings = Array.from(new Set(products
       .map(product => Math.floor(product.rating))
       .filter(rating => rating > 0)
-    )).sort((a, b) => b - a); // Sort descending
+    )).sort((a, b) => b - a);
 
-    // If no ratings available, use default
     const dynamicRatings = availableRatings.length > 0 ? availableRatings : [4, 3, 2, 1];
 
     setFilters({
@@ -256,16 +271,193 @@ export default function CoffeeCategoryPage() {
       ratings: dynamicRatings
     });
 
-    // Set initial price range based on actual data
-    setPriceRange([minPrice, maxPrice]);
+    // Initialize custom price inputs with actual data
     setCustomMinPrice(minPrice.toString());
     setCustomMaxPrice(maxPrice.toString());
+    setActiveFilters(prev => ({
+      ...prev,
+      priceRange: [minPrice, maxPrice]
+    }));
   };
 
-  // Generate price ranges based on actual price data - FIXED
+  // Apply all active filters
+  const applyFilters = () => {
+    let filteredProducts = [...allProducts];
+
+    // Filter by brands
+    if (activeFilters.selectedBrands.length > 0) {
+      filteredProducts = filteredProducts.filter(product => 
+        product.brand && activeFilters.selectedBrands.includes(product.brand)
+      );
+    }
+
+    // Filter by price range - FIXED: Use activeFilters.priceRange
+    filteredProducts = filteredProducts.filter(product => 
+      product.price >= activeFilters.priceRange[0] && product.price <= activeFilters.priceRange[1]
+    );
+
+    // Filter by ratings
+    if (activeFilters.selectedRatings.length > 0) {
+      filteredProducts = filteredProducts.filter(product => 
+        activeFilters.selectedRatings.some(rating => Math.floor(product.rating) >= rating)
+      );
+    }
+
+    // Filter by categories
+    if (activeFilters.selectedCategories.length > 0) {
+      filteredProducts = filteredProducts.filter(product => 
+        activeFilters.selectedCategories.includes(product.category)
+      );
+    }
+
+    setCoffeeProducts(filteredProducts);
+  };
+
+  // Handle brand filter change
+  const handleBrandFilter = (brand: string) => {
+    setActiveFilters(prev => {
+      const isSelected = prev.selectedBrands.includes(brand);
+      const updatedBrands = isSelected
+        ? prev.selectedBrands.filter(b => b !== brand)
+        : [...prev.selectedBrands, brand];
+      
+      return {
+        ...prev,
+        selectedBrands: updatedBrands
+      };
+    });
+  };
+
+  // Handle rating filter change
+  const handleRatingFilter = (rating: number) => {
+    setActiveFilters(prev => {
+      const isSelected = prev.selectedRatings.includes(rating);
+      const updatedRatings = isSelected
+        ? prev.selectedRatings.filter(r => r !== rating)
+        : [...prev.selectedRatings, rating];
+      
+      return {
+        ...prev,
+        selectedRatings: updatedRatings
+      };
+    });
+  };
+
+  // Handle category filter change
+  const handleCategoryFilter = (categoryId: string, categoryName: string) => {
+    setActiveFilters(prev => {
+      const isSelected = prev.selectedCategories.includes(categoryName);
+      const updatedCategories = isSelected
+        ? prev.selectedCategories.filter(c => c !== categoryName)
+        : [...prev.selectedCategories, categoryName];
+      
+      return {
+        ...prev,
+        selectedCategories: updatedCategories
+      };
+    });
+
+    setCategories(prev => prev.map(cat => ({
+      ...cat,
+      active: cat.id === categoryId ? !cat.active : cat.active
+    })));
+  };
+
+  // Handle price range selection - FIXED
+  const handlePriceRangeSelect = (range: PriceRange) => {
+    setActiveFilters(prev => ({
+      ...prev,
+      selectedPriceRange: range.value,
+      priceRange: [range.min, range.max]
+    }));
+    setCustomMinPrice(range.min.toString());
+    setCustomMaxPrice(range.max.toString());
+  };
+
+  // Handle custom price range - FIXED
+  const handleCustomPriceApply = () => {
+    const min = parseInt(customMinPrice) || 0;
+    const max = parseInt(customMaxPrice) || 1000000;
+    
+    // Validate and ensure min is not greater than max
+    const validatedMin = Math.min(min, max);
+    const validatedMax = Math.max(min, max);
+    
+    setActiveFilters(prev => ({
+      ...prev,
+      selectedPriceRange: "custom",
+      priceRange: [validatedMin, validatedMax]
+    }));
+    
+    // Update the input fields with validated values
+    setCustomMinPrice(validatedMin.toString());
+    setCustomMaxPrice(validatedMax.toString());
+  };
+
+  // Handle individual custom price input changes - NEW: Real-time updates
+  const handleCustomMinPriceChange = (value: string) => {
+    const numericValue = value.replace(/[^0-9]/g, '');
+    setCustomMinPrice(numericValue);
+    
+    // Update price range in real-time if both values are valid
+    const min = parseInt(numericValue) || 0;
+    const max = parseInt(customMaxPrice) || 1000000;
+    
+    const validatedMin = Math.min(min, max);
+    const validatedMax = Math.max(min, max);
+    
+    setActiveFilters(prev => ({
+      ...prev,
+      selectedPriceRange: "custom",
+      priceRange: [validatedMin, validatedMax]
+    }));
+  };
+
+  const handleCustomMaxPriceChange = (value: string) => {
+    const numericValue = value.replace(/[^0-9]/g, '');
+    setCustomMaxPrice(numericValue);
+    
+    // Update price range in real-time if both values are valid
+    const min = parseInt(customMinPrice) || 0;
+    const max = parseInt(numericValue) || 1000000;
+    
+    const validatedMin = Math.min(min, max);
+    const validatedMax = Math.max(min, max);
+    
+    setActiveFilters(prev => ({
+      ...prev,
+      selectedPriceRange: "custom",
+      priceRange: [validatedMin, validatedMax]
+    }));
+  };
+
+  // Clear all filters - FIXED: Reset price range properly
+  const clearAllFilters = () => {
+    // Get the actual min and max prices from all products
+    const prices = allProducts.map(p => p.price).filter(price => price > 0);
+    const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+    const maxPrice = prices.length > 0 ? Math.max(...prices) : 1000000;
+    
+    setActiveFilters({
+      selectedBrands: [],
+      selectedPriceRange: "",
+      selectedRatings: [],
+      selectedCategories: [],
+      priceRange: [minPrice, maxPrice]
+    });
+    
+    setCustomMinPrice(minPrice.toString());
+    setCustomMaxPrice(maxPrice.toString());
+    
+    setCategories(prev => prev.map((cat, index) => ({
+      ...cat,
+      active: index === 0
+    })));
+  };
+
+  // Generate price ranges based on actual price data
   const generatePriceRanges = (minPrice: number, maxPrice: number): PriceRange[] => {
     if (minPrice === maxPrice || maxPrice - minPrice < 10000) {
-      // If prices are very close, create simple ranges
       return [
         {
           id: 1,
@@ -279,7 +471,6 @@ export default function CoffeeCategoryPage() {
 
     const ranges: PriceRange[] = [];
     const rangeCount = Math.min(5, Math.ceil((maxPrice - minPrice) / 100000) || 1);
-    
     const step = Math.ceil((maxPrice - minPrice) / rangeCount);
     
     for (let i = 0; i < rangeCount; i++) {
@@ -312,29 +503,6 @@ export default function CoffeeCategoryPage() {
     }
   };
 
-  const handlePriceRangeSelect = (range: PriceRange) => {
-    setSelectedPriceRange(range.value);
-    setPriceRange([range.min, range.max]);
-    setCustomMinPrice(range.min.toString());
-    setCustomMaxPrice(range.max.toString());
-  };
-
-  const handleCustomPriceApply = () => {
-    const min = parseInt(customMinPrice) || 0;
-    const max = parseInt(customMaxPrice) || 1000000;
-    
-    // Validate min and max
-    if (min > max) {
-      // Swap values if min is greater than max
-      setPriceRange([max, min]);
-      setCustomMinPrice(max.toString());
-      setCustomMaxPrice(min.toString());
-    } else {
-      setPriceRange([min, max]);
-    }
-    setSelectedPriceRange("custom");
-  };
-
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('fa-IR').format(price) + " تومان";
   };
@@ -356,14 +524,7 @@ export default function CoffeeCategoryPage() {
     }
   };
 
-  // Toggle category active state
-  const toggleCategoryActive = (categoryId: string) => {
-    setCategories(prev => prev.map(cat => ({
-      ...cat,
-      active: cat.id === categoryId
-    })));
-  };
-
+  // Filter Section Component
   const FilterSection = ({ title, children, filterKey }: { title: string; children: React.ReactNode; filterKey: string }) => (
     <div className="border-b border-amber-200 last:border-b-0">
       <button
@@ -420,6 +581,15 @@ export default function CoffeeCategoryPage() {
     );
   };
 
+  // Check if any filters are active
+  const hasActiveFilters = 
+    activeFilters.selectedBrands.length > 0 ||
+    activeFilters.selectedRatings.length > 0 ||
+    activeFilters.selectedCategories.length > 0 ||
+    activeFilters.selectedPriceRange !== "" ||
+    activeFilters.priceRange[0] > 0 ||
+    activeFilters.priceRange[1] < 1000000;
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white pt-24 flex items-center justify-center">
@@ -445,6 +615,91 @@ export default function CoffeeCategoryPage() {
           <span>دسته‌بندی کالا ها</span>
         </motion.div>
 
+        {/* Active Filters Display */}
+        {hasActiveFilters && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 bg-amber-50 rounded-2xl border border-amber-200"
+          >
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm text-amber-700 font-[var(--font-yekan)]">فیلترهای فعال:</span>
+              
+              {activeFilters.selectedBrands.map(brand => (
+                <span key={brand} className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-sm font-[var(--font-yekan)] flex items-center gap-1">
+                  برند: {brand}
+                  <button 
+                    onClick={() => handleBrandFilter(brand)}
+                    className="hover:text-amber-900"
+                  >
+                    <FiX size={14} />
+                  </button>
+                </span>
+              ))}
+              
+              {activeFilters.selectedRatings.map(rating => (
+                <span key={rating} className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-sm font-[var(--font-yekan)] flex items-center gap-1">
+                  امتیاز: {rating}+
+                  <button 
+                    onClick={() => handleRatingFilter(rating)}
+                    className="hover:text-amber-900"
+                  >
+                    <FiX size={14} />
+                  </button>
+                </span>
+              ))}
+              
+              {activeFilters.selectedCategories.map(category => (
+                <span key={category} className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-sm font-[var(--font-yekan)] flex items-center gap-1">
+                  دسته: {category}
+                  <button 
+                    onClick={() => {
+                      const categoryObj = categories.find(cat => cat.name === category);
+                      if (categoryObj) {
+                        handleCategoryFilter(categoryObj.id, category);
+                      }
+                    }}
+                    className="hover:text-amber-900"
+                  >
+                    <FiX size={14} />
+                  </button>
+                </span>
+              ))}
+              
+              {(activeFilters.selectedPriceRange || activeFilters.priceRange[0] > 0 || activeFilters.priceRange[1] < 1000000) && (
+                <span className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-sm font-[var(--font-yekan)] flex items-center gap-1">
+                  قیمت: {formatPrice(activeFilters.priceRange[0])} - {formatPrice(activeFilters.priceRange[1])}
+                  <button 
+                    onClick={() => {
+                      const prices = allProducts.map(p => p.price).filter(price => price > 0);
+                      const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+                      const maxPrice = prices.length > 0 ? Math.max(...prices) : 1000000;
+                      
+                      setActiveFilters(prev => ({ 
+                        ...prev, 
+                        selectedPriceRange: "", 
+                        priceRange: [minPrice, maxPrice] 
+                      }));
+                      setCustomMinPrice(minPrice.toString());
+                      setCustomMaxPrice(maxPrice.toString());
+                    }}
+                    className="hover:text-amber-900"
+                  >
+                    <FiX size={14} />
+                  </button>
+                </span>
+              )}
+              
+              <button 
+                onClick={clearAllFilters}
+                className="text-red-500 hover:text-red-700 text-sm font-[var(--font-yekan)] mr-auto"
+              >
+                حذف همه فیلترها
+              </button>
+            </div>
+          </motion.div>
+        )}
+
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Desktop Sidebar Filters */}
           <motion.div
@@ -454,12 +709,22 @@ export default function CoffeeCategoryPage() {
             className="lg:w-64 flex-shrink-0 hidden lg:block"
           >
             <div className="bg-white rounded-2xl shadow-lg border border-amber-200 p-6 sticky top-32">
-              <div className="flex items-center gap-2 mb-6">
-                <FiFilter className="text-amber-600" />
-                <h3 className="font-bold text-gray-800 font-[var(--font-yekan)]">فیلترها</h3>
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2">
+                  <FiFilter className="text-amber-600" />
+                  <h3 className="font-bold text-gray-800 font-[var(--font-yekan)]">فیلترها</h3>
+                </div>
+                {hasActiveFilters && (
+                  <button 
+                    onClick={clearAllFilters}
+                    className="text-red-500 hover:text-red-700 text-sm font-[var(--font-yekan)]"
+                  >
+                    حذف همه
+                  </button>
+                )}
               </div>
 
-              {/* Categories - DYNAMIC */}
+              {/* Categories */}
               <div className="mb-6">
                 <h4 className="font-semibold text-gray-700 mb-3 font-[var(--font-yekan)]">دسته‌بندی‌ها</h4>
                 <div className="space-y-2">
@@ -485,8 +750,8 @@ export default function CoffeeCategoryPage() {
                         <div className="flex items-center gap-2">
                           <input
                             type="checkbox"
-                            checked={category.active}
-                            onChange={() => toggleCategoryActive(category.id)}
+                            checked={activeFilters.selectedCategories.includes(category.name)}
+                            onChange={() => handleCategoryFilter(category.id, category.name)}
                             className="rounded border-amber-300 text-amber-600 focus:ring-amber-500"
                           />
                           <span className="text-sm text-gray-600 group-hover:text-amber-700 transition-colors font-[var(--font-yekan)]">
@@ -502,7 +767,7 @@ export default function CoffeeCategoryPage() {
                 </div>
               </div>
 
-              {/* DYNAMIC Price Range Filter - FIXED */}
+              {/* Price Range Filter - FIXED */}
               <div className="mb-6">
                 <h4 className="font-semibold text-gray-700 mb-4 font-[var(--font-yekan)]">محدوده قیمت</h4>
                 
@@ -516,14 +781,14 @@ export default function CoffeeCategoryPage() {
                       transition={{ delay: index * 0.1 }}
                       onClick={() => handlePriceRangeSelect(range)}
                       className={`w-full text-right py-3 px-4 rounded-xl border transition-all duration-200 font-[var(--font-yekan)] text-sm ${
-                        selectedPriceRange === range.value
+                        activeFilters.selectedPriceRange === range.value
                           ? 'bg-amber-500 text-white border-amber-500 shadow-md'
                           : 'bg-white text-gray-700 border-amber-200 hover:bg-amber-50 hover:border-amber-300'
                       }`}
                     >
                       <div className="flex items-center justify-between">
                         <span>{range.label}</span>
-                        {selectedPriceRange === range.value && (
+                        {activeFilters.selectedPriceRange === range.value && (
                           <div className="w-2 h-2 bg-white rounded-full"></div>
                         )}
                       </div>
@@ -531,12 +796,12 @@ export default function CoffeeCategoryPage() {
                   ))}
                 </div>
 
-                {/* Custom Price Range Input - IMPROVED */}
+                {/* Custom Price Range Input - FIXED: Real-time updates */}
                 <div className="bg-amber-50 rounded-xl p-4 border border-amber-200">
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-sm text-gray-700 font-[var(--font-yekan)]">قیمت دلخواه</span>
                     <span className="text-xs text-amber-600 bg-amber-100 px-2 py-1 rounded-full font-[var(--font-yekan)]">
-                      {formatPrice(priceRange[0])} - {formatPrice(priceRange[1])}
+                      {formatPrice(activeFilters.priceRange[0])} - {formatPrice(activeFilters.priceRange[1])}
                     </span>
                   </div>
                   
@@ -546,7 +811,7 @@ export default function CoffeeCategoryPage() {
                       <input
                         type="text"
                         value={customMinPrice}
-                        onChange={(e) => setCustomMinPrice(e.target.value.replace(/[^0-9]/g, ''))}
+                        onChange={(e) => handleCustomMinPriceChange(e.target.value)}
                         placeholder="۰"
                         className="w-full px-3 py-2 text-sm border border-amber-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 font-[var(--font-yekan)] text-left"
                       />
@@ -556,7 +821,7 @@ export default function CoffeeCategoryPage() {
                       <input
                         type="text"
                         value={customMaxPrice}
-                        onChange={(e) => setCustomMaxPrice(e.target.value.replace(/[^0-9]/g, ''))}
+                        onChange={(e) => handleCustomMaxPriceChange(e.target.value)}
                         placeholder="۱۰۰۰۰۰۰"
                         className="w-full px-3 py-2 text-sm border border-amber-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 font-[var(--font-yekan)] text-left"
                       />
@@ -574,7 +839,7 @@ export default function CoffeeCategoryPage() {
                 </div>
               </div>
 
-              {/* DYNAMIC Brands Filter */}
+              {/* Brands Filter */}
               <div className="mb-6">
                 <h4 className="font-semibold text-gray-700 mb-3 font-[var(--font-yekan)]">برندها</h4>
                 <div className="space-y-2">
@@ -586,7 +851,12 @@ export default function CoffeeCategoryPage() {
                       transition={{ delay: index * 0.1 }}
                       className="flex items-center gap-2 cursor-pointer group"
                     >
-                      <input type="checkbox" className="rounded border-amber-300 text-amber-600 focus:ring-amber-500" />
+                      <input 
+                        type="checkbox" 
+                        checked={activeFilters.selectedBrands.includes(brand)}
+                        onChange={() => handleBrandFilter(brand)}
+                        className="rounded border-amber-300 text-amber-600 focus:ring-amber-500" 
+                      />
                       <span className="text-sm text-gray-600 group-hover:text-amber-700 transition-colors font-[var(--font-yekan)]">
                         {brand}
                       </span>
@@ -595,7 +865,7 @@ export default function CoffeeCategoryPage() {
                 </div>
               </div>
 
-              {/* DYNAMIC Ratings Filter - FIXED */}
+              {/* Ratings Filter */}
               <div>
                 <h4 className="font-semibold text-gray-700 mb-3 font-[var(--font-yekan)]">امتیاز</h4>
                 <div className="space-y-2">
@@ -607,7 +877,12 @@ export default function CoffeeCategoryPage() {
                       transition={{ delay: index * 0.1 }}
                       className="flex items-center gap-2 cursor-pointer group"
                     >
-                      <input type="checkbox" className="rounded border-amber-300 text-amber-600 focus:ring-amber-500" />
+                      <input 
+                        type="checkbox" 
+                        checked={activeFilters.selectedRatings.includes(rating)}
+                        onChange={() => handleRatingFilter(rating)}
+                        className="rounded border-amber-300 text-amber-600 focus:ring-amber-500" 
+                      />
                       <div className="flex items-center gap-1">
                         {[...Array(5)].map((_, i) => (
                           <FiStar
@@ -675,31 +950,12 @@ export default function CoffeeCategoryPage() {
               </div>
             </motion.div>
 
-            {/* Filter Options */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="flex flex-wrap gap-3 mb-6"
-            >
-              {['توصیه شده ها', 'تخفیف دارها'].map((filter, index) => (
-                <motion.button
-                  key={filter}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.4, delay: index * 0.1 }}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all font-[var(--font-yekan)] ${
-                    index === 0
-                      ? 'bg-amber-600 text-white shadow-lg'
-                      : 'bg-white text-gray-700 border border-amber-200 hover:bg-amber-50 hover:text-amber-700'
-                  }`}
-                >
-                  {filter}
-                </motion.button>
-              ))}
-            </motion.div>
+            {/* Results Count */}
+            <div className="mb-6">
+              <p className="text-gray-600 font-[var(--font-yekan)]">
+                نمایش {coffeeProducts.length} محصول از {allProducts.length} محصول
+              </p>
+            </div>
 
             {/* Products Grid/List */}
             <motion.div
@@ -727,7 +983,7 @@ export default function CoffeeCategoryPage() {
                       viewMode === 'list' ? 'flex' : ''
                     }`}
                   >
-                    {/* Product Image with placeholder */}
+                    {/* Product Image */}
                     <div className={`relative ${viewMode === 'list' ? 'w-48 flex-shrink-0' : 'h-48'}`}>
                       <ProductImage
                         src={product.image}
@@ -838,15 +1094,21 @@ export default function CoffeeCategoryPage() {
             {coffeeProducts.length === 0 && !loading && (
               <div className="text-center py-12">
                 <p className="text-gray-600 font-[var(--font-yekan)] text-lg">
-                  محصولی برای نمایش وجود ندارد.
+                  محصولی با فیلترهای انتخاب شده یافت نشد.
                 </p>
+                <button 
+                  onClick={clearAllFilters}
+                  className="mt-4 bg-amber-500 hover:bg-amber-600 text-white px-6 py-2 rounded-xl font-[var(--font-yekan)]"
+                >
+                  حذف فیلترها
+                </button>
               </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* Mobile Filters Modal - Updated with dynamic filters */}
+      {/* Mobile Filters Modal - Updated with fixed price range */}
       <AnimatePresence>
         {showMobileFilters && (
           <>
@@ -879,7 +1141,7 @@ export default function CoffeeCategoryPage() {
               {/* Filters Content */}
               <div className="flex-1 overflow-y-auto p-4">
                 <div className="bg-white rounded-2xl border border-amber-200">
-                  {/* Categories - DYNAMIC */}
+                  {/* Categories */}
                   <FilterSection title="دسته‌بندی‌ها" filterKey="categories">
                     <div className="space-y-2">
                       {categoriesLoading ? (
@@ -898,8 +1160,8 @@ export default function CoffeeCategoryPage() {
                             <div className="flex items-center gap-2">
                               <input
                                 type="checkbox"
-                                checked={category.active}
-                                onChange={() => toggleCategoryActive(category.id)}
+                                checked={activeFilters.selectedCategories.includes(category.name)}
+                                onChange={() => handleCategoryFilter(category.id, category.name)}
                                 className="rounded border-amber-300 text-amber-600 focus:ring-amber-500"
                               />
                               <span className="text-sm text-gray-600 group-hover:text-amber-700 transition-colors font-[var(--font-yekan)]">
@@ -915,7 +1177,7 @@ export default function CoffeeCategoryPage() {
                     </div>
                   </FilterSection>
 
-                  {/* Price Range - DYNAMIC */}
+                  {/* Price Range - FIXED */}
                   <FilterSection title="محدوده قیمت" filterKey="price">
                     <div className="space-y-3">
                       {filters.priceRanges.map((range) => (
@@ -923,28 +1185,28 @@ export default function CoffeeCategoryPage() {
                           key={range.id}
                           onClick={() => handlePriceRangeSelect(range)}
                           className={`w-full text-right py-3 px-4 rounded-xl border transition-all duration-200 font-[var(--font-yekan)] text-sm ${
-                            selectedPriceRange === range.value
+                            activeFilters.selectedPriceRange === range.value
                               ? 'bg-amber-500 text-white border-amber-500 shadow-md'
                               : 'bg-white text-gray-700 border-amber-200 hover:bg-amber-50 hover:border-amber-300'
                           }`}
                         >
                           <div className="flex items-center justify-between">
                             <span>{range.label}</span>
-                            {selectedPriceRange === range.value && (
+                            {activeFilters.selectedPriceRange === range.value && (
                               <div className="w-2 h-2 bg-white rounded-full"></div>
                             )}
                           </div>
                         </button>
                       ))}
                       
-                      {/* Custom Price Range for Mobile */}
+                      {/* Custom Price Range for Mobile - FIXED */}
                       <div className="bg-amber-50 rounded-xl p-4 border border-amber-200">
                         <div className="flex gap-2 mb-3">
                           <div className="flex-1">
                             <input
                               type="text"
                               value={customMinPrice}
-                              onChange={(e) => setCustomMinPrice(e.target.value.replace(/[^0-9]/g, ''))}
+                              onChange={(e) => handleCustomMinPriceChange(e.target.value)}
                               placeholder="حداقل قیمت"
                               className="w-full px-3 py-2 text-sm border border-amber-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 font-[var(--font-yekan)] text-left"
                             />
@@ -953,7 +1215,7 @@ export default function CoffeeCategoryPage() {
                             <input
                               type="text"
                               value={customMaxPrice}
-                              onChange={(e) => setCustomMaxPrice(e.target.value.replace(/[^0-9]/g, ''))}
+                              onChange={(e) => handleCustomMaxPriceChange(e.target.value)}
                               placeholder="حداکثر قیمت"
                               className="w-full px-3 py-2 text-sm border border-amber-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 font-[var(--font-yekan)] text-left"
                             />
@@ -969,12 +1231,17 @@ export default function CoffeeCategoryPage() {
                     </div>
                   </FilterSection>
 
-                  {/* Brands - DYNAMIC */}
+                  {/* Brands */}
                   <FilterSection title="برندها" filterKey="brands">
                     <div className="space-y-2">
                       {filters.brands.map((brand) => (
                         <label key={brand} className="flex items-center gap-2 cursor-pointer group">
-                          <input type="checkbox" className="rounded border-amber-300 text-amber-600 focus:ring-amber-500" />
+                          <input 
+                            type="checkbox" 
+                            checked={activeFilters.selectedBrands.includes(brand)}
+                            onChange={() => handleBrandFilter(brand)}
+                            className="rounded border-amber-300 text-amber-600 focus:ring-amber-500" 
+                          />
                           <span className="text-sm text-gray-600 group-hover:text-amber-700 transition-colors font-[var(--font-yekan)]">
                             {brand}
                           </span>
@@ -983,12 +1250,17 @@ export default function CoffeeCategoryPage() {
                     </div>
                   </FilterSection>
 
-                  {/* Ratings - DYNAMIC */}
+                  {/* Ratings */}
                   <FilterSection title="امتیاز" filterKey="ratings">
                     <div className="space-y-2">
                       {filters.ratings.map((rating) => (
                         <label key={rating} className="flex items-center gap-2 cursor-pointer group">
-                          <input type="checkbox" className="rounded border-amber-300 text-amber-600 focus:ring-amber-500" />
+                          <input 
+                            type="checkbox" 
+                            checked={activeFilters.selectedRatings.includes(rating)}
+                            onChange={() => handleRatingFilter(rating)}
+                            className="rounded border-amber-300 text-amber-600 focus:ring-amber-500" 
+                          />
                           <div className="flex items-center gap-1">
                             {[...Array(5)].map((_, i) => (
                               <FiStar
