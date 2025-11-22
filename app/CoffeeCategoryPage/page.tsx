@@ -133,96 +133,99 @@ export default function CoffeeCategoryPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [categoriesLoading, setCategoriesLoading] = useState<boolean>(true);
 
-  // Fetch categories from API
+  // Fetch categories and products from API
   useEffect(() => {
-    async function loadCategories() {
+    async function loadData() {
       try {
         setCategoriesLoading(true);
-        const response = await fetch('https://coffee-shop-backend-k3un.onrender.com/api/v1/category');
+        setLoading(true);
         
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+        // Fetch categories and products in parallel
+        const [categoriesResponse, productsResponse] = await Promise.all([
+          fetch('https://coffee-shop-backend-k3un.onrender.com/api/v1/category'),
+          fetch('https://coffee-shop-backend-k3un.onrender.com/api/v1/product')
+        ]);
+        
+        if (!categoriesResponse.ok || !productsResponse.ok) {
+          throw new Error(`HTTP error! status: ${categoriesResponse.status}, ${productsResponse.status}`);
         }
         
-        const result: CategoriesApiResponse = await response.json();
+        const categoriesResult: CategoriesApiResponse = await categoriesResponse.json();
+        const productsResult: ProductsApiResponse = await productsResponse.json();
         
-        if (result.success && result.data.categories) {
-          const mappedCategories = result.data.categories
-            .filter(cat => cat.isActive)
-            .map((category, index) => ({
-              id: category._id,
-              name: category.name,
-              count: category.productsCount || 0,
-              active: index === 0
-            }));
-          
-          setCategories(mappedCategories);
-        } else {
-          throw new Error('Failed to fetch categories from backend');
+        if (!categoriesResult.success || !productsResult.success) {
+          throw new Error('Failed to fetch data from backend');
         }
+
+        const allProductsData = productsResult.data.products.map((product) => ({
+          id: product._id,
+          name: product.name,
+          price: product.priceAfterDiscount || product.price,
+          originalPrice: product.originalPrice,
+          image: product.image,
+          category: product.category?.name || 'قهوه',
+          badge: product.badge,
+          rating: product.rating || 0,
+          reviews: product.reviews || 0,
+          isPrime: product.isPrime,
+          discount: product.discount,
+          type: 'regular',
+          positiveFeature: product.positiveFeature,
+          status: getStatusFromBadge(product.badge),
+          brand: product.brand
+        }));
+
+        setAllProducts(allProductsData);
+        setCoffeeProducts(allProductsData);
+        
+        // Calculate product counts for each category
+        const categoryProductCounts = new Map();
+        allProductsData.forEach(product => {
+          const categoryName = product.category;
+          categoryProductCounts.set(categoryName, (categoryProductCounts.get(categoryName) || 0) + 1);
+        });
+
+        // Map categories with actual product counts
+        const mappedCategories = categoriesResult.data.categories
+          .filter(cat => cat.isActive)
+          .map((category, index) => ({
+            id: category._id,
+            name: category.name,
+            count: categoryProductCounts.get(category.name) || 0,
+            active: index === 0
+          }));
+
+        // Add "All Categories" option with total count
+        const allCategoriesOption = {
+          id: "all",
+          name: "همه دسته‌بندی‌ها",
+          count: allProductsData.length,
+          active: true
+        };
+
+        setCategories([allCategoriesOption, ...mappedCategories]);
+        
+        // Generate dynamic filters from products data
+        generateDynamicFilters(allProductsData);
+
       } catch (error) {
-        console.error('Error loading categories:', error);
+        console.error('Error loading data:', error);
+        // Fallback to static data
         setCategories([
           { id: "1", name: "همه دسته‌بندی‌ها", count: 0, active: true },
           { id: "2", name: "قهوه اسپرسو", count: 0, active: false },
           { id: "3", name: "قهوه ترک", count: 0, active: false },
           { id: "4", name: "دانه قهوه", count: 0, active: false }
         ]);
-      } finally {
-        setCategoriesLoading(false);
-      }
-    }
-    
-    loadCategories();
-  }, []);
-
-  // Fetch products from API and generate dynamic filters
-  useEffect(() => {
-    async function loadProducts() {
-      try {
-        setLoading(true);
-        const response = await fetch('https://coffee-shop-backend-k3un.onrender.com/api/v1/product');
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const result: ProductsApiResponse = await response.json();
-        
-        if (result.success && result.data.products) {
-          const mappedProducts = result.data.products.map((product) => ({
-            id: product._id,
-            name: product.name,
-            price: product.priceAfterDiscount || product.price,
-            originalPrice: product.originalPrice,
-            image: product.image,
-            category: product.category?.name || 'قهوه',
-            badge: product.badge,
-            rating: product.rating || 0,
-            reviews: product.reviews || 0,
-            isPrime: product.isPrime,
-            discount: product.discount,
-            type: 'regular',
-            positiveFeature: product.positiveFeature,
-            status: getStatusFromBadge(product.badge),
-            brand: product.brand
-          }));
-          
-          setAllProducts(mappedProducts);
-          setCoffeeProducts(mappedProducts);
-          
-          generateDynamicFilters(mappedProducts);
-        }
-      } catch (error) {
-        console.error('Error loading products:', error);
         setAllProducts([]);
         setCoffeeProducts([]);
       } finally {
+        setCategoriesLoading(false);
         setLoading(false);
       }
     }
     
-    loadProducts();
+    loadData();
   }, []);
 
   // Apply filters whenever activeFilters change
@@ -291,7 +294,7 @@ export default function CoffeeCategoryPage() {
       );
     }
 
-    // Filter by price range - FIXED: Use activeFilters.priceRange
+    // Filter by price range
     filteredProducts = filteredProducts.filter(product => 
       product.price >= activeFilters.priceRange[0] && product.price <= activeFilters.priceRange[1]
     );
@@ -303,8 +306,9 @@ export default function CoffeeCategoryPage() {
       );
     }
 
-    // Filter by categories
-    if (activeFilters.selectedCategories.length > 0) {
+    // Filter by categories (excluding "All Categories")
+    if (activeFilters.selectedCategories.length > 0 && 
+        !activeFilters.selectedCategories.includes("همه دسته‌بندی‌ها")) {
       filteredProducts = filteredProducts.filter(product => 
         activeFilters.selectedCategories.includes(product.category)
       );
@@ -346,10 +350,20 @@ export default function CoffeeCategoryPage() {
   // Handle category filter change
   const handleCategoryFilter = (categoryId: string, categoryName: string) => {
     setActiveFilters(prev => {
-      const isSelected = prev.selectedCategories.includes(categoryName);
-      const updatedCategories = isSelected
-        ? prev.selectedCategories.filter(c => c !== categoryName)
-        : [...prev.selectedCategories, categoryName];
+      let updatedCategories: string[];
+      
+      if (categoryName === "همه دسته‌بندی‌ها") {
+        // If "All Categories" is selected, clear other category selections
+        updatedCategories = prev.selectedCategories.includes("همه دسته‌بندی‌ها") 
+          ? [] 
+          : ["همه دسته‌بندی‌ها"];
+      } else {
+        // For specific categories
+        const isSelected = prev.selectedCategories.includes(categoryName);
+        updatedCategories = isSelected
+          ? prev.selectedCategories.filter(c => c !== categoryName && c !== "همه دسته‌بندی‌ها")
+          : [...prev.selectedCategories.filter(c => c !== "همه دسته‌بندی‌ها"), categoryName];
+      }
       
       return {
         ...prev,
@@ -357,13 +371,14 @@ export default function CoffeeCategoryPage() {
       };
     });
 
+    // Update the categories UI state
     setCategories(prev => prev.map(cat => ({
       ...cat,
       active: cat.id === categoryId ? !cat.active : cat.active
     })));
   };
 
-  // Handle price range selection - FIXED
+  // Handle price range selection
   const handlePriceRangeSelect = (range: PriceRange) => {
     setActiveFilters(prev => ({
       ...prev,
@@ -374,7 +389,7 @@ export default function CoffeeCategoryPage() {
     setCustomMaxPrice(range.max.toString());
   };
 
-  // Handle custom price range - FIXED
+  // Handle custom price range
   const handleCustomPriceApply = () => {
     const min = parseInt(customMinPrice) || 0;
     const max = parseInt(customMaxPrice) || 1000000;
@@ -394,7 +409,7 @@ export default function CoffeeCategoryPage() {
     setCustomMaxPrice(validatedMax.toString());
   };
 
-  // Handle individual custom price input changes - NEW: Real-time updates
+  // Handle individual custom price input changes
   const handleCustomMinPriceChange = (value: string) => {
     const numericValue = value.replace(/[^0-9]/g, '');
     setCustomMinPrice(numericValue);
@@ -431,7 +446,7 @@ export default function CoffeeCategoryPage() {
     }));
   };
 
-  // Clear all filters - FIXED: Reset price range properly
+  // Clear all filters
   const clearAllFilters = () => {
     // Get the actual min and max prices from all products
     const prices = allProducts.map(p => p.price).filter(price => price > 0);
@@ -449,9 +464,10 @@ export default function CoffeeCategoryPage() {
     setCustomMinPrice(minPrice.toString());
     setCustomMaxPrice(maxPrice.toString());
     
-    setCategories(prev => prev.map((cat, index) => ({
+    // Reset categories UI - only "All Categories" active
+    setCategories(prev => prev.map(cat => ({
       ...cat,
-      active: index === 0
+      active: cat.id === "all"
     })));
   };
 
@@ -724,7 +740,7 @@ export default function CoffeeCategoryPage() {
                 )}
               </div>
 
-              {/* Categories */}
+              {/* Categories - FIXED: Now shows correct product counts */}
               <div className="mb-6">
                 <h4 className="font-semibold text-gray-700 mb-3 font-[var(--font-yekan)]">دسته‌بندی‌ها</h4>
                 <div className="space-y-2">
@@ -767,7 +783,7 @@ export default function CoffeeCategoryPage() {
                 </div>
               </div>
 
-              {/* Price Range Filter - FIXED */}
+              {/* Price Range Filter */}
               <div className="mb-6">
                 <h4 className="font-semibold text-gray-700 mb-4 font-[var(--font-yekan)]">محدوده قیمت</h4>
                 
@@ -796,7 +812,7 @@ export default function CoffeeCategoryPage() {
                   ))}
                 </div>
 
-                {/* Custom Price Range Input - FIXED: Real-time updates */}
+                {/* Custom Price Range Input */}
                 <div className="bg-amber-50 rounded-xl p-4 border border-amber-200">
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-sm text-gray-700 font-[var(--font-yekan)]">قیمت دلخواه</span>
@@ -1108,7 +1124,7 @@ export default function CoffeeCategoryPage() {
         </div>
       </div>
 
-      {/* Mobile Filters Modal - Updated with fixed price range */}
+      {/* Mobile Filters Modal */}
       <AnimatePresence>
         {showMobileFilters && (
           <>
@@ -1141,7 +1157,7 @@ export default function CoffeeCategoryPage() {
               {/* Filters Content */}
               <div className="flex-1 overflow-y-auto p-4">
                 <div className="bg-white rounded-2xl border border-amber-200">
-                  {/* Categories */}
+                  {/* Categories - FIXED: Now shows correct product counts */}
                   <FilterSection title="دسته‌بندی‌ها" filterKey="categories">
                     <div className="space-y-2">
                       {categoriesLoading ? (
@@ -1177,7 +1193,7 @@ export default function CoffeeCategoryPage() {
                     </div>
                   </FilterSection>
 
-                  {/* Price Range - FIXED */}
+                  {/* Price Range */}
                   <FilterSection title="محدوده قیمت" filterKey="price">
                     <div className="space-y-3">
                       {filters.priceRanges.map((range) => (
@@ -1199,7 +1215,7 @@ export default function CoffeeCategoryPage() {
                         </button>
                       ))}
                       
-                      {/* Custom Price Range for Mobile - FIXED */}
+                      {/* Custom Price Range for Mobile */}
                       <div className="bg-amber-50 rounded-xl p-4 border border-amber-200">
                         <div className="flex gap-2 mb-3">
                           <div className="flex-1">
