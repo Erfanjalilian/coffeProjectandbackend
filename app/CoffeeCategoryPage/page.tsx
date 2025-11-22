@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
-import { FiFilter, FiGrid, FiList, FiStar, FiChevronDown, FiX, FiMessageCircle } from "react-icons/fi";
+import { FiFilter, FiGrid, FiList, FiStar, FiChevronDown, FiX, FiMessageCircle, FiCoffee } from "react-icons/fi";
 import Link from "next/link";
 
 interface Product {
@@ -20,7 +20,7 @@ interface Product {
   type: string;
   positiveFeature: string;
   status: string;
-  brand?: string; // Added brand field
+  brand?: string;
 }
 
 interface Category {
@@ -76,7 +76,7 @@ interface ProductsApiResponse {
       name: string;
       description: string;
       positiveFeature: string;
-      category: string | null;
+      category: any;
       badge: string;
       images: string[];
       image: string;
@@ -90,7 +90,10 @@ interface ProductsApiResponse {
       isPremium: boolean;
       features: string[];
       priceAfterDiscount: number;
-      brand?: string; // Added brand field
+      brand?: string;
+      userReviews: Array<{
+        rating: number;
+      }>;
     }>;
     pagination: {
       page: number;
@@ -178,17 +181,17 @@ export default function CoffeeCategoryPage() {
             name: product.name,
             price: product.priceAfterDiscount || product.price,
             originalPrice: product.originalPrice,
-            image: `https://coffee-shop-backend-k3un.onrender.com/${product.image}`,
-            category: product.category || 'قهوه',
+            image: product.image, // Keep as is for now - placeholder will be handled
+            category: product.category?.name || 'قهوه',
             badge: product.badge,
-            rating: product.rating,
-            reviews: product.reviews,
+            rating: product.rating || 0,
+            reviews: product.reviews || 0,
             isPrime: product.isPrime,
             discount: product.discount,
             type: 'regular',
             positiveFeature: product.positiveFeature,
             status: getStatusFromBadge(product.badge),
-            brand: product.brand // Map brand from API
+            brand: product.brand
           }));
           
           setCoffeeProducts(mappedProducts);
@@ -212,7 +215,7 @@ export default function CoffeeCategoryPage() {
     if (products.length === 0) {
       // Fallback to static filters if no products
       setFilters({
-        brands: ["دیویدوف", "لاوازا", "ایلی", "استارباکس", "نسپرسو", "کمکس"],
+        brands: ["برندهای موجود"],
         priceRanges: [
           { id: 1, label: "زیر ۱۰۰ هزار تومان", value: "0-100000", min: 0, max: 100000 },
           { id: 2, label: "۱۰۰ تا ۳۰۰ هزار تومان", value: "100000-300000", min: 100000, max: 300000 },
@@ -233,18 +236,25 @@ export default function CoffeeCategoryPage() {
 
     // Generate dynamic price ranges based on actual product prices
     const prices = products.map(p => p.price).filter(price => price > 0);
-    const minPrice = Math.min(...prices);
-    const maxPrice = Math.max(...prices);
+    const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+    const maxPrice = prices.length > 0 ? Math.max(...prices) : 1000000;
     
     const dynamicPriceRanges = generatePriceRanges(minPrice, maxPrice);
 
-   // تغییر تایپ برند به any[]
-setFilters({
-  brands: (uniqueBrands as any[])?.length > 0 ? (uniqueBrands as any[]) : ["برندهای موجود"],
-  priceRanges: dynamicPriceRanges,
-  ratings: [4, 3, 2, 1]
-});
+    // Generate dynamic ratings based on actual product ratings
+    const availableRatings = Array.from(new Set(products
+      .map(product => Math.floor(product.rating))
+      .filter(rating => rating > 0)
+    )).sort((a, b) => b - a); // Sort descending
 
+    // If no ratings available, use default
+    const dynamicRatings = availableRatings.length > 0 ? availableRatings : [4, 3, 2, 1];
+
+    setFilters({
+      brands: uniqueBrands.length > 0 ? uniqueBrands as string[] : ["برندهای موجود"],
+      priceRanges: dynamicPriceRanges,
+      ratings: dynamicRatings
+    });
 
     // Set initial price range based on actual data
     setPriceRange([minPrice, maxPrice]);
@@ -252,10 +262,23 @@ setFilters({
     setCustomMaxPrice(maxPrice.toString());
   };
 
-  // Generate price ranges based on actual price data
+  // Generate price ranges based on actual price data - FIXED
   const generatePriceRanges = (minPrice: number, maxPrice: number): PriceRange[] => {
+    if (minPrice === maxPrice || maxPrice - minPrice < 10000) {
+      // If prices are very close, create simple ranges
+      return [
+        {
+          id: 1,
+          label: `${formatPrice(minPrice)}`,
+          value: `${minPrice}-${maxPrice}`,
+          min: minPrice,
+          max: maxPrice
+        }
+      ];
+    }
+
     const ranges: PriceRange[] = [];
-    const rangeCount = 5; // Number of price ranges to generate
+    const rangeCount = Math.min(5, Math.ceil((maxPrice - minPrice) / 100000) || 1);
     
     const step = Math.ceil((maxPrice - minPrice) / rangeCount);
     
@@ -299,7 +322,16 @@ setFilters({
   const handleCustomPriceApply = () => {
     const min = parseInt(customMinPrice) || 0;
     const max = parseInt(customMaxPrice) || 1000000;
-    setPriceRange([min, max]);
+    
+    // Validate min and max
+    if (min > max) {
+      // Swap values if min is greater than max
+      setPriceRange([max, min]);
+      setCustomMinPrice(max.toString());
+      setCustomMaxPrice(min.toString());
+    } else {
+      setPriceRange([min, max]);
+    }
     setSelectedPriceRange("custom");
   };
 
@@ -361,6 +393,32 @@ setFilters({
       </AnimatePresence>
     </div>
   );
+
+  // Image placeholder component
+  const ProductImage = ({ src, alt, className }: { src: string; alt: string; className: string }) => {
+    const [imageError, setImageError] = useState(false);
+    
+    const handleImageError = () => {
+      setImageError(true);
+    };
+
+    if (imageError || !src || src.includes('undefined')) {
+      return (
+        <div className={`${className} bg-gradient-to-br from-amber-100 to-amber-200 flex items-center justify-center`}>
+          <FiCoffee className="text-amber-400 text-2xl" />
+        </div>
+      );
+    }
+
+    return (
+      <img
+        src={src}
+        alt={alt}
+        className={className}
+        onError={handleImageError}
+      />
+    );
+  };
 
   if (loading) {
     return (
@@ -444,7 +502,7 @@ setFilters({
                 </div>
               </div>
 
-              {/* DYNAMIC Price Range Filter */}
+              {/* DYNAMIC Price Range Filter - FIXED */}
               <div className="mb-6">
                 <h4 className="font-semibold text-gray-700 mb-4 font-[var(--font-yekan)]">محدوده قیمت</h4>
                 
@@ -473,7 +531,7 @@ setFilters({
                   ))}
                 </div>
 
-                {/* Custom Price Range Input */}
+                {/* Custom Price Range Input - IMPROVED */}
                 <div className="bg-amber-50 rounded-xl p-4 border border-amber-200">
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-sm text-gray-700 font-[var(--font-yekan)]">قیمت دلخواه</span>
@@ -537,7 +595,7 @@ setFilters({
                 </div>
               </div>
 
-              {/* Ratings - Static (as it's based on star system) */}
+              {/* DYNAMIC Ratings Filter - FIXED */}
               <div>
                 <h4 className="font-semibold text-gray-700 mb-3 font-[var(--font-yekan)]">امتیاز</h4>
                 <div className="space-y-2">
@@ -669,9 +727,9 @@ setFilters({
                       viewMode === 'list' ? 'flex' : ''
                     }`}
                   >
-                    {/* Product Image */}
+                    {/* Product Image with placeholder */}
                     <div className={`relative ${viewMode === 'list' ? 'w-48 flex-shrink-0' : 'h-48'}`}>
-                      <img
+                      <ProductImage
                         src={product.image}
                         alt={product.name}
                         className={`w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 ${
@@ -925,7 +983,7 @@ setFilters({
                     </div>
                   </FilterSection>
 
-                  {/* Ratings - Static */}
+                  {/* Ratings - DYNAMIC */}
                   <FilterSection title="امتیاز" filterKey="ratings">
                     <div className="space-y-2">
                       {filters.ratings.map((rating) => (
