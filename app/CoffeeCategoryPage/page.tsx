@@ -133,6 +133,9 @@ export default function CoffeeCategoryPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [categoriesLoading, setCategoriesLoading] = useState<boolean>(true);
 
+  // NEW STATE: For Recommended and Discounted filters
+  const [quickFilter, setQuickFilter] = useState<'all' | 'recommended' | 'discounted'>('all');
+
   // Fetch categories and products from API
   useEffect(() => {
     async function loadData() {
@@ -228,10 +231,10 @@ export default function CoffeeCategoryPage() {
     loadData();
   }, []);
 
-  // Apply filters whenever activeFilters change
+  // Apply filters whenever activeFilters or quickFilter change
   useEffect(() => {
     applyFilters();
-  }, [activeFilters, allProducts]);
+  }, [activeFilters, allProducts, quickFilter]);
 
   // Generate dynamic filters based on actual product data
   const generateDynamicFilters = (products: Product[]) => {
@@ -283,7 +286,7 @@ export default function CoffeeCategoryPage() {
     }));
   };
 
-  // Apply all active filters
+  // Apply all active filters including quick filters
   const applyFilters = () => {
     let filteredProducts = [...allProducts];
 
@@ -311,6 +314,20 @@ export default function CoffeeCategoryPage() {
         !activeFilters.selectedCategories.includes("همه دسته‌بندی‌ها")) {
       filteredProducts = filteredProducts.filter(product => 
         activeFilters.selectedCategories.includes(product.category)
+      );
+    }
+
+    // NEW: Apply quick filters (Recommended and Discounted)
+    if (quickFilter === 'recommended') {
+      // Filter recommended products (you can define your own logic here)
+      // For example: products with rating >= 4 or isPrime products
+      filteredProducts = filteredProducts.filter(product => 
+        product.rating >= 4 || product.isPrime
+      );
+    } else if (quickFilter === 'discounted') {
+      // Filter discounted products
+      filteredProducts = filteredProducts.filter(product => 
+        product.discount > 0
       );
     }
 
@@ -464,6 +481,9 @@ export default function CoffeeCategoryPage() {
     setCustomMinPrice(minPrice.toString());
     setCustomMaxPrice(maxPrice.toString());
     
+    // Reset quick filter
+    setQuickFilter('all');
+    
     // Reset categories UI - only "All Categories" active
     setCategories(prev => prev.map(cat => ({
       ...cat,
@@ -604,7 +624,8 @@ export default function CoffeeCategoryPage() {
     activeFilters.selectedCategories.length > 0 ||
     activeFilters.selectedPriceRange !== "" ||
     activeFilters.priceRange[0] > 0 ||
-    activeFilters.priceRange[1] < 1000000;
+    activeFilters.priceRange[1] < 1000000 ||
+    quickFilter !== 'all';
 
   if (loading) {
     return (
@@ -631,90 +652,7 @@ export default function CoffeeCategoryPage() {
           <span>دسته‌بندی کالا ها</span>
         </motion.div>
 
-        {/* Active Filters Display */}
-        {hasActiveFilters && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-6 p-4 bg-amber-50 rounded-2xl border border-amber-200"
-          >
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-sm text-amber-700 font-[var(--font-yekan)]">فیلترهای فعال:</span>
-              
-              {activeFilters.selectedBrands.map(brand => (
-                <span key={brand} className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-sm font-[var(--font-yekan)] flex items-center gap-1">
-                  برند: {brand}
-                  <button 
-                    onClick={() => handleBrandFilter(brand)}
-                    className="hover:text-amber-900"
-                  >
-                    <FiX size={14} />
-                  </button>
-                </span>
-              ))}
-              
-              {activeFilters.selectedRatings.map(rating => (
-                <span key={rating} className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-sm font-[var(--font-yekan)] flex items-center gap-1">
-                  امتیاز: {rating}+
-                  <button 
-                    onClick={() => handleRatingFilter(rating)}
-                    className="hover:text-amber-900"
-                  >
-                    <FiX size={14} />
-                  </button>
-                </span>
-              ))}
-              
-              {activeFilters.selectedCategories.map(category => (
-                <span key={category} className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-sm font-[var(--font-yekan)] flex items-center gap-1">
-                  دسته: {category}
-                  <button 
-                    onClick={() => {
-                      const categoryObj = categories.find(cat => cat.name === category);
-                      if (categoryObj) {
-                        handleCategoryFilter(categoryObj.id, category);
-                      }
-                    }}
-                    className="hover:text-amber-900"
-                  >
-                    <FiX size={14} />
-                  </button>
-                </span>
-              ))}
-              
-              {(activeFilters.selectedPriceRange || activeFilters.priceRange[0] > 0 || activeFilters.priceRange[1] < 1000000) && (
-                <span className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-sm font-[var(--font-yekan)] flex items-center gap-1">
-                  قیمت: {formatPrice(activeFilters.priceRange[0])} - {formatPrice(activeFilters.priceRange[1])}
-                  <button 
-                    onClick={() => {
-                      const prices = allProducts.map(p => p.price).filter(price => price > 0);
-                      const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
-                      const maxPrice = prices.length > 0 ? Math.max(...prices) : 1000000;
-                      
-                      setActiveFilters(prev => ({ 
-                        ...prev, 
-                        selectedPriceRange: "", 
-                        priceRange: [minPrice, maxPrice] 
-                      }));
-                      setCustomMinPrice(minPrice.toString());
-                      setCustomMaxPrice(maxPrice.toString());
-                    }}
-                    className="hover:text-amber-900"
-                  >
-                    <FiX size={14} />
-                  </button>
-                </span>
-              )}
-              
-              <button 
-                onClick={clearAllFilters}
-                className="text-red-500 hover:text-red-700 text-sm font-[var(--font-yekan)] mr-auto"
-              >
-                حذف همه فیلترها
-              </button>
-            </div>
-          </motion.div>
-        )}
+        {/* REMOVED: The Active Filters Display section has been removed as requested */}
 
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Desktop Sidebar Filters */}
@@ -740,7 +678,7 @@ export default function CoffeeCategoryPage() {
                 )}
               </div>
 
-              {/* Categories - FIXED: Now shows correct product counts */}
+              {/* Categories */}
               <div className="mb-6">
                 <h4 className="font-semibold text-gray-700 mb-3 font-[var(--font-yekan)]">دسته‌بندی‌ها</h4>
                 <div className="space-y-2">
@@ -966,6 +904,37 @@ export default function CoffeeCategoryPage() {
               </div>
             </motion.div>
 
+            {/* NEW: Quick Filter Buttons (Recommended and Discounted) */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="flex flex-wrap gap-3 mb-6"
+            >
+              {[
+                { key: 'all', label: 'همه محصولات' },
+                { key: 'recommended', label: 'توصیه شده ها' },
+                { key: 'discounted', label: 'تخفیف دارها' }
+              ].map((filter, index) => (
+                <motion.button
+                  key={filter.key}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.4, delay: index * 0.1 }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setQuickFilter(filter.key as 'all' | 'recommended' | 'discounted')}
+                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all font-[var(--font-yekan)] ${
+                    quickFilter === filter.key
+                      ? 'bg-amber-600 text-white shadow-lg'
+                      : 'bg-white text-gray-700 border border-amber-200 hover:bg-amber-50 hover:text-amber-700'
+                  }`}
+                >
+                  {filter.label}
+                </motion.button>
+              ))}
+            </motion.div>
+
             {/* Results Count */}
             <div className="mb-6">
               <p className="text-gray-600 font-[var(--font-yekan)]">
@@ -1157,7 +1126,7 @@ export default function CoffeeCategoryPage() {
               {/* Filters Content */}
               <div className="flex-1 overflow-y-auto p-4">
                 <div className="bg-white rounded-2xl border border-amber-200">
-                  {/* Categories - FIXED: Now shows correct product counts */}
+                  {/* Categories */}
                   <FilterSection title="دسته‌بندی‌ها" filterKey="categories">
                     <div className="space-y-2">
                       {categoriesLoading ? (
@@ -1286,6 +1255,30 @@ export default function CoffeeCategoryPage() {
                             ))}
                             <span className="text-xs text-gray-500 mr-1">و بالاتر</span>
                           </div>
+                        </label>
+                      ))}
+                    </div>
+                  </FilterSection>
+
+                  {/* NEW: Quick Filters for Mobile */}
+                  <FilterSection title="فیلترهای سریع" filterKey="quick">
+                    <div className="space-y-2">
+                      {[
+                        { key: 'all', label: 'همه محصولات' },
+                        { key: 'recommended', label: 'توصیه شده ها' },
+                        { key: 'discounted', label: 'تخفیف دارها' }
+                      ].map((filter) => (
+                        <label key={filter.key} className="flex items-center gap-2 cursor-pointer group">
+                          <input 
+                            type="radio"
+                            name="quickFilter"
+                            checked={quickFilter === filter.key}
+                            onChange={() => setQuickFilter(filter.key as 'all' | 'recommended' | 'discounted')}
+                            className="rounded-full border-amber-300 text-amber-600 focus:ring-amber-500" 
+                          />
+                          <span className="text-sm text-gray-600 group-hover:text-amber-700 transition-colors font-[var(--font-yekan)]">
+                            {filter.label}
+                          </span>
                         </label>
                       ))}
                     </div>

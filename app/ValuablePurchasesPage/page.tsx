@@ -67,7 +67,7 @@ interface PriceRange {
 interface FilterState {
   categories: string[];
   priceRanges: string[];
-  features: string[];
+  brands: string[];
   specialFilters: string[];
 }
 
@@ -76,10 +76,11 @@ export default function ValuablePurchasesPage() {
   const [expandedFilter, setExpandedFilter] = useState<string | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [brands, setBrands] = useState<Category[]>([]);
   const [filterState, setFilterState] = useState<FilterState>({
     categories: [],
     priceRanges: [],
-    features: [],
+    brands: [],
     specialFilters: []
   });
   const [loading, setLoading] = useState<boolean>(true);
@@ -101,12 +102,24 @@ export default function ValuablePurchasesPage() {
 
           // Extract categories from API data
           const categoryMap = new Map();
+          const brandMap = new Map();
+          
           apiData.data.valueBuys.forEach(item => {
             const categoryName = item.product.brand || 'دسته‌بندی نشده';
+            const brandName = item.product.brand || 'برند مشخص نشده';
+            
+            // Count categories
             if (categoryMap.has(categoryName)) {
               categoryMap.set(categoryName, categoryMap.get(categoryName) + 1);
             } else {
               categoryMap.set(categoryName, 1);
+            }
+            
+            // Count brands
+            if (brandMap.has(brandName)) {
+              brandMap.set(brandName, brandMap.get(brandName) + 1);
+            } else {
+              brandMap.set(brandName, 1);
             }
           });
 
@@ -117,7 +130,15 @@ export default function ValuablePurchasesPage() {
             active: false
           }));
 
+          const extractedBrands: Category[] = Array.from(brandMap.entries()).map(([name, count], index) => ({
+            id: `brand-${index}`,
+            name,
+            count,
+            active: false
+          }));
+
           setCategories(extractedCategories);
+          setBrands(extractedBrands);
         }
       } catch (error) {
         console.error('Error loading data from API:', error);
@@ -136,6 +157,11 @@ export default function ValuablePurchasesPage() {
       return false;
     }
 
+    // Brand filter
+    if (filterState.brands.length > 0 && !filterState.brands.includes(product.product.brand)) {
+      return false;
+    }
+
     // Price range filter
     if (filterState.priceRanges.length > 0) {
       const price = product.product.priceAfterDiscount || product.product.price;
@@ -144,19 +170,6 @@ export default function ValuablePurchasesPage() {
         return price >= min && price <= max;
       });
       if (!matchesPrice) return false;
-    }
-
-    // Features filter
-    if (filterState.features.length > 0) {
-      const matchesFeatures = filterState.features.some(feature => {
-        switch (feature) {
-          case 'recommended': return product.features.recommended;
-          case 'lowStock': return product.features.lowStock;
-          case 'rareDeal': return product.features.rareDeal;
-          default: return false;
-        }
-      });
-      if (!matchesFeatures) return false;
     }
 
     // Special filters
@@ -371,6 +384,37 @@ export default function ValuablePurchasesPage() {
                 </div>
               </div>
 
+              {/* Brands - Dynamic from API */}
+              <div className="mb-6">
+                <h4 className="font-semibold text-gray-700 mb-3 font-[var(--font-yekan)] flex items-center gap-2">
+                  <FiAward className="text-amber-500" />
+                  برندها
+                </h4>
+                <div className="space-y-2">
+                  {brands.map((brand) => (
+                    <motion.label
+                      key={brand.id}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className="flex items-center gap-3 cursor-pointer group p-3 rounded-xl border border-amber-200 hover:bg-amber-50 transition-all"
+                    >
+                      <input 
+                        type="checkbox" 
+                        checked={filterState.brands.includes(brand.name)}
+                        onChange={() => handleFilterChange('brands', brand.name)}
+                        className="rounded border-amber-300 text-amber-600 focus:ring-amber-500 w-4 h-4" 
+                      />
+                      <span className="text-sm text-gray-600 group-hover:text-amber-700 transition-colors font-[var(--font-yekan)] flex-1">
+                        {brand.name}
+                      </span>
+                      <span className="text-xs bg-amber-200 text-amber-700 px-2 py-1 rounded-full">
+                        {brand.count}
+                      </span>
+                    </motion.label>
+                  ))}
+                </div>
+              </div>
+
               {/* Price Range */}
               <div className="mb-6">
                 <h4 className="font-semibold text-gray-700 mb-3 font-[var(--font-yekan)] flex items-center gap-2">
@@ -398,38 +442,6 @@ export default function ValuablePurchasesPage() {
                   ))}
                 </div>
               </div>
-
-              {/* Features */}
-              <div>
-                <h4 className="font-semibold text-gray-700 mb-3 font-[var(--font-yekan)] flex items-center gap-2">
-                  <FiShield className="text-amber-500" />
-                  ویژگی‌ها
-                </h4>
-                <div className="space-y-2">
-                  {[
-                    { key: 'recommended', label: 'پیشنهاد ویژه' },
-                    { key: 'lowStock', label: 'موجودی محدود' },
-                    { key: 'rareDeal', label: 'فرصت استثنایی' }
-                  ].map((feature) => (
-                    <motion.label
-                      key={feature.key}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      className="flex items-center gap-3 cursor-pointer group p-3 rounded-xl border border-amber-200 hover:bg-amber-50 transition-all"
-                    >
-                      <input 
-                        type="checkbox" 
-                        checked={filterState.features.includes(feature.key)}
-                        onChange={() => handleFilterChange('features', feature.key)}
-                        className="rounded border-amber-300 text-amber-600 focus:ring-amber-500 w-4 h-4" 
-                      />
-                      <span className="text-sm text-gray-600 group-hover:text-amber-700 transition-colors font-[var(--font-yekan)] flex-1">
-                        {feature.label}
-                      </span>
-                    </motion.label>
-                  ))}
-                </div>
-              </div>
             </div>
           </motion.div>
 
@@ -450,6 +462,42 @@ export default function ValuablePurchasesPage() {
                 <FiChevronDown className="text-white" />
               </motion.button>
             </div>
+
+            {/* Consultation Banner - Kept exactly as in original design */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="bg-gradient-to-r from-emerald-500 to-green-600 rounded-2xl shadow-lg border border-emerald-400 p-6 mb-6 relative overflow-hidden"
+            >
+              <div className="absolute top-0 left-0 w-24 h-24 bg-white/10 rounded-full -translate-x-12 -translate-y-12"></div>
+              <div className="absolute bottom-0 right-0 w-20 h-20 bg-white/10 rounded-full translate-x-10 translate-y-10"></div>
+              
+              <div className="flex flex-col md:flex-row items-center justify-between gap-4 relative z-10">
+                <div className="flex items-center gap-4">
+                  <div className="bg-white/20 rounded-xl p-3 backdrop-blur-sm">
+                    <FiMessageCircle className="text-white text-xl" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-white mb-1 font-[var(--font-yekan)]">
+                      بیشترین ارزش دریافتی در مقابل پول پرداخت شده 
+                    </h3>
+                    <p className="text-emerald-100 font-[var(--font-yekan)] text-sm leading-relaxed">
+                      برای دریافت راهنمایی تخصصی در انتخاب محصول، روی دکمه "از من بپرس" کلیک کنید
+                    </p>
+                  </div>
+                </div>
+                
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="flex items-center gap-2 bg-white hover:bg-emerald-50 text-emerald-700 px-6 py-3 rounded-xl font-semibold transition-all shadow-lg font-[var(--font-yekan)] whitespace-nowrap"
+                >
+                  <FiMessageCircle size={18} />
+                  <span>از من بپرس</span>
+                </motion.button>
+              </div>
+            </motion.div>
 
             {/* Products Grid */}
             <motion.div
@@ -541,6 +589,19 @@ export default function ValuablePurchasesPage() {
 
                         {/* Buttons Section */}
                         <div className="flex flex-col gap-2">
+                          {/* Smart Consultation Button */}
+                          <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            className="flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg font-[var(--font-yekan)]"
+                            onClick={(e) => {
+                              e.preventDefault();
+                            }}
+                          >
+                            <FiMessageCircle size={14} />
+                            <span>مشاوره سریع (هوشمند)</span>
+                          </motion.button>
+
                           {/* Buy Button */}
                           <motion.button
                             whileHover={{ scale: 1.02 }}
@@ -548,10 +609,9 @@ export default function ValuablePurchasesPage() {
                             className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white px-4 py-3 rounded-xl font-semibold transition-all shadow-lg font-[var(--font-yekan)]"
                             onClick={(e) => {
                               e.preventDefault();
-                              // Add to cart logic here
                             }}
                           >
-                            افزودن به سبد خرید
+                            خرید
                           </motion.button>
                         </div>
                       </div>
@@ -638,6 +698,18 @@ export default function ValuablePurchasesPage() {
                 </div>
               </FilterSection>
 
+              {/* Brands in Mobile Modal */}
+              <FilterSection title="برندها" filterKey="brands">
+                <div className="space-y-2">
+                  {brands.map(brand => (
+                    <label key={brand.id} className="flex items-center justify-between p-3 rounded-xl border border-amber-200 hover:bg-amber-50 cursor-pointer font-[var(--font-yekan)]">
+                      <span>{brand.name}</span>
+                      <span className="text-sm bg-amber-200 text-amber-700 px-2 py-1 rounded-full">{brand.count}</span>
+                    </label>
+                  ))}
+                </div>
+              </FilterSection>
+
               <FilterSection title="محدوده قیمت" filterKey="price">
                 <div className="space-y-2">
                   {priceRanges.map(range => (
@@ -649,26 +721,6 @@ export default function ValuablePurchasesPage() {
                         className="w-4 h-4 text-amber-600 focus:ring-amber-500" 
                       />
                       <span className="flex-1">{range.label}</span>
-                    </label>
-                  ))}
-                </div>
-              </FilterSection>
-
-              <FilterSection title="ویژگی‌ها" filterKey="features">
-                <div className="space-y-2">
-                  {[
-                    { key: 'recommended', label: 'پیشنهاد ویژه' },
-                    { key: 'lowStock', label: 'موجودی محدود' },
-                    { key: 'rareDeal', label: 'فرصت استثنایی' }
-                  ].map((feature) => (
-                    <label key={feature.key} className="flex items-center gap-3 p-3 rounded-xl border border-amber-200 hover:bg-amber-50 cursor-pointer font-[var(--font-yekan)]">
-                      <input 
-                        type="checkbox" 
-                        checked={filterState.features.includes(feature.key)}
-                        onChange={() => handleFilterChange('features', feature.key)}
-                        className="w-4 h-4 text-amber-600 focus:ring-amber-500 rounded" 
-                      />
-                      <span className="flex-1">{feature.label}</span>
                     </label>
                   ))}
                 </div>
