@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 // API Configuration
-const API_BASE_URL = process.env.NEXT_PUBLIC_AUTH_API_BASE_URL ?? "https://coffee-shop-backend-k3un.onrender.com/api/v1";
+const API_BASE_URL = "https://coffee-shop-backend-k3un.onrender.com/api/v1";
 
 // API Response Type
 type ApiResponse<T> = {
@@ -19,7 +19,7 @@ type ApiResponse<T> = {
   message?: string;
 };
 
-// Error Handling - Fixed the error creation
+// Error Handling
 interface ApiError extends Error {
   status?: number;
 }
@@ -53,7 +53,7 @@ const resolveErrorMessage = (error: unknown) => {
       case 403:
         return "شما دسترسی لازم برای این عملیات را ندارید";
       case 404:
-        return "آدرس API یافت نشد. لطفاً با پشتیبانی تماس بگیرید";
+        return "قابلیت بروزرسانی پروفایل در حال حاضر در دسترس نیست. لطفاً با پشتیبانی تماس بگیرید";
       case 500:
         return "خطای داخلی سرور، لطفاً دوباره تلاش کنید";
       default:
@@ -77,15 +77,9 @@ export default function ProfilePage() {
   const router = useRouter();
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  
-  // Parse the full name from user data
-  const getUserFullName = () => {
-    return user?.name || "";
-  };
 
   // State for form fields
   const [formData, setFormData] = useState({
-    name: getUserFullName(),
     username: user?.username || "",
     phone: user?.phone || ""
   });
@@ -93,6 +87,7 @@ export default function ProfilePage() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [isUpdateSupported, setIsUpdateSupported] = useState(true);
 
   // Check authentication on component mount
   useEffect(() => {
@@ -107,7 +102,6 @@ export default function ProfilePage() {
   useEffect(() => {
     if (user) {
       setFormData({
-        name: user?.name || "",
         username: user?.username || "",
         phone: user?.phone || ""
       });
@@ -120,14 +114,11 @@ export default function ProfilePage() {
   }, [router]);
 
   // Track if form has been modified
-  const isFormModified = formData.name !== getUserFullName() || formData.username !== (user?.username || "");
+  const isFormModified = formData.username !== (user?.username || "");
 
   // Get user's display name for sidebar
   const getUserDisplayName = () => {
-    if (user?.name) {
-      return user.name;
-    }
-    return user?.phone || "کاربر";
+    return user?.username || user?.phone || "کاربر";
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -165,90 +156,92 @@ export default function ProfilePage() {
         throw createApiError("شناسه کاربر یافت نشد");
       }
 
-      // Try different endpoint variations with user ID
-      const endpointVariations = [
-        `${API_BASE_URL}/users/${user._id}`, // Most common pattern
-        `${API_BASE_URL}/user/${user._id}`,
-        `${API_BASE_URL}/users/me`, // For current user
-        `${API_BASE_URL}/user/profile`,
-        `${API_BASE_URL}/users/profile`
+      // Since the main endpoint returns 404, let's try common patterns
+      // Based on REST conventions and common patterns
+      const endpointsToTry = [
+        {
+          url: `${API_BASE_URL}/users/${user._id}`,
+          method: "PUT"
+        },
+        {
+          url: `${API_BASE_URL}/users/${user._id}`,
+          method: "PATCH"
+        },
+        {
+          url: `${API_BASE_URL}/user/${user._id}`,
+          method: "PUT"
+        },
+        {
+          url: `${API_BASE_URL}/user/${user._id}`,
+          method: "PATCH"
+        },
+        {
+          url: `${API_BASE_URL}/users/profile`,
+          method: "PUT"
+        },
+        {
+          url: `${API_BASE_URL}/user/profile`,
+          method: "PUT"
+        },
+        {
+          url: `${API_BASE_URL}/users/me`,
+          method: "PUT"
+        },
+        {
+          url: `${API_BASE_URL}/user/me`,
+          method: "PUT"
+        }
       ];
-
-      const methodVariations = ["PUT", "PATCH", "POST"];
 
       let lastError: Error | null = null;
 
-      // Try each endpoint with each method
-      for (const endpoint of endpointVariations) {
-        for (const method of methodVariations) {
-          try {
-            console.log(`🔄 Trying: ${method} ${endpoint}`);
+      for (const { url, method } of endpointsToTry) {
+        try {
+          console.log(`🔄 Trying: ${method} ${url}`);
+          
+          const response = await fetch(url, {
+            method: method,
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              username: formData.username
+            }),
+          });
+
+          console.log(`📥 Response status: ${response.status}`);
+
+          if (response.ok) {
+            const responseData = await response.json() as ApiResponse<any>;
+            console.log(`✅ Success with ${method} ${url}:`, responseData);
             
-            const response = await fetch(endpoint, {
-              method: method,
-              headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`
-              },
-              body: JSON.stringify({
-                name: formData.name,
+            // Update user context with new data
+            if (updateUser) {
+              const updatedUser = {
+                ...user,
                 username: formData.username
-              }),
-            });
-
-            console.log(`📥 Response status for ${method} ${endpoint}:`, response.status);
-
-            const responseText = await response.text();
-            console.log(`📥 Raw response:`, responseText);
-
-            if (response.ok) {
-              // Success case - even if response is empty
-              console.log(`✅ Success with ${method} ${endpoint}`);
-              
-              // Update user context with new data
-              if (updateUser) {
-                const updatedUser = {
-                  ...user,
-                  name: formData.name,
-                  username: formData.username
-                };
-                updateUser(updatedUser);
-                console.log("✅ User context updated");
-              }
-
-              setSuccessMessage("اطلاعات پروفایل با موفقیت به‌روزرسانی شد");
-              setTimeout(() => setSuccessMessage(""), 3000);
-              return; // Success, exit the function
-            } else {
-              // If response is not OK but we get a meaningful error
-              if (responseText) {
-                try {
-                  const data = JSON.parse(responseText) as ApiResponse<any>;
-                  lastError = createApiError(
-                    data.error || data.message || `خطای ${response.status}`,
-                    response.status
-                  );
-                } catch {
-                  lastError = createApiError(`خطای ${response.status}`, response.status);
-                }
-              } else {
-                lastError = createApiError(`خطای ${response.status}`, response.status);
-              }
-              console.log(`❌ ${method} ${endpoint} failed:`, lastError.message);
+              };
+              updateUser(updatedUser);
             }
-          } catch (fetchError) {
-            console.error(`❌ ${method} ${endpoint} error:`, fetchError);
-            lastError = fetchError as Error;
+
+            setSuccessMessage("نام کاربری با موفقیت به‌روزرسانی شد");
+            setTimeout(() => setSuccessMessage(""), 3000);
+            return; // Success!
+          } else {
+            const errorText = await response.text();
+            console.log(`❌ ${method} ${url} failed: ${response.status}`, errorText);
+            lastError = createApiError(`خطای ${response.status}`, response.status);
           }
+        } catch (err) {
+          console.error(`❌ ${method} ${url} error:`, err);
+          lastError = err as Error;
         }
       }
 
-      // If all endpoints and methods failed
-      if (lastError) {
-        throw lastError;
-      } else {
-        throw createApiError("همه endpointها و methodها با خطا مواجه شدند");
-      }
+      // If we tried all endpoints and none worked
+      setIsUpdateSupported(false);
+      throw createApiError("سیستم بروزرسانی پروفایل در حال حاضر در دسترس نیست. لطفاً با پشتیبانی تماس بگیرید", 404);
 
     } catch (err) {
       console.error("Profile update error:", err);
@@ -260,7 +253,6 @@ export default function ProfilePage() {
 
   const handleReset = () => {
     setFormData({
-      name: getUserFullName(),
       username: user?.username || "",
       phone: user?.phone || ""
     });
@@ -386,6 +378,19 @@ export default function ProfilePage() {
                 </motion.div>
               )}
 
+              {/* Update Not Supported Message */}
+              {!isUpdateSupported && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mb-6 bg-amber-50 border border-amber-200 rounded-xl p-4"
+                >
+                  <p className="text-amber-700 text-sm font-[var(--font-yekan)] text-center">
+                    قابلیت بروزرسانی پروفایل در حال حاضر در دسترس نیست. لطفاً با پشتیبانی تماس بگیرید.
+                  </p>
+                </motion.div>
+              )}
+
               {/* Profile Information Card */}
               <div className="bg-white rounded-2xl shadow-lg border border-amber-200 p-6 mb-6">
                 <div className="flex items-center gap-3 mb-6">
@@ -404,26 +409,6 @@ export default function ProfilePage() {
 
                 <form onSubmit={handleSave}>
                   <div className="space-y-6">
-                    {/* Full Name Field */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2 font-[var(--font-yekan)]">
-                        نام کامل
-                      </label>
-                      <input
-                        type="text"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 font-[var(--font-yekan)] bg-white"
-                        placeholder="نام و نام خانوادگی خود را وارد کنید"
-                      />
-                      {!formData.name && (
-                        <p className="text-amber-600 text-xs mt-2 font-[var(--font-yekan)]">
-                          نام کامل شما هنوز ثبت نشده است
-                        </p>
-                      )}
-                    </div>
-
                     {/* Username Field */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2 font-[var(--font-yekan)]">
@@ -434,9 +419,15 @@ export default function ProfilePage() {
                         name="username"
                         value={formData.username}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 font-[var(--font-yekan)] bg-white"
+                        disabled={!isUpdateSupported}
+                        className="w-full px-4 py-3 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 font-[var(--font-yekan)] bg-white disabled:bg-gray-50 disabled:text-gray-500"
                         placeholder="نام کاربری خود را وارد کنید"
                       />
+                      {!formData.username && (
+                        <p className="text-amber-600 text-xs mt-2 font-[var(--font-yekan)]">
+                          نام کاربری شما هنوز ثبت نشده است
+                        </p>
+                      )}
                     </div>
 
                     {/* Phone Number Field */}
@@ -470,7 +461,7 @@ export default function ProfilePage() {
                       </div>
                     </div>
 
-                    {/* Action Buttons - Always visible but disabled when no changes */}
+                    {/* Action Buttons */}
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -478,7 +469,7 @@ export default function ProfilePage() {
                     >
                       <button
                         type="submit"
-                        disabled={isSaving || !isFormModified}
+                        disabled={isSaving || !isFormModified || !isUpdateSupported}
                         className="flex-1 bg-amber-600 hover:bg-amber-700 disabled:bg-amber-400 disabled:cursor-not-allowed text-white py-3 rounded-xl font-[var(--font-yekan)] font-semibold transition-colors flex items-center justify-center gap-2"
                       >
                         {isSaving ? (
@@ -486,6 +477,8 @@ export default function ProfilePage() {
                             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                             در حال ذخیره...
                           </>
+                        ) : !isUpdateSupported ? (
+                          "غیرفعال"
                         ) : (
                           <>
                             <FiSave size={18} />
@@ -494,7 +487,7 @@ export default function ProfilePage() {
                         )}
                       </button>
                       
-                      {isFormModified && (
+                      {isFormModified && isUpdateSupported && (
                         <button
                           type="button"
                           onClick={handleReset}
@@ -527,20 +520,22 @@ export default function ProfilePage() {
                     <ul className="text-gray-700 space-y-2 font-[var(--font-yekan)] text-sm">
                       <li className="flex items-start gap-2">
                         <span className="text-amber-600 mt-1">•</span>
-                        <span>می‌توانید مستقیماً اطلاعات خود را ویرایش کرده و سپس دکمه ذخیره را بزنید</span>
+                        <span>می‌توانید نام کاربری خود را ویرایش کرده و سپس دکمه ذخیره را بزنید</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-amber-600 mt-1">•</span>
-                        <span>نام کامل باید مطابق با کارت شناسایی شما باشد</span>
+                        <span>نام کاربری باید منحصر به فرد باشد</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-amber-600 mt-1">•</span>
                         <span>شماره موبایل برای ورود به حساب و بازیابی رمز عبور استفاده می‌شود</span>
                       </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-amber-600 mt-1">•</span>
-                        <span>دکمه ذخیره تنها زمانی فعال می‌شود که تغییری در اطلاعات ایجاد کرده باشید</span>
-                      </li>
+                      {!isUpdateSupported && (
+                        <li className="flex items-start gap-2">
+                          <span className="text-amber-600 mt-1">•</span>
+                          <span className="text-amber-700">بروزرسانی پروفایل موقتاً غیرفعال است. لطفاً با پشتیبانی تماس بگیرید.</span>
+                        </li>
+                      )}
                     </ul>
                   </div>
                 </div>

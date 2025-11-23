@@ -1,35 +1,58 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { FiFilter, FiStar, FiShoppingCart, FiHeart, FiChevronDown, FiX, FiMessageCircle, FiAward, FiZap, FiClock, FiShield, FiTruck } from "react-icons/fi";
 import { LuCrown } from "react-icons/lu";
 
-interface PremiumProduct {
-  id: number;
-  name: string;
-  price: number;
-  originalPrice?: number;
-  image: string;
-  category: string;
-  badge: string;
-  rating: number;
-  reviews: number;
-  isPrime: boolean;
-  discount: number;
-  isPremium: boolean;
-  features: string[];
-  timeLeft: string;
-  soldCount: number;
-  type: string;
-  positiveFeature: string;
-  status: string;
+interface Product {
+  _id: string;
+  features: {
+    recommended: boolean;
+    specialDiscount: boolean;
+    lowStock: boolean;
+    rareDeal: boolean;
+  };
+  filters: {
+    economicChoice: boolean;
+    bestValue: boolean;
+    topSelling: boolean;
+    freeShipping: boolean;
+  };
+  product: {
+    _id: string;
+    name: string;
+    slug: string;
+    category: string;
+    price: number;
+    stock: number;
+    image: string;
+    brand: string;
+    priceAfterDiscount: number;
+    id: string;
+  };
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface ApiResponse {
+  status: number;
+  success: boolean;
+  data: {
+    valueBuys: Product[];
+    pagination: {
+      page: number;
+      limit: number;
+      totalPage: number;
+      totalValueBuys: number;
+    };
+  };
 }
 
 interface Category {
-  id: number;
+  id: string;
   name: string;
   count: number;
   active: boolean;
@@ -41,9 +64,9 @@ interface PriceRange {
   value: string;
 }
 
-interface Filters {
-  levels: string[];
-  priceRanges: PriceRange[];
+interface FilterState {
+  categories: string[];
+  priceRanges: string[];
   features: string[];
   specialFilters: string[];
 }
@@ -51,51 +74,53 @@ interface Filters {
 export default function ValuablePurchasesPage() {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [expandedFilter, setExpandedFilter] = useState<string | null>(null);
-  const [valuableProducts, setValuableProducts] = useState<PremiumProduct[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [filters, setFilters] = useState<Filters>({ 
-    levels: [], 
-    priceRanges: [], 
+  const [filterState, setFilterState] = useState<FilterState>({
+    categories: [],
+    priceRanges: [],
     features: [],
-    specialFilters: [] 
+    specialFilters: []
   });
   const [loading, setLoading] = useState<boolean>(true);
+  const [priceRanges] = useState<PriceRange[]>([
+    { id: 1, label: 'زیر ۵۰۰ هزار تومان', value: '0-500000' },
+    { id: 2, label: '۵۰۰ هزار تا ۱ میلیون', value: '500000-1000000' },
+    { id: 3, label: 'بالای ۱ میلیون', value: '1000000-5000000' },
+  ]);
 
   useEffect(() => {
     async function loadData() {
       try {
         setLoading(true);
-        const response = await fetch('https://6810ff2827f2fdac24139dec.mockapi.io/Product');
-        const data: PremiumProduct[] = await response.json();
+        const response = await fetch('https://coffee-shop-backend-k3un.onrender.com/api/v1/valueBuy');
+        const apiData: ApiResponse = await response.json();
 
-        const premiumProducts = data.filter(p => p.isPremium);
-        setValuableProducts(premiumProducts);
+        if (apiData.success && apiData.data.valueBuys) {
+          setProducts(apiData.data.valueBuys);
 
-        const cats: Category[] = Array.from(new Set(premiumProducts.map(p => p.category))).map((c, idx) => ({
-          id: idx,
-          name: c,
-          count: premiumProducts.filter(p => p.category === c).length,
-          active: false,
-        }));
-        setCategories(cats);
+          // Extract categories from API data
+          const categoryMap = new Map();
+          apiData.data.valueBuys.forEach(item => {
+            const categoryName = item.product.brand || 'دسته‌بندی نشده';
+            if (categoryMap.has(categoryName)) {
+              categoryMap.set(categoryName, categoryMap.get(categoryName) + 1);
+            } else {
+              categoryMap.set(categoryName, 1);
+            }
+          });
 
-        setFilters({
-          levels: ['معمولی', 'ویژه', 'پریمیوم'],
-          priceRanges: [
-            { id: 1, label: 'زیر ۵۰۰ هزار تومان', value: '0-500000' },
-            { id: 2, label: '۵۰۰ هزار تا ۱ میلیون', value: '500000-1000000' },
-            { id: 3, label: 'بالای ۱ میلیون', value: '1000000-5000000' },
-          ],
-          features: ['ارگانیک', 'فاقد کافئین', 'برشته‌کاری ویژه'],
-          specialFilters: [
-            'بهترین انتخاب اقتصادی',
-            'بیشترین ارزش در این بازه قیمت',
-            'پرفروش با رضایت بالا',
-            'ارسال رایگان'
-          ]
-        });
+          const extractedCategories: Category[] = Array.from(categoryMap.entries()).map(([name, count], index) => ({
+            id: `cat-${index}`,
+            name,
+            count,
+            active: false
+          }));
+
+          setCategories(extractedCategories);
+        }
       } catch (error) {
-        console.error('Error loading data:', error);
+        console.error('Error loading data from API:', error);
       } finally {
         setLoading(false);
       }
@@ -104,23 +129,95 @@ export default function ValuablePurchasesPage() {
     loadData();
   }, []);
 
+  // Filter products based on filter state
+  const filteredProducts = products.filter(product => {
+    // Category filter
+    if (filterState.categories.length > 0 && !filterState.categories.includes(product.product.brand)) {
+      return false;
+    }
+
+    // Price range filter
+    if (filterState.priceRanges.length > 0) {
+      const price = product.product.priceAfterDiscount || product.product.price;
+      const matchesPrice = filterState.priceRanges.some(range => {
+        const [min, max] = range.split('-').map(Number);
+        return price >= min && price <= max;
+      });
+      if (!matchesPrice) return false;
+    }
+
+    // Features filter
+    if (filterState.features.length > 0) {
+      const matchesFeatures = filterState.features.some(feature => {
+        switch (feature) {
+          case 'recommended': return product.features.recommended;
+          case 'lowStock': return product.features.lowStock;
+          case 'rareDeal': return product.features.rareDeal;
+          default: return false;
+        }
+      });
+      if (!matchesFeatures) return false;
+    }
+
+    // Special filters
+    if (filterState.specialFilters.length > 0) {
+      const matchesSpecial = filterState.specialFilters.some(filter => {
+        switch (filter) {
+          case 'economicChoice': return product.filters.economicChoice;
+          case 'bestValue': return product.filters.bestValue;
+          case 'topSelling': return product.filters.topSelling;
+          case 'freeShipping': return product.filters.freeShipping;
+          default: return false;
+        }
+      });
+      if (!matchesSpecial) return false;
+    }
+
+    return true;
+  });
+
   // Helper function to format prices with "تومان"
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('fa-IR').format(price) + " تومان";
   };
 
   // Helper function to get status badge styling
-  const getStatusBadgeStyle = (status: string) => {
-    switch (status) {
-      case "فروش ویژه":
-        return "bg-gradient-to-r from-red-500 to-red-600 text-white";
-      case "جدید":
-        return "bg-gradient-to-r from-green-500 to-green-600 text-white";
-      case "پر فروش":
-        return "bg-gradient-to-r from-amber-500 to-amber-600 text-white";
-      default:
-        return "bg-gradient-to-r from-amber-600 to-amber-700 text-white";
-    }
+  const getStatusBadgeStyle = (product: Product) => {
+    if (product.features.specialDiscount) return "bg-gradient-to-r from-red-500 to-red-600 text-white";
+    if (product.filters.topSelling) return "bg-gradient-to-r from-amber-500 to-amber-600 text-white";
+    if (product.features.lowStock) return "bg-gradient-to-r from-purple-500 to-purple-600 text-white";
+    return "bg-gradient-to-r from-green-500 to-green-600 text-white";
+  };
+
+  const getStatusText = (product: Product) => {
+    if (product.features.specialDiscount) return "فروش ویژه";
+    if (product.filters.topSelling) return "پر فروش";
+    if (product.features.lowStock) return "آخرین فرصت";
+    return "جدید";
+  };
+
+  const getPositiveFeature = (product: Product) => {
+    if (product.filters.economicChoice) return "انتخاب اقتصادی";
+    if (product.filters.bestValue) return "بهترین ارزش";
+    if (product.filters.freeShipping) return "ارسال رایگان";
+    return "کیفیت عالی";
+  };
+
+  const getProductFeatures = (product: Product) => {
+    const features: string[] = [];
+    if (product.features.recommended) features.push('پیشنهاد ویژه');
+    if (product.features.rareDeal) features.push('فرصت استثنایی');
+    if (product.features.lowStock) features.push('موجودی محدود');
+    return features;
+  };
+
+  const handleFilterChange = (filterType: keyof FilterState, value: string) => {
+    setFilterState(prev => ({
+      ...prev,
+      [filterType]: prev[filterType].includes(value)
+        ? prev[filterType].filter(item => item !== value)
+        : [...prev[filterType], value]
+    }));
   };
 
   const FilterSection = ({ title, children, filterKey }: { title: string; children: React.ReactNode; filterKey: string }) => (
@@ -200,15 +297,12 @@ export default function ValuablePurchasesPage() {
               <div className="bg-gradient-to-r from-amber-50 to-amber-100 rounded-xl p-4 mb-6 border border-amber-200">
                 <div className="flex items-center justify-between text-sm font-[var(--font-yekan)]">
                   <span className="text-gray-700">تعداد محصولات:</span>
-                  <span className="font-bold text-amber-700">{valuableProducts.length} قلم</span>
+                  <span className="font-bold text-amber-700">{filteredProducts.length} قلم</span>
                 </div>
                 <div className="flex items-center justify-between text-sm mt-2 font-[var(--font-yekan)]">
-                  <span className="text-gray-700">میانگین امتیاز:</span>
+                  <span className="text-gray-700">موجودی کل:</span>
                   <span className="font-bold text-amber-700">
-                    {valuableProducts.length > 0 
-                      ? (valuableProducts.reduce((acc, product) => acc + product.rating, 0) / valuableProducts.length).toFixed(1)
-                      : '0.0'
-                    } از ۵
+                    {products.reduce((acc, product) => acc + product.product.stock, 0)} عدد
                   </span>
                 </div>
               </div>
@@ -220,21 +314,28 @@ export default function ValuablePurchasesPage() {
                   فیلترهای ویژه
                 </h4>
                 <div className="space-y-2">
-                  {filters.specialFilters.map((filter, index) => (
+                  {[
+                    { key: 'economicChoice', label: 'بهترین انتخاب اقتصادی', icon: <FiAward className="text-amber-500 w-4 h-4" /> },
+                    { key: 'bestValue', label: 'بیشترین ارزش', icon: <FiZap className="text-amber-500 w-4 h-4" /> },
+                    { key: 'topSelling', label: 'پرفروش', icon: <FiStar className="text-amber-500 w-4 h-4" /> },
+                    { key: 'freeShipping', label: 'ارسال رایگان', icon: <FiTruck className="text-green-500 w-4 h-4" /> }
+                  ].map((filter) => (
                     <motion.label
-                      key={filter}
+                      key={filter.key}
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.1 }}
                       className="flex items-center gap-3 cursor-pointer group p-3 rounded-xl border border-amber-200 hover:bg-amber-50 transition-all"
                     >
-                      <input type="checkbox" className="rounded border-amber-300 text-amber-600 focus:ring-amber-500 w-4 h-4" />
+                      <input 
+                        type="checkbox" 
+                        checked={filterState.specialFilters.includes(filter.key)}
+                        onChange={() => handleFilterChange('specialFilters', filter.key)}
+                        className="rounded border-amber-300 text-amber-600 focus:ring-amber-500 w-4 h-4" 
+                      />
                       <span className="text-sm text-gray-600 group-hover:text-amber-700 transition-colors font-[var(--font-yekan)] flex-1">
-                        {filter}
+                        {filter.label}
                       </span>
-                      {filter === "ارسال رایگان" && (
-                        <FiTruck className="text-green-500 w-4 h-4" />
-                      )}
+                      {filter.icon}
                     </motion.label>
                   ))}
                 </div>
@@ -247,20 +348,22 @@ export default function ValuablePurchasesPage() {
                   دسته‌بندی‌ها
                 </h4>
                 <div className="space-y-2">
-                  {categories.map((category, index) => (
+                  {categories.map((category) => (
                     <motion.button
                       key={category.id}
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.1 }}
                       className={`w-full flex items-center justify-between p-3 rounded-xl transition-all font-[var(--font-yekan)] text-right ${
-                        category.active
+                        filterState.categories.includes(category.name)
                           ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-lg'
                           : 'bg-amber-50 text-gray-700 hover:bg-amber-100 hover:text-amber-700 border border-amber-200'
                       }`}
+                      onClick={() => handleFilterChange('categories', category.name)}
                     >
                       <span className="text-sm">{category.name}</span>
-                      <span className={`text-xs px-2 py-1 rounded-full ${category.active ? 'bg-white/20 text-white' : 'bg-amber-200 text-amber-700'}`}>
+                      <span className={`text-xs px-2 py-1 rounded-full ${
+                        filterState.categories.includes(category.name) ? 'bg-white/20 text-white' : 'bg-amber-200 text-amber-700'
+                      }`}>
                         {category.count}
                       </span>
                     </motion.button>
@@ -275,15 +378,19 @@ export default function ValuablePurchasesPage() {
                   محدوده قیمت
                 </h4>
                 <div className="space-y-2">
-                  {filters.priceRanges.map((range, index) => (
+                  {priceRanges.map((range) => (
                     <motion.label
                       key={range.id}
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.1 }}
                       className="flex items-center gap-3 cursor-pointer group p-3 rounded-xl border border-amber-200 hover:bg-amber-50 transition-all"
                     >
-                      <input type="radio" name="price" className="text-amber-600 focus:ring-amber-500 w-4 h-4" />
+                      <input 
+                        type="checkbox" 
+                        checked={filterState.priceRanges.includes(range.value)}
+                        onChange={() => handleFilterChange('priceRanges', range.value)}
+                        className="rounded border-amber-300 text-amber-600 focus:ring-amber-500 w-4 h-4" 
+                      />
                       <span className="text-sm text-gray-600 group-hover:text-amber-700 transition-colors font-[var(--font-yekan)] flex-1">
                         {range.label}
                       </span>
@@ -296,20 +403,28 @@ export default function ValuablePurchasesPage() {
               <div>
                 <h4 className="font-semibold text-gray-700 mb-3 font-[var(--font-yekan)] flex items-center gap-2">
                   <FiShield className="text-amber-500" />
-                  ویژگی‌های ویژه
+                  ویژگی‌ها
                 </h4>
                 <div className="space-y-2">
-                  {filters.features.map((feature, index) => (
+                  {[
+                    { key: 'recommended', label: 'پیشنهاد ویژه' },
+                    { key: 'lowStock', label: 'موجودی محدود' },
+                    { key: 'rareDeal', label: 'فرصت استثنایی' }
+                  ].map((feature) => (
                     <motion.label
-                      key={feature}
+                      key={feature.key}
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.1 }}
                       className="flex items-center gap-3 cursor-pointer group p-3 rounded-xl border border-amber-200 hover:bg-amber-50 transition-all"
                     >
-                      <input type="checkbox" className="rounded border-amber-300 text-amber-600 focus:ring-amber-500 w-4 h-4" />
+                      <input 
+                        type="checkbox" 
+                        checked={filterState.features.includes(feature.key)}
+                        onChange={() => handleFilterChange('features', feature.key)}
+                        className="rounded border-amber-300 text-amber-600 focus:ring-amber-500 w-4 h-4" 
+                      />
                       <span className="text-sm text-gray-600 group-hover:text-amber-700 transition-colors font-[var(--font-yekan)] flex-1">
-                        {feature}
+                        {feature.label}
                       </span>
                     </motion.label>
                   ))}
@@ -336,42 +451,6 @@ export default function ValuablePurchasesPage() {
               </motion.button>
             </div>
 
-            {/* Consultation Banner */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="bg-gradient-to-r from-emerald-500 to-green-600 rounded-2xl shadow-lg border border-emerald-400 p-6 mb-6 relative overflow-hidden"
-            >
-              <div className="absolute top-0 left-0 w-24 h-24 bg-white/10 rounded-full -translate-x-12 -translate-y-12"></div>
-              <div className="absolute bottom-0 right-0 w-20 h-20 bg-white/10 rounded-full translate-x-10 translate-y-10"></div>
-              
-              <div className="flex flex-col md:flex-row items-center justify-between gap-4 relative z-10">
-                <div className="flex items-center gap-4">
-                  <div className="bg-white/20 rounded-xl p-3 backdrop-blur-sm">
-                    <FiMessageCircle className="text-white text-xl" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-white mb-1 font-[var(--font-yekan)]">
-                      بیشترین ارزش دریافتی در مقابل پول پرداخت شده 
-                    </h3>
-                    <p className="text-emerald-100 font-[var(--font-yekan)] text-sm leading-relaxed">
-                      برای دریافت راهنمایی تخصصی در انتخاب محصول، روی دکمه "از من بپرس" کلیک کنید
-                    </p>
-                  </div>
-                </div>
-                
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="flex items-center gap-2 bg-white hover:bg-emerald-50 text-emerald-700 px-6 py-3 rounded-xl font-semibold transition-all shadow-lg font-[var(--font-yekan)] whitespace-nowrap"
-                >
-                  <FiMessageCircle size={18} />
-                  <span>از من بپرس</span>
-                </motion.button>
-              </div>
-            </motion.div>
-
             {/* Products Grid */}
             <motion.div
               initial={{ opacity: 0 }}
@@ -379,80 +458,65 @@ export default function ValuablePurchasesPage() {
               transition={{ duration: 0.8 }}
               className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
             >
-              {valuableProducts.map((product, index) => (
+              {filteredProducts.map((product, index) => (
                 <motion.div
-                  key={product.id}
+                  key={product._id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: index * 0.1 }}
                 >
                   <Link
-                    href={`/CoffeeCategoryPage/${product.id}`}
+                    href={`/products/${product.product.slug}`}
                     className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-amber-100 overflow-hidden group relative block"
                   >
-                    {/* Product Image */}
-                    <div className="relative h-48 overflow-hidden">
-                      <Image
-                        src={product.image}
-                        alt={product.name}
-                        fill
-                        className="object-cover group-hover:scale-110 transition-transform duration-500"
-                      />
-                      
-                      {/* Discount Badge */}
-                      {product.discount > 0 && (
-                        <div className="absolute top-3 left-3 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold shadow-lg">
-                          {product.discount}% تخفیف
-                        </div>
-                      )}
+                    {/* Product Image Section */}
+                    <div className="relative h-48 overflow-hidden bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center">
+                      <div className="text-center">
+                        <LuCrown className="w-12 h-12 text-amber-600 mx-auto mb-2" />
+                        <span className="text-amber-700 font-bold font-[var(--font-yekan)] text-lg">{product.product.name}</span>
+                        <p className="text-amber-600 text-sm mt-1 font-[var(--font-yekan)]">{product.product.brand}</p>
+                      </div>
                       
                       {/* Status Badge */}
                       <div className="absolute top-3 right-3">
-                        <span className={`text-xs px-2 py-1 rounded-full font-medium font-[var(--font-yekan)] shadow-md ${getStatusBadgeStyle(product.status)}`}>
-                          {product.status}
+                        <span className={`text-xs px-2 py-1 rounded-full font-medium font-[var(--font-yekan)] shadow-md ${getStatusBadgeStyle(product)}`}>
+                          {getStatusText(product)}
                         </span>
                       </div>
 
                       {/* Premium Badge */}
-                      {product.isPremium && (
-                        <div className="absolute bottom-3 right-3 bg-gradient-to-r from-amber-500 to-amber-600 text-white text-xs px-2 py-1 rounded-full font-bold shadow-lg flex items-center gap-1">
-                          <LuCrown size={10} />
-                          <span>پریمیوم</span>
-                        </div>
-                      )}
+                      <div className="absolute bottom-3 right-3 bg-gradient-to-r from-amber-500 to-amber-600 text-white text-xs px-2 py-1 rounded-full font-bold shadow-lg flex items-center gap-1">
+                        <LuCrown size={10} />
+                        <span>پریمیوم</span>
+                      </div>
                     </div>
 
                     {/* Product Info */}
                     <div className="p-4">
                       <h3 className="font-bold text-gray-800 mb-2 text-sm leading-relaxed font-[var(--font-yekan)]">
-                        {product.name}
+                        {product.product.name}
                       </h3>
                       
-                      {/* Rating */}
+                      {/* Stock Information */}
                       <div className="flex items-center gap-2 mb-2">
                         <div className="flex items-center gap-1">
-                          {[...Array(5)].map((_, i) => (
-                            <FiStar
-                              key={i}
-                              className={`w-3 h-3 ${i < Math.floor(product.rating) ? 'text-amber-400 fill-amber-400' : 'text-gray-300'}`}
-                            />
-                          ))}
+                          <FiShield className="w-3 h-3 text-green-500" />
+                          <span className="text-xs text-gray-500 font-[var(--font-yekan)]">
+                            موجودی: {product.product.stock} عدد
+                          </span>
                         </div>
-                        <span className="text-xs text-gray-500 font-[var(--font-yekan)]">
-                          ({product.reviews} نظر)
-                        </span>
                       </div>
 
                       {/* Positive Feature */}
                       <div className="mb-3">
                         <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full font-medium font-[var(--font-yekan)] border border-green-200">
-                          {product.positiveFeature}
+                          {getPositiveFeature(product)}
                         </span>
                       </div>
 
-                      {/* Premium Features */}
+                      {/* Product Features */}
                       <div className="flex flex-wrap gap-1 mb-3">
-                        {product.features.slice(0, 2).map((feature, idx) => (
+                        {getProductFeatures(product).map((feature, idx) => (
                           <span key={idx} className="text-xs bg-amber-50 text-amber-700 px-2 py-1 rounded-full border border-amber-200">
                             {feature}
                           </span>
@@ -464,34 +528,19 @@ export default function ValuablePurchasesPage() {
                         {/* Price Section */}
                         <div className="flex flex-col gap-1">
                           {/* Original Price (if discounted) */}
-                          {product.originalPrice && (
+                          {product.product.priceAfterDiscount && product.product.priceAfterDiscount < product.product.price && (
                             <span className="text-sm text-gray-500 line-through font-[var(--font-yekan)]">
-                              {formatPrice(product.originalPrice)}
+                              {formatPrice(product.product.price)}
                             </span>
                           )}
                           {/* Current Price */}
-                          <span className={`font-bold text-amber-700 font-[var(--font-yekan)] ${
-                            product.originalPrice ? 'text-lg' : 'text-xl'
-                          }`}>
-                            {formatPrice(product.price)}
+                          <span className={`font-bold text-amber-700 font-[var(--font-yekan)] text-xl`}>
+                            {formatPrice(product.product.priceAfterDiscount || product.product.price)}
                           </span>
                         </div>
 
                         {/* Buttons Section */}
                         <div className="flex flex-col gap-2">
-                          {/* Smart Consultation Button */}
-                          <motion.button
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            className="flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg font-[var(--font-yekan)]"
-                            onClick={(e) => {
-                              e.preventDefault();
-                            }}
-                          >
-                            <FiMessageCircle size={14} />
-                            <span>مشاوره سریع (هوشمند)</span>
-                          </motion.button>
-
                           {/* Buy Button */}
                           <motion.button
                             whileHover={{ scale: 1.02 }}
@@ -499,9 +548,10 @@ export default function ValuablePurchasesPage() {
                             className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white px-4 py-3 rounded-xl font-semibold transition-all shadow-lg font-[var(--font-yekan)]"
                             onClick={(e) => {
                               e.preventDefault();
+                              // Add to cart logic here
                             }}
                           >
-                            خرید
+                            افزودن به سبد خرید
                           </motion.button>
                         </div>
                       </div>
@@ -510,6 +560,25 @@ export default function ValuablePurchasesPage() {
                 </motion.div>
               ))}
             </motion.div>
+
+            {/* No Results Message */}
+            {filteredProducts.length === 0 && !loading && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-center py-12"
+              >
+                <div className="bg-white rounded-2xl shadow-lg border border-amber-200 p-8 max-w-md mx-auto">
+                  <LuCrown className="w-16 h-16 text-amber-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-bold text-gray-800 mb-2 font-[var(--font-yekan)]">
+                    محصولی یافت نشد
+                  </h3>
+                  <p className="text-gray-600 font-[var(--font-yekan)]">
+                    با فیلترهای فعلی هیچ محصولی matching ندارد. لطفاً فیلترها را تغییر دهید.
+                  </p>
+                </div>
+              </motion.div>
+            )}
           </div>
         </div>
       </div>
@@ -539,13 +608,20 @@ export default function ValuablePurchasesPage() {
               {/* Special Filters */}
               <FilterSection title="فیلترهای ویژه" filterKey="special">
                 <div className="space-y-2">
-                  {filters.specialFilters.map(filter => (
-                    <label key={filter} className="flex items-center gap-3 p-3 rounded-xl border border-amber-200 hover:bg-amber-50 cursor-pointer font-[var(--font-yekan)]">
-                      <input type="checkbox" className="w-4 h-4 text-amber-600 focus:ring-amber-500 rounded" />
-                      <span className="flex-1">{filter}</span>
-                      {filter === "ارسال رایگان" && (
-                        <FiTruck className="text-green-500 w-4 h-4" />
-                      )}
+                  {[
+                    { key: 'economicChoice', label: 'بهترین انتخاب اقتصادی' },
+                    { key: 'bestValue', label: 'بیشترین ارزش' },
+                    { key: 'topSelling', label: 'پرفروش' },
+                    { key: 'freeShipping', label: 'ارسال رایگان' }
+                  ].map((filter) => (
+                    <label key={filter.key} className="flex items-center gap-3 p-3 rounded-xl border border-amber-200 hover:bg-amber-50 cursor-pointer font-[var(--font-yekan)]">
+                      <input 
+                        type="checkbox" 
+                        checked={filterState.specialFilters.includes(filter.key)}
+                        onChange={() => handleFilterChange('specialFilters', filter.key)}
+                        className="w-4 h-4 text-amber-600 focus:ring-amber-500 rounded" 
+                      />
+                      <span className="flex-1">{filter.label}</span>
                     </label>
                   ))}
                 </div>
@@ -564,9 +640,14 @@ export default function ValuablePurchasesPage() {
 
               <FilterSection title="محدوده قیمت" filterKey="price">
                 <div className="space-y-2">
-                  {filters.priceRanges.map(range => (
+                  {priceRanges.map(range => (
                     <label key={range.id} className="flex items-center gap-3 p-3 rounded-xl border border-amber-200 hover:bg-amber-50 cursor-pointer font-[var(--font-yekan)]">
-                      <input type="radio" name="price" className="w-4 h-4 text-amber-600 focus:ring-amber-500" />
+                      <input 
+                        type="checkbox" 
+                        checked={filterState.priceRanges.includes(range.value)}
+                        onChange={() => handleFilterChange('priceRanges', range.value)}
+                        className="w-4 h-4 text-amber-600 focus:ring-amber-500" 
+                      />
                       <span className="flex-1">{range.label}</span>
                     </label>
                   ))}
@@ -575,10 +656,19 @@ export default function ValuablePurchasesPage() {
 
               <FilterSection title="ویژگی‌ها" filterKey="features">
                 <div className="space-y-2">
-                  {filters.features.map(feature => (
-                    <label key={feature} className="flex items-center gap-3 p-3 rounded-xl border border-amber-200 hover:bg-amber-50 cursor-pointer font-[var(--font-yekan)]">
-                      <input type="checkbox" className="w-4 h-4 text-amber-600 focus:ring-amber-500 rounded" />
-                      <span className="flex-1">{feature}</span>
+                  {[
+                    { key: 'recommended', label: 'پیشنهاد ویژه' },
+                    { key: 'lowStock', label: 'موجودی محدود' },
+                    { key: 'rareDeal', label: 'فرصت استثنایی' }
+                  ].map((feature) => (
+                    <label key={feature.key} className="flex items-center gap-3 p-3 rounded-xl border border-amber-200 hover:bg-amber-50 cursor-pointer font-[var(--font-yekan)]">
+                      <input 
+                        type="checkbox" 
+                        checked={filterState.features.includes(feature.key)}
+                        onChange={() => handleFilterChange('features', feature.key)}
+                        className="w-4 h-4 text-amber-600 focus:ring-amber-500 rounded" 
+                      />
+                      <span className="flex-1">{feature.label}</span>
                     </label>
                   ))}
                 </div>
@@ -588,6 +678,7 @@ export default function ValuablePurchasesPage() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 className="w-full mt-4 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-white font-bold font-[var(--font-yekan)] shadow-lg"
+                onClick={() => setShowMobileFilters(false)}
               >
                 اعمال فیلترها
               </motion.button>
