@@ -7,25 +7,55 @@ import { FiCreditCard, FiPlus, FiEdit, FiTrash2, FiCopy, FiSettings } from "reac
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
+// Define proper TypeScript interfaces
+interface BankAccount {
+  _id: string;
+  user: {
+    _id: string;
+    phone: string;
+  };
+  bankName: string;
+  cardNumber: string;
+  shebaNumber: string;
+  accountType: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface BankAccountWithUser extends BankAccount {
+  accountHolderName: string;
+}
+
 export default function BankAccountsPage() {
-  const { user, logout, isLoading, isAuthenticated } = useAuth();
+  const { user: currentUser, logout, isLoading, isAuthenticated } = useAuth();
+  
   const router = useRouter();
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   // State for bank accounts and form
-  const [bankAccounts, setBankAccounts] = useState<any[]>([]);
+  const [bankAccounts, setBankAccounts] = useState<BankAccountWithUser[]>([]);
   const [isAddingAccount, setIsAddingAccount] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  
+  const [isLoadingAccounts, setIsLoadingAccounts] = useState(true);
+
   // Form state
   const [formData, setFormData] = useState({
     bankName: "",
     cardNumber: "",
-    iban: "",
+    shebaNumber: "",
     accountHolderName: "",
     isDefault: false
   });
+
+  // Add this useEffect to display the current user's ID
+useEffect(() => {
+  if (currentUser?._id) {
+    console.log('Logged-in User ID:', currentUser._id);
+    console.log('Full User Object:', currentUser);
+  }
+}, [currentUser]);
 
   // Check authentication on component mount
   useEffect(() => {
@@ -36,6 +66,68 @@ export default function BankAccountsPage() {
     }
   }, [isAuthenticated, isLoading, router]);
 
+  // Fetch bank accounts data when authenticated
+  useEffect(() => {
+    if (isAuthenticated && !isLoading && currentUser?._id) {
+      fetchBankAccounts();
+    }
+  }, [isAuthenticated, isLoading, currentUser?._id]);
+
+  // Fetch bank accounts for the CURRENT logged-in user
+  const fetchBankAccounts = async () => {
+    try {
+      setIsLoadingAccounts(true);
+      
+      // Get the current user's ID from context
+      const currentUserId = currentUser?._id;
+      
+      if (!currentUserId) {
+        console.error('No user ID found in context');
+        return;
+      }
+
+      // Fetch bank accounts
+      const bankAccountsResponse = await fetch('https://coffee-shop-backend-k3un.onrender.com/api/v1/bankAccount');
+      const bankAccountsData = await bankAccountsResponse.json();
+      
+      if (bankAccountsData.success) {
+        // Filter bank accounts to only show the current user's accounts
+        const userBankAccounts = bankAccountsData.data.bankAccounts.filter(
+          (account: BankAccount) =>
+             account.user._id === currentUserId
+        );
+
+        // Add account holder name from current user context
+        const accountsWithUserNames: BankAccountWithUser[] = userBankAccounts.map((account: BankAccount) => {
+          // Get account holder name from current user's data
+          let accountHolderName = "نام نامشخص";
+          
+          if (currentUser?.addresses && currentUser.addresses.length > 0) {
+            accountHolderName = currentUser.addresses[0].name;
+          } else if (currentUser?.firstName || currentUser?.lastName) {
+            accountHolderName = `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim();
+          } else if (currentUser?.phone) {
+            accountHolderName = currentUser.phone;
+          }
+          
+          return {
+            ...account,
+            accountHolderName
+          };
+        });
+        
+        setBankAccounts(accountsWithUserNames);
+      } else {
+        setBankAccounts([]);
+      }
+    } catch (error) {
+      console.error('Error fetching bank accounts:', error);
+      setBankAccounts([]);
+    } finally {
+      setIsLoadingAccounts(false);
+    }
+  };
+
   // Close mobile menu when route changes
   useEffect(() => {
     setIsMobileMenuOpen(false);
@@ -43,10 +135,10 @@ export default function BankAccountsPage() {
 
   // Get user's display name for sidebar
   const getUserDisplayName = () => {
-    if (user?.firstName && user?.lastName) {
-      return `${user.firstName} ${user.lastName}`;
+    if (currentUser?.firstName && currentUser?.lastName) {
+      return `${currentUser.firstName} ${currentUser.lastName}`;
     }
-    return user?.phone || "کاربر";
+    return currentUser?.phone || "کاربر";
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -58,10 +150,9 @@ export default function BankAccountsPage() {
   };
 
   const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/\D/g, ''); // Remove non-digits
-    if (value.length > 16) value = value.slice(0, 16); // Limit to 16 digits
+    let value = e.target.value.replace(/\D/g, '');
+    if (value.length > 16) value = value.slice(0, 16);
     
-    // Add spaces every 4 digits for better readability
     const formattedValue = value.replace(/(\d{4})(?=\d)/g, '$1 ');
     
     setFormData(prev => ({
@@ -70,15 +161,14 @@ export default function BankAccountsPage() {
     }));
   };
 
-  const handleIbanChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.toUpperCase().replace(/\s/g, ''); // Remove spaces and convert to uppercase
+  const handleShebaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value.toUpperCase().replace(/\s/g, '');
     
-    // Format with spaces every 4 characters
     const formattedValue = value.replace(/(.{4})/g, '$1 ').trim();
     
     setFormData(prev => ({
       ...prev,
-      iban: formattedValue
+      shebaNumber: formattedValue
     }));
   };
 
@@ -86,84 +176,90 @@ export default function BankAccountsPage() {
     e.preventDefault();
     setIsSaving(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      const newAccount = {
-        id: Date.now().toString(),
-        ...formData,
-        // Remove spaces for storage
+    try {
+      const accountData = {
+        bankName: formData.bankName,
         cardNumber: formData.cardNumber.replace(/\s/g, ''),
-        iban: formData.iban.replace(/\s/g, ''),
-        createdAt: new Date().toISOString()
+        shebaNumber: formData.shebaNumber.replace(/\s/g, ''),
+        accountType: "حساب جاری",
+        isActive: true,
+        // Include the current user's ID from context
+        user: {
+          _id: currentUser?._id,
+          phone: currentUser?.phone
+        }
       };
-      
-      setBankAccounts(prev => [newAccount, ...prev]);
-      setIsSaving(false);
-      setIsAddingAccount(false);
-      setFormData({
-        bankName: "",
-        cardNumber: "",
-        iban: "",
-        accountHolderName: "",
-        isDefault: false
+
+      // Make POST request to add new bank account
+      const response = await fetch('https://coffee-shop-backend-k3un.onrender.com/api/v1/bankAccount', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(accountData)
       });
-    }, 1500);
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Refresh the bank accounts list
+        await fetchBankAccounts();
+        setIsSaving(false);
+        setIsAddingAccount(false);
+        setFormData({
+          bankName: "",
+          cardNumber: "",
+          shebaNumber: "",
+          accountHolderName: "",
+          isDefault: false
+        });
+      } else {
+        console.error('Error saving bank account:', result);
+        setIsSaving(false);
+      }
+    } catch (error) {
+      console.error('Error saving bank account:', error);
+      setIsSaving(false);
+    }
   };
 
-  const handleCancel = () => {
-    setIsAddingAccount(false);
-    setFormData({
-      bankName: "",
-      cardNumber: "",
-      iban: "",
-      accountHolderName: "",
-      isDefault: false
-    });
-  };
+  const handleDeleteAccount = async (id: string) => {
+    try {
+      // Make DELETE request to remove bank account
+      const response = await fetch(`https://coffee-shop-backend-k3un.onrender.com/api/v1/bankAccount/${id}`, {
+        method: 'DELETE',
+      });
 
-  const handleDeleteAccount = (id: string) => {
-    setBankAccounts(prev => prev.filter(account => account.id !== id));
+      const result = await response.json();
+
+      if (result.success) {
+        // Remove from local state
+        setBankAccounts(prev => prev.filter(account => account._id !== id));
+      } else {
+        console.error('Error deleting bank account:', result);
+      }
+    } catch (error) {
+      console.error('Error deleting bank account:', error);
+    }
   };
 
   const handleSetDefault = (id: string) => {
     setBankAccounts(prev => prev.map(account => ({
       ...account,
-      isDefault: account.id === id
+      isDefault: account._id === id
     })));
   };
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    // You could add a toast notification here
   };
 
   // Iranian banks list
   const banks = [
-    "ملت",
-    "ملی",
-    "صادرات",
-    "پارسیان",
-    "پاسارگاد",
-    "تجارت",
-    "رفاه",
-    "سامان",
-    "سپه",
-    "کارآفرین",
-    "کشاورزی",
-    "صنعت و معدن",
-    "مسکن",
-    "قرض الحسنه مهر",
-    "قوامین",
-    "انصار",
-    "دی",
-    "ایران زمین",
-    "خاورمیانه",
-    "سینا",
-    "شهر",
-    "گردشگری",
-    "حکمت ایرانیان",
-    "موسسه اعتباری توسعه",
-    "موسسه اعتباری ثامن"
+    "ملت", "ملی", "صادرات", "پارسیان", "پاسارگاد", "تجارت", "رفاه", "سامان", 
+    "سپه", "کارآفرین", "کشاورزی", "صنعت و معدن", "مسکن", "قرض الحسنه مهر", 
+    "قوامین", "انصار", "دی", "ایران زمین", "خاورمیانه", "سینا", "شهر", 
+    "گردشگری", "حکمت ایرانیان", "موسسه اعتباری توسعه", "موسسه اعتباری ثامن"
   ];
 
   // Format card number for display
@@ -171,13 +267,13 @@ export default function BankAccountsPage() {
     return cardNumber.replace(/(\d{4})/g, '$1 ').trim();
   };
 
-  // Format IBAN for display
-  const formatIban = (iban: string) => {
-    return iban.replace(/(.{4})/g, '$1 ').trim();
+  // Format sheba for display
+  const formatSheba = (shebaNumber: string) => {
+    return shebaNumber.replace(/(.{4})/g, '$1 ').trim();
   };
 
-  // Show loading while checking authentication
-  if (isLoading || isCheckingAuth) {
+  // Show loading while checking authentication or loading accounts
+  if (isLoading || isCheckingAuth || isLoadingAccounts) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-amber-50 to-amber-100 flex items-center justify-center" dir="rtl">
         <motion.div
@@ -186,7 +282,7 @@ export default function BankAccountsPage() {
           className="text-center"
         >
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-amber-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 font-[var(--font-yekan)]">در حال بارگذاری...</p>
+          <p className="text-gray-600 font-[var(--font-yekan)]">در حال بارگذاری اطلاعات حساب‌ها...</p>
         </motion.div>
       </div>
     );
@@ -226,7 +322,7 @@ export default function BankAccountsPage() {
             >
               <UserProfileSidebarD
                 userName={getUserDisplayName()}
-                userRole={user?.roles?.[0]}
+                userRole={currentUser?.roles?.[0]}
                 onLogout={logout}
                 activePage="bank-accounts"
                 isMobile={true}
@@ -270,7 +366,7 @@ export default function BankAccountsPage() {
           <div className="hidden lg:block lg:col-span-1">
             <UserProfileSidebarD
               userName={getUserDisplayName()}
-              userRole={user?.roles?.[0]}
+              userRole={currentUser?.roles?.[0]}
               onLogout={logout}
               activePage="bank-accounts"
             />
@@ -343,7 +439,7 @@ export default function BankAccountsPage() {
                         />
                       </div>
 
-                      {/* Card Number and IBAN Row */}
+                      {/* Card Number and Sheba Row */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2 font-[var(--font-yekan)]">
@@ -357,7 +453,7 @@ export default function BankAccountsPage() {
                             required
                             className="w-full px-4 py-3 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 font-[var(--font-yekan)] dir-ltr text-left"
                             placeholder="1234 5678 9012 3456"
-                            maxLength={19} // 16 digits + 3 spaces
+                            maxLength={19}
                           />
                         </div>
 
@@ -367,12 +463,12 @@ export default function BankAccountsPage() {
                           </label>
                           <input
                             type="text"
-                            name="iban"
-                            value={formData.iban}
-                            onChange={handleIbanChange}
+                            name="shebaNumber"
+                            value={formData.shebaNumber}
+                            onChange={handleShebaChange}
                             className="w-full px-4 py-3 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 font-[var(--font-yekan)] dir-ltr text-left"
                             placeholder="IR 0000 0000 0000 0000 0000 00"
-                            maxLength={29} // 24 characters + 5 spaces
+                            maxLength={29}
                           />
                         </div>
                       </div>
@@ -416,7 +512,7 @@ export default function BankAccountsPage() {
                         </button>
                         <button
                           type="button"
-                          onClick={handleCancel}
+                          onClick={() => setIsAddingAccount(false)}
                           disabled={isSaving}
                           className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-xl font-[var(--font-yekan)] font-semibold transition-colors"
                         >
@@ -456,37 +552,35 @@ export default function BankAccountsPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {bankAccounts.map((account) => (
                       <motion.div
-                        key={account.id}
+                        key={account._id}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         className="bg-white rounded-2xl shadow-lg border border-amber-200 p-6 hover:shadow-xl transition-all duration-300"
                       >
                         <div className="flex items-start justify-between mb-4">
                           <div className="flex items-center gap-3">
-                            <div className={`p-2 rounded-full ${account.isDefault ? 'bg-amber-100' : 'bg-gray-100'}`}>
-                              <FiCreditCard className={`text-lg ${account.isDefault ? 'text-amber-600' : 'text-gray-400'}`} />
+                            <div className={`p-2 rounded-full ${account.isActive ? 'bg-amber-100' : 'bg-gray-100'}`}>
+                              <FiCreditCard className={`text-lg ${account.isActive ? 'text-amber-600' : 'text-gray-400'}`} />
                             </div>
                             <div>
                               <h3 className="font-bold text-gray-800 font-[var(--font-yekan)]">
                                 {account.bankName}
                               </h3>
-                              {account.isDefault && (
-                                <span className="bg-amber-100 text-amber-700 text-xs px-2 py-1 rounded-full font-[var(--font-yekan)]">
-                                  پیش‌فرض
-                                </span>
-                              )}
+                              <span className={`text-xs px-2 py-1 rounded-full font-[var(--font-yekan)] ${account.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                                {account.isActive ? 'فعال' : 'غیرفعال'}
+                              </span>
                             </div>
                           </div>
                           <div className="flex gap-2">
                             <button
-                              onClick={() => handleSetDefault(account.id)}
+                              onClick={() => handleSetDefault(account._id)}
                               className="text-amber-600 hover:text-amber-700 p-2 transition-colors"
                               title="تنظیم به عنوان پیش‌فرض"
                             >
                               <FiCreditCard size={16} />
                             </button>
                             <button
-                              onClick={() => handleDeleteAccount(account.id)}
+                              onClick={() => handleDeleteAccount(account._id)}
                               className="text-red-600 hover:text-red-700 p-2 transition-colors"
                               title="حذف حساب"
                             >
@@ -517,15 +611,15 @@ export default function BankAccountsPage() {
                             </div>
                           </div>
                           
-                          {account.iban && (
+                          {account.shebaNumber && (
                             <div>
                               <span className="font-semibold">شماره شبا:</span>
                               <div className="flex items-center gap-2 mt-1">
                                 <p className="font-mono dir-ltr text-xs">
-                                  {formatIban(account.iban)}
+                                  {formatSheba(account.shebaNumber)}
                                 </p>
                                 <button
-                                  onClick={() => copyToClipboard(account.iban)}
+                                  onClick={() => copyToClipboard(account.shebaNumber)}
                                   className="text-amber-600 hover:text-amber-700 transition-colors"
                                   title="کپی شماره شبا"
                                 >
@@ -534,6 +628,11 @@ export default function BankAccountsPage() {
                               </div>
                             </div>
                           )}
+
+                          <div>
+                            <span className="font-semibold">نوع حساب:</span>
+                            <p className="mt-1">{account.accountType}</p>
+                          </div>
                         </div>
                       </motion.div>
                     ))}
