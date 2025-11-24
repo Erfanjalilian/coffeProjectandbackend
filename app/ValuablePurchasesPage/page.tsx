@@ -6,20 +6,11 @@ import { useState, useEffect } from "react";
 import { FiFilter, FiStar, FiShoppingCart, FiHeart, FiChevronDown, FiX, FiMessageCircle, FiAward, FiZap, FiClock, FiShield, FiTruck } from "react-icons/fi";
 import { LuCrown } from "react-icons/lu";
 
+// Corrected Interfaces based on actual API structure
 interface Product {
   _id: string;
-  features: {
-    recommended: boolean;
-    specialDiscount: boolean;
-    lowStock: boolean;
-    rareDeal: boolean;
-  };
-  filters: {
-    economicChoice: boolean;
-    bestValue: boolean;
-    topSelling: boolean;
-    freeShipping: boolean;
-  };
+  features?: string[]; // Made optional
+  filters?: string[]; // Made optional
   product: {
     _id: string;
     name: string;
@@ -28,13 +19,26 @@ interface Product {
     price: number;
     stock: number;
     image: string;
-    brand: string;
+    brand?: string;
     priceAfterDiscount: number;
     id: string;
   };
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+interface Category {
+  _id: string;
+  name: string;
+  slug: string;
+  description: string;
+  images: string;
+  color: string;
+  parent: string | null;
+  isActive: boolean;
+  productsCount: number;
+  id: string;
 }
 
 interface ApiResponse {
@@ -51,17 +55,18 @@ interface ApiResponse {
   };
 }
 
-interface Category {
-  id: string;
-  name: string;
-  count: number;
-  active: boolean;
-}
-
-interface PriceRange {
-  id: number;
-  label: string;
-  value: string;
+interface CategoryApiResponse {
+  status: number;
+  success: boolean;
+  data: {
+    categories: Category[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      pages: number;
+    };
+  };
 }
 
 interface FilterState {
@@ -71,12 +76,20 @@ interface FilterState {
   specialFilters: string[];
 }
 
+interface FilterCategory {
+  id: string;
+  name: string;
+  count: number;
+  active: boolean;
+}
+
 export default function ValuablePurchasesPage() {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [expandedFilter, setExpandedFilter] = useState<string | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [brands, setBrands] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<FilterCategory[]>([]);
+  const [brands, setBrands] = useState<FilterCategory[]>([]);
+  const [allCategories, setAllCategories] = useState<Category[]>([]);
   const [filterState, setFilterState] = useState<FilterState>({
     categories: [],
     priceRanges: [],
@@ -84,7 +97,7 @@ export default function ValuablePurchasesPage() {
     specialFilters: []
   });
   const [loading, setLoading] = useState<boolean>(true);
-  const [priceRanges] = useState<PriceRange[]>([
+  const [priceRanges] = useState([
     { id: 1, label: 'زیر ۵۰۰ هزار تومان', value: '0-500000' },
     { id: 2, label: '۵۰۰ هزار تا ۱ میلیون', value: '500000-1000000' },
     { id: 3, label: 'بالای ۱ میلیون', value: '1000000-5000000' },
@@ -94,52 +107,23 @@ export default function ValuablePurchasesPage() {
     async function loadData() {
       try {
         setLoading(true);
-        const response = await fetch('https://coffee-shop-backend-k3un.onrender.com/api/v1/valueBuy');
-        const apiData: ApiResponse = await response.json();
+        
+        const [productsResponse, categoriesResponse] = await Promise.all([
+          fetch('https://coffee-shop-backend-k3un.onrender.com/api/v1/valueBuy'),
+          fetch('https://coffee-shop-backend-k3un.onrender.com/api/v1/category')
+        ]);
 
-        if (apiData.success && apiData.data.valueBuys) {
-          setProducts(apiData.data.valueBuys);
+        const productsData: ApiResponse = await productsResponse.json();
+        const categoriesData: CategoryApiResponse = await categoriesResponse.json();
 
-          // Extract categories from API data
-          const categoryMap = new Map();
-          const brandMap = new Map();
-          
-          apiData.data.valueBuys.forEach(item => {
-            const categoryName = item.product.brand || 'دسته‌بندی نشده';
-            const brandName = item.product.brand || 'برند مشخص نشده';
-            
-            // Count categories
-            if (categoryMap.has(categoryName)) {
-              categoryMap.set(categoryName, categoryMap.get(categoryName) + 1);
-            } else {
-              categoryMap.set(categoryName, 1);
-            }
-            
-            // Count brands
-            if (brandMap.has(brandName)) {
-              brandMap.set(brandName, brandMap.get(brandName) + 1);
-            } else {
-              brandMap.set(brandName, 1);
-            }
-          });
-
-          const extractedCategories: Category[] = Array.from(categoryMap.entries()).map(([name, count], index) => ({
-            id: `cat-${index}`,
-            name,
-            count,
-            active: false
-          }));
-
-          const extractedBrands: Category[] = Array.from(brandMap.entries()).map(([name, count], index) => ({
-            id: `brand-${index}`,
-            name,
-            count,
-            active: false
-          }));
-
-          setCategories(extractedCategories);
-          setBrands(extractedBrands);
+        if (productsData.success && productsData.data.valueBuys) {
+          setProducts(productsData.data.valueBuys);
         }
+
+        if (categoriesData.success && categoriesData.data.categories) {
+          setAllCategories(categoriesData.data.categories);
+        }
+
       } catch (error) {
         console.error('Error loading data from API:', error);
       } finally {
@@ -150,19 +134,69 @@ export default function ValuablePurchasesPage() {
     loadData();
   }, []);
 
-  // Filter products based on filter state
+  useEffect(() => {
+    if (products.length > 0 && allCategories.length > 0) {
+      processCategoriesAndBrands();
+    }
+  }, [products, allCategories]);
+
+  const processCategoriesAndBrands = () => {
+    const categoryMap = new Map<string, number>();
+    const brandMap = new Map<string, number>();
+
+    products.forEach(item => {
+      const category = allCategories.find(cat => cat._id === item.product.category);
+      const categoryName = category?.name || 'دسته‌بندی نشده';
+      
+      if (categoryMap.has(categoryName)) {
+        categoryMap.set(categoryName, categoryMap.get(categoryName)! + 1);
+      } else {
+        categoryMap.set(categoryName, 1);
+      }
+      
+      const brandName = item.product.brand || 'برند مشخص نشده';
+      if (brandMap.has(brandName)) {
+        brandMap.set(brandName, brandMap.get(brandName)! + 1);
+      } else {
+        brandMap.set(brandName, 1);
+      }
+    });
+
+    const processedCategories: FilterCategory[] = Array.from(categoryMap.entries()).map(([name, count], index) => ({
+      id: `cat-${index}`,
+      name,
+      count,
+      active: false
+    }));
+
+    const processedBrands: FilterCategory[] = Array.from(brandMap.entries()).map(([name, count], index) => ({
+      id: `brand-${index}`,
+      name,
+      count,
+      active: false
+    }));
+
+    setCategories(processedCategories);
+    setBrands(processedBrands);
+  };
+
   const filteredProducts = products.filter(product => {
-    // Category filter
-    if (filterState.categories.length > 0 && !filterState.categories.includes(product.product.brand)) {
-      return false;
+    if (filterState.categories.length > 0) {
+      const productCategory = allCategories.find(cat => cat._id === product.product.category);
+      const categoryName = productCategory?.name || 'دسته‌بندی نشده';
+      
+      if (!filterState.categories.includes(categoryName)) {
+        return false;
+      }
     }
 
-    // Brand filter
-    if (filterState.brands.length > 0 && !filterState.brands.includes(product.product.brand)) {
-      return false;
+    if (filterState.brands.length > 0) {
+      const brandName = product.product.brand || 'برند مشخص نشده';
+      if (!filterState.brands.includes(brandName)) {
+        return false;
+      }
     }
 
-    // Price range filter
     if (filterState.priceRanges.length > 0) {
       const price = product.product.priceAfterDiscount || product.product.price;
       const matchesPrice = filterState.priceRanges.some(range => {
@@ -172,16 +206,10 @@ export default function ValuablePurchasesPage() {
       if (!matchesPrice) return false;
     }
 
-    // Special filters
-    if (filterState.specialFilters.length > 0) {
+    // FIXED: Check if filters exists before using includes
+    if (filterState.specialFilters.length > 0 && product.filters) {
       const matchesSpecial = filterState.specialFilters.some(filter => {
-        switch (filter) {
-          case 'economicChoice': return product.filters.economicChoice;
-          case 'bestValue': return product.filters.bestValue;
-          case 'topSelling': return product.filters.topSelling;
-          case 'freeShipping': return product.filters.freeShipping;
-          default: return false;
-        }
+        return product.filters!.includes(filter);
       });
       if (!matchesSpecial) return false;
     }
@@ -189,39 +217,34 @@ export default function ValuablePurchasesPage() {
     return true;
   });
 
-  // Helper function to format prices with "تومان"
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('fa-IR').format(price) + " تومان";
   };
 
-  // Helper function to get status badge styling
+  // FIXED: All helper functions now safely check if arrays exist
   const getStatusBadgeStyle = (product: Product) => {
-    if (product.features.specialDiscount) return "bg-gradient-to-r from-red-500 to-red-600 text-white";
-    if (product.filters.topSelling) return "bg-gradient-to-r from-amber-500 to-amber-600 text-white";
-    if (product.features.lowStock) return "bg-gradient-to-r from-purple-500 to-purple-600 text-white";
+    if (product.features && product.features.includes("پیشنهاد شده")) return "bg-gradient-to-r from-red-500 to-red-600 text-white";
+    if (product.filters && product.filters.includes("انتخاب اقتصادی")) return "bg-gradient-to-r from-amber-500 to-amber-600 text-white";
+    if (product.product.stock < 3) return "bg-gradient-to-r from-purple-500 to-purple-600 text-white";
     return "bg-gradient-to-r from-green-500 to-green-600 text-white";
   };
 
   const getStatusText = (product: Product) => {
-    if (product.features.specialDiscount) return "فروش ویژه";
-    if (product.filters.topSelling) return "پر فروش";
-    if (product.features.lowStock) return "آخرین فرصت";
+    if (product.features && product.features.includes("پیشنهاد شده")) return "فروش ویژه";
+    if (product.filters && product.filters.includes("انتخاب اقتصادی")) return "پر فروش";
+    if (product.product.stock < 3) return "آخرین فرصت";
     return "جدید";
   };
 
   const getPositiveFeature = (product: Product) => {
-    if (product.filters.economicChoice) return "انتخاب اقتصادی";
-    if (product.filters.bestValue) return "بهترین ارزش";
-    if (product.filters.freeShipping) return "ارسال رایگان";
+    if (product.filters && product.filters.includes("انتخاب اقتصادی")) return "انتخاب اقتصادی";
+    if (product.features && product.features.includes("پیشنهاد شده")) return "پیشنهاد ویژه";
+    if (product.product.stock > 10) return "موجود زیاد";
     return "کیفیت عالی";
   };
 
   const getProductFeatures = (product: Product) => {
-    const features: string[] = [];
-    if (product.features.recommended) features.push('پیشنهاد ویژه');
-    if (product.features.rareDeal) features.push('فرصت استثنایی');
-    if (product.features.lowStock) features.push('موجودی محدود');
-    return features;
+    return product.features || []; // Return empty array if features doesn't exist
   };
 
   const handleFilterChange = (filterType: keyof FilterState, value: string) => {
@@ -384,7 +407,7 @@ export default function ValuablePurchasesPage() {
                 </div>
               </div>
 
-              {/* Brands - Dynamic from API */}
+              {/* Brands */}
               <div className="mb-6">
                 <h4 className="font-semibold text-gray-700 mb-3 font-[var(--font-yekan)] flex items-center gap-2">
                   <FiAward className="text-amber-500" />
@@ -463,7 +486,7 @@ export default function ValuablePurchasesPage() {
               </motion.button>
             </div>
 
-            {/* Consultation Banner - Kept exactly as in original design */}
+            {/* Consultation Banner */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -517,7 +540,7 @@ export default function ValuablePurchasesPage() {
                     href={`/products/${product.product.slug}`}
                     className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-amber-100 overflow-hidden group relative block"
                   >
-                    {/* Product Image Section */}
+                    {/* Product Image Section - Without Image */}
                     <div className="relative h-48 overflow-hidden bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center">
                       <div className="text-center">
                         <LuCrown className="w-12 h-12 text-amber-600 mx-auto mb-2" />
@@ -575,13 +598,11 @@ export default function ValuablePurchasesPage() {
                       <div className="space-y-3 mt-4">
                         {/* Price Section */}
                         <div className="flex flex-col gap-1">
-                          {/* Original Price (if discounted) */}
                           {product.product.priceAfterDiscount && product.product.priceAfterDiscount < product.product.price && (
                             <span className="text-sm text-gray-500 line-through font-[var(--font-yekan)]">
                               {formatPrice(product.product.price)}
                             </span>
                           )}
-                          {/* Current Price */}
                           <span className={`font-bold text-amber-700 font-[var(--font-yekan)] text-xl`}>
                             {formatPrice(product.product.priceAfterDiscount || product.product.price)}
                           </span>
@@ -589,7 +610,6 @@ export default function ValuablePurchasesPage() {
 
                         {/* Buttons Section */}
                         <div className="flex flex-col gap-2">
-                          {/* Smart Consultation Button */}
                           <motion.button
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
@@ -602,7 +622,6 @@ export default function ValuablePurchasesPage() {
                             <span>مشاوره سریع (هوشمند)</span>
                           </motion.button>
 
-                          {/* Buy Button */}
                           <motion.button
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
@@ -690,21 +709,40 @@ export default function ValuablePurchasesPage() {
               <FilterSection title="دسته‌بندی‌ها" filterKey="category">
                 <div className="space-y-2">
                   {categories.map(category => (
-                    <label key={category.id} className="flex items-center justify-between p-3 rounded-xl border border-amber-200 hover:bg-amber-50 cursor-pointer font-[var(--font-yekan)]">
-                      <span>{category.name}</span>
-                      <span className="text-sm bg-amber-200 text-amber-700 px-2 py-1 rounded-full">{category.count}</span>
-                    </label>
+                    <button
+                      key={category.id}
+                      className={`w-full flex items-center justify-between p-3 rounded-xl transition-all font-[var(--font-yekan)] text-right ${
+                        filterState.categories.includes(category.name)
+                          ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-lg'
+                          : 'bg-amber-50 text-gray-700 hover:bg-amber-100 hover:text-amber-700 border border-amber-200'
+                      }`}
+                      onClick={() => handleFilterChange('categories', category.name)}
+                    >
+                      <span className="text-sm">{category.name}</span>
+                      <span className={`text-xs px-2 py-1 rounded-full ${
+                        filterState.categories.includes(category.name) ? 'bg-white/20 text-white' : 'bg-amber-200 text-amber-700'
+                      }`}>
+                        {category.count}
+                      </span>
+                    </button>
                   ))}
                 </div>
               </FilterSection>
 
-              {/* Brands in Mobile Modal */}
               <FilterSection title="برندها" filterKey="brands">
                 <div className="space-y-2">
                   {brands.map(brand => (
                     <label key={brand.id} className="flex items-center justify-between p-3 rounded-xl border border-amber-200 hover:bg-amber-50 cursor-pointer font-[var(--font-yekan)]">
-                      <span>{brand.name}</span>
-                      <span className="text-sm bg-amber-200 text-amber-700 px-2 py-1 rounded-full">{brand.count}</span>
+                      <input 
+                        type="checkbox" 
+                        checked={filterState.brands.includes(brand.name)}
+                        onChange={() => handleFilterChange('brands', brand.name)}
+                        className="w-4 h-4 text-amber-600 focus:ring-amber-500 rounded" 
+                      />
+                      <span className="flex-1 text-right">{brand.name}</span>
+                      <span className="text-xs bg-amber-200 text-amber-700 px-2 py-1 rounded-full">
+                        {brand.count}
+                      </span>
                     </label>
                   ))}
                 </div>
