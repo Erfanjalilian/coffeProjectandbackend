@@ -534,8 +534,9 @@ export default function ValuablePurchasesPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: index * 0.1 }}
                 >
+                  {/* FIXED: Updated href to use correct product detail page URL structure */}
                   <Link
-                    href={`/products/${product.product.slug}`}
+                    href={`/CoffeeCategoryPage/${product.product._id}`}
                     className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-amber-100 overflow-hidden group relative block h-full flex flex-col"
                   >
                     {/* Product Image Section - Without Image - FIXED: Reduced height */}
