@@ -9,8 +9,8 @@ import { LuCrown } from "react-icons/lu";
 // Corrected Interfaces based on actual API structure
 interface Product {
   _id: string;
-  features?: string[]; // Made optional
-  filters?: string[]; // Made optional
+  features?: string[];
+  filters?: string[];
   product: {
     _id: string;
     name: string;
@@ -206,7 +206,6 @@ export default function ValuablePurchasesPage() {
       if (!matchesPrice) return false;
     }
 
-    // FIXED: Check if filters exists before using includes
     if (filterState.specialFilters.length > 0 && product.filters) {
       const matchesSpecial = filterState.specialFilters.some(filter => {
         return product.filters!.includes(filter);
@@ -221,7 +220,6 @@ export default function ValuablePurchasesPage() {
     return new Intl.NumberFormat('fa-IR').format(price) + " تومان";
   };
 
-  // FIXED: All helper functions now safely check if arrays exist
   const getStatusBadgeStyle = (product: Product) => {
     if (product.features && product.features.includes("پیشنهاد شده")) return "bg-gradient-to-r from-red-500 to-red-600 text-white";
     if (product.filters && product.filters.includes("انتخاب اقتصادی")) return "bg-gradient-to-r from-amber-500 to-amber-600 text-white";
@@ -244,7 +242,7 @@ export default function ValuablePurchasesPage() {
   };
 
   const getProductFeatures = (product: Product) => {
-    return product.features || []; // Return empty array if features doesn't exist
+    return product.features || [];
   };
 
   const handleFilterChange = (filterType: keyof FilterState, value: string) => {
@@ -522,12 +520,12 @@ export default function ValuablePurchasesPage() {
               </div>
             </motion.div>
 
-            {/* Products Grid */}
+            {/* Products Grid - FIXED: 2 columns on mobile */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.8 }}
-              className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
+              className="grid grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6"
             >
               {filteredProducts.map((product, index) => (
                 <motion.div
@@ -538,33 +536,33 @@ export default function ValuablePurchasesPage() {
                 >
                   <Link
                     href={`/products/${product.product.slug}`}
-                    className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-amber-100 overflow-hidden group relative block"
+                    className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-amber-100 overflow-hidden group relative block h-full flex flex-col"
                   >
                     {/* Product Image Section - Without Image */}
-                    <div className="relative h-48 overflow-hidden bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center">
+                    <div className="relative h-40 overflow-hidden bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center">
                       <div className="text-center">
-                        <LuCrown className="w-12 h-12 text-amber-600 mx-auto mb-2" />
-                        <span className="text-amber-700 font-bold font-[var(--font-yekan)] text-lg">{product.product.name}</span>
-                        <p className="text-amber-600 text-sm mt-1 font-[var(--font-yekan)]">{product.product.brand}</p>
+                        <LuCrown className="w-10 h-10 text-amber-600 mx-auto mb-2" />
+                        <span className="text-amber-700 font-bold font-[var(--font-yekan)] text-sm">{product.product.name}</span>
+                        <p className="text-amber-600 text-xs mt-1 font-[var(--font-yekan)]">{product.product.brand}</p>
                       </div>
                       
                       {/* Status Badge */}
-                      <div className="absolute top-3 right-3">
+                      <div className="absolute top-2 right-2">
                         <span className={`text-xs px-2 py-1 rounded-full font-medium font-[var(--font-yekan)] shadow-md ${getStatusBadgeStyle(product)}`}>
                           {getStatusText(product)}
                         </span>
                       </div>
 
                       {/* Premium Badge */}
-                      <div className="absolute bottom-3 right-3 bg-gradient-to-r from-amber-500 to-amber-600 text-white text-xs px-2 py-1 rounded-full font-bold shadow-lg flex items-center gap-1">
+                      <div className="absolute bottom-2 right-2 bg-gradient-to-r from-amber-500 to-amber-600 text-white text-xs px-2 py-1 rounded-full font-bold shadow-lg flex items-center gap-1">
                         <LuCrown size={10} />
                         <span>پریمیوم</span>
                       </div>
                     </div>
 
                     {/* Product Info */}
-                    <div className="p-4">
-                      <h3 className="font-bold text-gray-800 mb-2 text-sm leading-relaxed font-[var(--font-yekan)]">
+                    <div className="p-3 flex-1 flex flex-col">
+                      <h3 className="font-bold text-gray-800 mb-2 text-sm leading-relaxed font-[var(--font-yekan)] line-clamp-2">
                         {product.product.name}
                       </h3>
                       
@@ -595,7 +593,7 @@ export default function ValuablePurchasesPage() {
                       </div>
 
                       {/* Price and Actions */}
-                      <div className="space-y-3 mt-4">
+                      <div className="space-y-3 mt-auto">
                         {/* Price Section */}
                         <div className="flex flex-col gap-1">
                           {product.product.priceAfterDiscount && product.product.priceAfterDiscount < product.product.price && (
@@ -603,7 +601,7 @@ export default function ValuablePurchasesPage() {
                               {formatPrice(product.product.price)}
                             </span>
                           )}
-                          <span className={`font-bold text-amber-700 font-[var(--font-yekan)] text-xl`}>
+                          <span className={`font-bold text-amber-700 font-[var(--font-yekan)] text-lg`}>
                             {formatPrice(product.product.priceAfterDiscount || product.product.price)}
                           </span>
                         </div>
@@ -613,19 +611,19 @@ export default function ValuablePurchasesPage() {
                           <motion.button
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
-                            className="flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg font-[var(--font-yekan)]"
+                            className="flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-3 py-2 rounded-xl text-xs font-semibold transition-all shadow-lg font-[var(--font-yekan)]"
                             onClick={(e) => {
                               e.preventDefault();
                             }}
                           >
-                            <FiMessageCircle size={14} />
-                            <span>مشاوره سریع (هوشمند)</span>
+                            <FiMessageCircle size={12} />
+                            <span>مشاوره سریع</span>
                           </motion.button>
 
                           <motion.button
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
-                            className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white px-4 py-3 rounded-xl font-semibold transition-all shadow-lg font-[var(--font-yekan)]"
+                            className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white px-3 py-2 rounded-xl font-semibold transition-all shadow-lg font-[var(--font-yekan)] text-sm"
                             onClick={(e) => {
                               e.preventDefault();
                             }}
