@@ -520,7 +520,7 @@ export default function ValuablePurchasesPage() {
               </div>
             </motion.div>
 
-            {/* Products Grid - FIXED: 2 columns on mobile */}
+            {/* Products Grid - FIXED: Reduced height for responsive mode */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -538,11 +538,11 @@ export default function ValuablePurchasesPage() {
                     href={`/products/${product.product.slug}`}
                     className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-amber-100 overflow-hidden group relative block h-full flex flex-col"
                   >
-                    {/* Product Image Section - Without Image */}
-                    <div className="relative h-40 overflow-hidden bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center">
+                    {/* Product Image Section - Without Image - FIXED: Reduced height */}
+                    <div className="relative h-32 sm:h-36 overflow-hidden bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center">
                       <div className="text-center">
-                        <LuCrown className="w-10 h-10 text-amber-600 mx-auto mb-2" />
-                        <span className="text-amber-700 font-bold font-[var(--font-yekan)] text-sm">{product.product.name}</span>
+                        <LuCrown className="w-8 h-8 sm:w-10 sm:h-10 text-amber-600 mx-auto mb-2" />
+                        <span className="text-amber-700 font-bold font-[var(--font-yekan)] text-xs sm:text-sm">{product.product.name}</span>
                         <p className="text-amber-600 text-xs mt-1 font-[var(--font-yekan)]">{product.product.brand}</p>
                       </div>
                       
@@ -560,9 +560,9 @@ export default function ValuablePurchasesPage() {
                       </div>
                     </div>
 
-                    {/* Product Info */}
+                    {/* Product Info - FIXED: Reduced padding and adjusted spacing */}
                     <div className="p-3 flex-1 flex flex-col">
-                      <h3 className="font-bold text-gray-800 mb-2 text-sm leading-relaxed font-[var(--font-yekan)] line-clamp-2">
+                      <h3 className="font-bold text-gray-800 mb-2 text-xs sm:text-sm leading-relaxed font-[var(--font-yekan)] line-clamp-2">
                         {product.product.name}
                       </h3>
                       
@@ -577,14 +577,14 @@ export default function ValuablePurchasesPage() {
                       </div>
 
                       {/* Positive Feature */}
-                      <div className="mb-3">
+                      <div className="mb-2">
                         <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full font-medium font-[var(--font-yekan)] border border-green-200">
                           {getPositiveFeature(product)}
                         </span>
                       </div>
 
                       {/* Product Features */}
-                      <div className="flex flex-wrap gap-1 mb-3">
+                      <div className="flex flex-wrap gap-1 mb-2">
                         {getProductFeatures(product).map((feature, idx) => (
                           <span key={idx} className="text-xs bg-amber-50 text-amber-700 px-2 py-1 rounded-full border border-amber-200">
                             {feature}
@@ -592,38 +592,38 @@ export default function ValuablePurchasesPage() {
                         ))}
                       </div>
 
-                      {/* Price and Actions */}
-                      <div className="space-y-3 mt-auto">
+                      {/* Price and Actions - FIXED: Reduced spacing and font sizes */}
+                      <div className="space-y-2 mt-auto">
                         {/* Price Section */}
                         <div className="flex flex-col gap-1">
                           {product.product.priceAfterDiscount && product.product.priceAfterDiscount < product.product.price && (
-                            <span className="text-sm text-gray-500 line-through font-[var(--font-yekan)]">
+                            <span className="text-xs text-gray-500 line-through font-[var(--font-yekan)]">
                               {formatPrice(product.product.price)}
                             </span>
                           )}
-                          <span className={`font-bold text-amber-700 font-[var(--font-yekan)] text-lg`}>
+                          <span className={`font-bold text-amber-700 font-[var(--font-yekan)] text-base sm:text-lg`}>
                             {formatPrice(product.product.priceAfterDiscount || product.product.price)}
                           </span>
                         </div>
 
-                        {/* Buttons Section */}
+                        {/* Buttons Section - FIXED: Reduced button sizes */}
                         <div className="flex flex-col gap-2">
                           <motion.button
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
-                            className="flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-3 py-2 rounded-xl text-xs font-semibold transition-all shadow-lg font-[var(--font-yekan)]"
+                            className="flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-2 py-1.5 sm:px-3 sm:py-2 rounded-xl text-xs font-semibold transition-all shadow-lg font-[var(--font-yekan)]"
                             onClick={(e) => {
                               e.preventDefault();
                             }}
                           >
-                            <FiMessageCircle size={12} />
-                            <span>مشاوره سریع</span>
+                            <FiMessageCircle size={10} className="sm:w-3 sm:h-3" />
+                            <span className="text-xs">مشاوره سریع</span>
                           </motion.button>
 
                           <motion.button
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
-                            className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white px-3 py-2 rounded-xl font-semibold transition-all shadow-lg font-[var(--font-yekan)] text-sm"
+                            className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white px-2 py-1.5 sm:px-3 sm:py-2 rounded-xl font-semibold transition-all shadow-lg font-[var(--font-yekan)] text-xs sm:text-sm"
                             onClick={(e) => {
                               e.preventDefault();
                             }}
