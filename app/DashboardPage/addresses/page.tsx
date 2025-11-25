@@ -29,19 +29,52 @@ export default function AddressesPage() {
     street: "",
   });
 
-  // Check authentication on component mount
+  // Check authentication on component mount and load addresses
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       router.push("/login");
     } else if (!isLoading && isAuthenticated) {
       setIsCheckingAuth(false);
-      // Use addresses from auth context
+      loadAddressesFromAPI();
+    }
+  }, [isAuthenticated, isLoading, router]);
+
+  // Load addresses from API
+  const loadAddressesFromAPI = async () => {
+    try {
+      setIsLoadingAddresses(true);
+      const token = localStorage.getItem("token");
+      
+      // Try to get current user's data to see their addresses
+      const response = await fetch('https://coffee-shop-backend-k3un.onrender.com/api/v1/user', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Find the current user in the users array
+        const currentUser = data.data.users.find((u: any) => u._id === user?._id);
+        
+        if (currentUser && currentUser.addresses) {
+          setAddresses(currentUser.addresses);
+          // Also update the auth context with fresh data
+          updateUser(currentUser);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading addresses:', error);
+      // Fallback to addresses from auth context
       if (user?.addresses) {
         setAddresses(user.addresses);
       }
+    } finally {
       setIsLoadingAddresses(false);
     }
-  }, [isAuthenticated, isLoading, router, user]);
+  };
 
   // Close mobile menu when route changes
   useEffect(() => {
@@ -80,34 +113,73 @@ export default function AddressesPage() {
         street: formData.street
       };
 
-      let updatedAddresses;
+      let response;
+      const baseURL = 'https://coffee-shop-backend-k3un.onrender.com/api/v1';
 
       if (isEditingAddress) {
-        // Update existing address
-        updatedAddresses = addresses.map(addr => 
-          addr._id === isEditingAddress ? { ...addressData, _id: isEditingAddress } : addr
-        );
+        // Try to update existing address
+        // Common patterns: /user/address/:id, /users/address/:id, /address/:id
+        const endpoints = [
+          `/user/address/${isEditingAddress}`,
+          `/users/address/${isEditingAddress}`,
+          `/address/${isEditingAddress}`,
+          `/user/${user?._id}/address/${isEditingAddress}`
+        ];
+
+        for (const endpoint of endpoints) {
+          try {
+            response = await fetch(`${baseURL}${endpoint}`, {
+              method: 'PUT',
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(addressData)
+            });
+
+            if (response.ok) break;
+          } catch (error) {
+            continue;
+          }
+        }
       } else {
-        // Add new address
-        const newAddress = {
-          ...addressData,
-          _id: `temp-${Date.now()}` // Temporary ID for local use
-        };
-        updatedAddresses = [newAddress, ...addresses];
+        // Try to create new address
+        // Common patterns: /user/address, /users/address, /address
+        const endpoints = [
+          '/user/address',
+          '/users/address', 
+          '/address',
+          `/user/${user?._id}/address`
+        ];
+
+        for (const endpoint of endpoints) {
+          try {
+            response = await fetch(`${baseURL}${endpoint}`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(addressData)
+            });
+
+            if (response.ok) break;
+          } catch (error) {
+            continue;
+          }
+        }
       }
 
-      // Since the API doesn't have update endpoints, we'll use local storage
-      // and update the auth context for now
-      setAddresses(updatedAddresses);
-      updateUser({ ...user, addresses: updatedAddresses });
-      
-      // Also update localStorage to persist the data
-      const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
-      const updatedUser = { ...currentUser, addresses: updatedAddresses };
-      localStorage.setItem("user", JSON.stringify(updatedUser));
-      
-      handleCancel();
-      alert('آدرس با موفقیت ذخیره شد');
+      if (response && response.ok) {
+        // Success! Reload addresses from API
+        await loadAddressesFromAPI();
+        handleCancel();
+        alert('آدرس با موفقیت ذخیره شد');
+      } else {
+        // If no API endpoint works, we need to know what endpoints are available
+        console.error('No valid address endpoint found');
+        alert('سیستم ذخیره آدرس در حال حاضر در دسترس نیست. لطفاً با پشتیبانی تماس بگیرید.');
+      }
 
     } catch (error) {
       console.error('Error saving address:', error);
@@ -135,18 +207,43 @@ export default function AddressesPage() {
     }
 
     try {
-      const updatedAddresses = addresses.filter(addr => addr._id !== addressId);
-      
-      // Update local state and context
-      setAddresses(updatedAddresses);
-      updateUser({ ...user, addresses: updatedAddresses });
-      
-      // Also update localStorage
-      const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
-      const updatedUser = { ...currentUser, addresses: updatedAddresses };
-      localStorage.setItem("user", JSON.stringify(updatedUser));
-      
-      alert('آدرس با موفقیت حذف شد');
+      const token = localStorage.getItem("token");
+      const baseURL = 'https://coffee-shop-backend-k3un.onrender.com/api/v1';
+
+      // Try different delete endpoints
+      const endpoints = [
+        `/user/address/${addressId}`,
+        `/users/address/${addressId}`,
+        `/address/${addressId}`,
+        `/user/${user?._id}/address/${addressId}`
+      ];
+
+      let response;
+
+      for (const endpoint of endpoints) {
+        try {
+          response = await fetch(`${baseURL}${endpoint}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          });
+
+          if (response.ok) break;
+        } catch (error) {
+          continue;
+        }
+      }
+
+      if (response && response.ok) {
+        // Success! Reload addresses from API
+        await loadAddressesFromAPI();
+        alert('آدرس با موفقیت حذف شد');
+      } else {
+        console.error('No valid delete endpoint found');
+        alert('سیستم حذف آدرس در حال حاضر در دسترس نیست.');
+      }
 
     } catch (error) {
       console.error('Error deleting address:', error);

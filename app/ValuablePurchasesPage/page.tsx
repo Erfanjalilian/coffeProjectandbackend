@@ -585,13 +585,7 @@ export default function ValuablePurchasesPage() {
                       </div>
 
                       {/* Product Features */}
-                      <div className="flex flex-wrap gap-1 mb-2">
-                        {getProductFeatures(product).map((feature, idx) => (
-                          <span key={idx} className="text-xs bg-amber-50 text-amber-700 px-2 py-1 rounded-full border border-amber-200">
-                            {feature}
-                          </span>
-                        ))}
-                      </div>
+                      
 
                       {/* Price and Actions - FIXED: Reduced spacing and font sizes */}
                       <div className="space-y-2 mt-auto">
