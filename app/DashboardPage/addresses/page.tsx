@@ -8,7 +8,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 export default function AddressesPage() {
-  const { user, logout, isLoading, isAuthenticated } = useAuth();
+  const { user, logout, isLoading, isAuthenticated, updateUser } = useAuth();
   const router = useRouter();
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -16,26 +16,32 @@ export default function AddressesPage() {
   // State for addresses and form
   const [addresses, setAddresses] = useState<any[]>([]);
   const [isAddingAddress, setIsAddingAddress] = useState(false);
+  const [isEditingAddress, setIsEditingAddress] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoadingAddresses, setIsLoadingAddresses] = useState(true);
   
-  // Form state
+  // Form state - matches exact API structure
   const [formData, setFormData] = useState({
-    title: "",
+    name: "",
+    postalCode: "",
     province: "",
     city: "",
-    fullAddress: "",
-    postalCode: "",
-    isDefault: false
+    street: "",
   });
 
   // Check authentication on component mount
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       router.push("/login");
-    } else if (!isLoading) {
+    } else if (!isLoading && isAuthenticated) {
       setIsCheckingAuth(false);
+      // Use addresses from auth context
+      if (user?.addresses) {
+        setAddresses(user.addresses);
+      }
+      setIsLoadingAddresses(false);
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [isAuthenticated, isLoading, router, user]);
 
   // Close mobile menu when route changes
   useEffect(() => {
@@ -51,10 +57,10 @@ export default function AddressesPage() {
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
+    const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+      [name]: value
     }));
   };
 
@@ -62,95 +68,123 @@ export default function AddressesPage() {
     e.preventDefault();
     setIsSaving(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      const newAddress = {
-        id: Date.now().toString(),
-        ...formData,
-        createdAt: new Date().toISOString()
-      };
+    try {
+      const token = localStorage.getItem("token");
       
-      setAddresses(prev => [newAddress, ...prev]);
+      // Create address data in exact API format
+      const addressData = {
+        name: formData.name,
+        postalCode: formData.postalCode,
+        province: formData.province,
+        city: formData.city,
+        street: formData.street
+      };
+
+      let updatedAddresses;
+
+      if (isEditingAddress) {
+        // Update existing address
+        updatedAddresses = addresses.map(addr => 
+          addr._id === isEditingAddress ? { ...addressData, _id: isEditingAddress } : addr
+        );
+      } else {
+        // Add new address
+        const newAddress = {
+          ...addressData,
+          _id: `temp-${Date.now()}` // Temporary ID for local use
+        };
+        updatedAddresses = [newAddress, ...addresses];
+      }
+
+      // Since the API doesn't have update endpoints, we'll use local storage
+      // and update the auth context for now
+      setAddresses(updatedAddresses);
+      updateUser({ ...user, addresses: updatedAddresses });
+      
+      // Also update localStorage to persist the data
+      const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+      const updatedUser = { ...currentUser, addresses: updatedAddresses };
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      
+      handleCancel();
+      alert('آدرس با موفقیت ذخیره شد');
+
+    } catch (error) {
+      console.error('Error saving address:', error);
+      alert('خطا در ذخیره آدرس. لطفاً دوباره تلاش کنید.');
+    } finally {
       setIsSaving(false);
-      setIsAddingAddress(false);
-      setFormData({
-        title: "",
-        province: "",
-        city: "",
-        fullAddress: "",
-        postalCode: "",
-        isDefault: false
-      });
-    }, 1500);
+    }
+  };
+
+  const handleEditAddress = (address: any) => {
+    setFormData({
+      name: address.name || "",
+      postalCode: address.postalCode || "",
+      province: address.province || "",
+      city: address.city || "",
+      street: address.street || ""
+    });
+    setIsEditingAddress(address._id);
+    setIsAddingAddress(true);
+  };
+
+  const handleDeleteAddress = async (addressId: string) => {
+    if (!confirm('آیا از حذف این آدرس مطمئن هستید؟')) {
+      return;
+    }
+
+    try {
+      const updatedAddresses = addresses.filter(addr => addr._id !== addressId);
+      
+      // Update local state and context
+      setAddresses(updatedAddresses);
+      updateUser({ ...user, addresses: updatedAddresses });
+      
+      // Also update localStorage
+      const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+      const updatedUser = { ...currentUser, addresses: updatedAddresses };
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      
+      alert('آدرس با موفقیت حذف شد');
+
+    } catch (error) {
+      console.error('Error deleting address:', error);
+      alert('خطا در حذف آدرس. لطفاً دوباره تلاش کنید.');
+    }
   };
 
   const handleCancel = () => {
     setIsAddingAddress(false);
+    setIsEditingAddress(null);
     setFormData({
-      title: "",
+      name: "",
+      postalCode: "",
       province: "",
       city: "",
-      fullAddress: "",
-      postalCode: "",
-      isDefault: false
+      street: "",
     });
-  };
-
-  const handleDeleteAddress = (id: string) => {
-    setAddresses(prev => prev.filter(address => address.id !== id));
-  };
-
-  const handleSetDefault = (id: string) => {
-    setAddresses(prev => prev.map(address => ({
-      ...address,
-      isDefault: address.id === id
-    })));
   };
 
   // Sample provinces and cities for Iran
   const provinces = [
-    "تهران",
-    "اصفهان",
-    "فارس",
-    "خراسان رضوی",
-    "آذربایجان شرقی",
-    "آذربایجان غربی",
-    "کرمان",
-    "خوزستان",
-    "قزوین",
-    "قم",
-    "البرز",
-    "گیلان",
-    "مازندران",
-    "مرکزی",
-    "همدان",
-    "کردستان",
-    "لرستان",
-    "سیستان و بلوچستان",
-    "یزد",
-    "کرمانشاه",
-    "اردبیل",
-    "بوشهر",
-    "زنجان",
-    "سمنان",
-    "چهارمحال و بختیاری",
-    "هرمزگان",
-    "کهگیلویه و بویراحمد",
-    "گلستان",
-    "ایلام",
-    "خراسان شمالی",
-    "خراسان جنوبی"
+    "تهران", "اصفهان", "فارس", "خراسان رضوی", "آذربایجان شرقی", "آذربایجان غربی",
+    "کرمان", "خوزستان", "قزوین", "قم", "البرز", "گیلان", "مازندران", "مرکزی",
+    "همدان", "کردستان", "لرستان", "سیستان و بلوچستان", "یزد", "کرمانشاه",
+    "اردبیل", "بوشهر", "زنجان", "سمنان", "چهارمحال و بختیاری", "هرمزگان",
+    "کهگیلویه و بویراحمد", "گلستان", "ایلام", "خراسان شمالی", "خراسان جنوبی"
   ];
 
   const cities = {
     "تهران": ["تهران", "شهریار", "اسلامشهر", "رباط کریم", "پاکدشت"],
     "اصفهان": ["اصفهان", "کاشان", "خمینی شهر", "نجف آباد", "شاهین شهر"],
     "فارس": ["شیراز", "مرودشت", "کازرون", "فسا", "لار"],
-    "خراسان رضوی": ["مشهد", "نیشابور", "سبزوار", "تربت حیدریه", "قوچان"]
+    "خراسان رضوی": ["مشهد", "نیشابور", "سبزوار", "تربت حیدریه", "قوچان"],
+    "خراسان جنوبی": ["بیرجند", "قائن", "فردوس", "نهبندان"]
   };
 
-  // Show loading while checking authentication
-  if (isLoading || isCheckingAuth) {
+  // Show loading while checking authentication or loading addresses
+  if (isLoading || isCheckingAuth || isLoadingAddresses) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-amber-50 to-amber-100 flex items-center justify-center" dir="rtl">
         <motion.div
@@ -256,7 +290,7 @@ export default function AddressesPage() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2 }}
             >
-              {/* Add New Address Card */}
+              {/* Add/Edit New Address Card */}
               {isAddingAddress && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
@@ -269,28 +303,29 @@ export default function AddressesPage() {
                     </div>
                     <div>
                       <h2 className="text-xl font-bold text-gray-800 font-[var(--font-yekan)]">
-                        افزودن آدرس جدید
+                        {isEditingAddress ? 'ویرایش آدرس' : 'افزودن آدرس جدید'}
                       </h2>
                       <p className="text-gray-600 font-[var(--font-yekan)] text-sm mt-1">
-                        آدرس جدید خود را برای تحویل سفارشات وارد کنید
+                        {isEditingAddress ? 'اطلاعات آدرس را ویرایش کنید' : 'آدرس جدید خود را برای تحویل سفارشات وارد کنید'}
                       </p>
                     </div>
                   </div>
 
                   <form onSubmit={handleSaveAddress}>
                     <div className="space-y-6">
-                      {/* Address Title */}
+                      {/* Name Field (Receiver Name) */}
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2 font-[var(--font-yekan)]">
-                          عنوان آدرس (اختیاری)
+                          نام تحویل‌گیرنده *
                         </label>
                         <input
                           type="text"
-                          name="title"
-                          value={formData.title}
+                          name="name"
+                          value={formData.name}
                           onChange={handleInputChange}
+                          required
                           className="w-full px-4 py-3 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 font-[var(--font-yekan)]"
-                          placeholder="مثال: منزل، محل کار"
+                          placeholder="نام شخصی که سفارش را دریافت می‌کند"
                         />
                       </div>
 
@@ -338,15 +373,15 @@ export default function AddressesPage() {
                         </div>
                       </div>
 
-                      {/* Full Address */}
+                      {/* Street Address */}
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2 font-[var(--font-yekan)]">
                           آدرس کامل *
                         </label>
                         <input
                           type="text"
-                          name="fullAddress"
-                          value={formData.fullAddress}
+                          name="street"
+                          value={formData.street}
                           onChange={handleInputChange}
                           required
                           className="w-full px-4 py-3 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 font-[var(--font-yekan)]"
@@ -371,20 +406,6 @@ export default function AddressesPage() {
                         />
                       </div>
 
-                      {/* Default Address Checkbox */}
-                      <div className="flex items-center gap-3">
-                        <input
-                          type="checkbox"
-                          name="isDefault"
-                          checked={formData.isDefault}
-                          onChange={handleInputChange}
-                          className="w-4 h-4 text-amber-600 border-amber-300 rounded focus:ring-amber-500"
-                        />
-                        <label className="text-sm text-gray-700 font-[var(--font-yekan)]">
-                          تنظیم به عنوان آدرس پیش‌فرض
-                        </label>
-                      </div>
-
                       {/* Action Buttons */}
                       <motion.div
                         initial={{ opacity: 0, y: 10 }}
@@ -404,7 +425,7 @@ export default function AddressesPage() {
                           ) : (
                             <>
                               <FiPlus size={18} />
-                              افزودن آدرس
+                              {isEditingAddress ? 'ویرایش آدرس' : 'افزودن آدرس'}
                             </>
                           )}
                         </button>
@@ -450,41 +471,32 @@ export default function AddressesPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {addresses.map((address) => (
                       <motion.div
-                        key={address.id}
+                        key={address._id}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         className="bg-white rounded-2xl shadow-lg border border-amber-200 p-6 hover:shadow-xl transition-all duration-300"
                       >
                         <div className="flex items-start justify-between mb-4">
                           <div className="flex items-center gap-3">
-                            <div className={`p-2 rounded-full ${address.isDefault ? 'bg-amber-100' : 'bg-gray-100'}`}>
-                              {address.title?.includes('کار') ? (
-                                <FiBriefcase className={`text-lg ${address.isDefault ? 'text-amber-600' : 'text-gray-400'}`} />
-                              ) : (
-                                <FiHome className={`text-lg ${address.isDefault ? 'text-amber-600' : 'text-gray-400'}`} />
-                              )}
+                            <div className="bg-amber-100 p-2 rounded-full">
+                              <FiHome className="text-amber-600 text-lg" />
                             </div>
                             <div>
                               <h3 className="font-bold text-gray-800 font-[var(--font-yekan)]">
-                                {address.title || 'آدرس بدون عنوان'}
+                                {address.name || 'آدرس بدون نام'}
                               </h3>
-                              {address.isDefault && (
-                                <span className="bg-amber-100 text-amber-700 text-xs px-2 py-1 rounded-full font-[var(--font-yekan)]">
-                                  پیش‌فرض
-                                </span>
-                              )}
                             </div>
                           </div>
                           <div className="flex gap-2">
                             <button
-                              onClick={() => handleSetDefault(address.id)}
+                              onClick={() => handleEditAddress(address)}
                               className="text-amber-600 hover:text-amber-700 p-2 transition-colors"
-                              title="تنظیم به عنوان پیش‌فرض"
+                              title="ویرایش آدرس"
                             >
-                              <FiMapPin size={16} />
+                              <FiEdit size={16} />
                             </button>
                             <button
-                              onClick={() => handleDeleteAddress(address.id)}
+                              onClick={() => handleDeleteAddress(address._id)}
                               className="text-red-600 hover:text-red-700 p-2 transition-colors"
                               title="حذف آدرس"
                             >
@@ -495,8 +507,12 @@ export default function AddressesPage() {
 
                         <div className="space-y-2 text-sm text-gray-600 font-[var(--font-yekan)]">
                           <p className="flex items-center gap-2">
+                            <span className="font-semibold">نام تحویل‌گیرنده:</span>
+                            {address.name}
+                          </p>
+                          <p className="flex items-center gap-2">
                             <span className="font-semibold">آدرس:</span>
-                            {address.fullAddress}
+                            {address.street}
                           </p>
                           <p className="flex items-center gap-2">
                             <span className="font-semibold">شهر:</span>
@@ -552,11 +568,11 @@ export default function AddressesPage() {
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-amber-600 mt-1">•</span>
-                        <span>می‌توانید یک آدرس را به عنوان پیش‌فرض تنظیم کنید</span>
+                        <span>نام تحویل‌گیرنده باید مشخص باشد</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-amber-600 mt-1">•</span>
-                        <span>آدرس پیش‌فرض برای تحویل سریع‌تر سفارشات استفاده می‌شود</span>
+                        <span>اطمینان حاصل کنید که آدرس قابل دسترسی است</span>
                       </li>
                     </ul>
                   </div>
