@@ -6,14 +6,51 @@ import { FiStar, FiShoppingCart, FiMessageCircle, FiArrowLeft, FiHeart, FiShare2
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCart } from "@/contaxt/CartContext";
+import { useAuth } from "@/contaxt/AuthContext";
 
-// Complete interface matching your API structure
 interface UserReview {
   _id: string;
   user: string;
   rating: number;
   comment: string;
   createdAt: string;
+}
+
+interface CommentUser {
+  _id: string;
+  phone: string;
+  username: string;
+  roles: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface Comment {
+  _id: string;
+  content: string;
+  product: {
+    _id: string;
+    name: string;
+  };
+  rating: number;
+  user: CommentUser;
+  replies: any[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface CommentsApiResponse {
+  status: number;
+  success: boolean;
+  data: {
+    comments: Comment[];
+    pagination: {
+      page: number;
+      limit: number;
+      totalPage: number;
+      totalComments: number;
+    };
+  };
 }
 
 interface Product {
@@ -74,6 +111,7 @@ interface ApiResponse {
 export default function ProductDetailPage() {
   const params = useParams();
   const { addToCart } = useCart();
+  const { user, isAuthenticated } = useAuth();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
@@ -81,7 +119,13 @@ export default function ProductDetailPage() {
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [selectedImage, setSelectedImage] = useState(0);
   const [newReview, setNewReview] = useState({ rating: 5, comment: '' });
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [showLoginAlert, setShowLoginAlert] = useState(false);
+  const [submitError, setSubmitError] = useState<string>('');
 
+  // Fetch product data
   useEffect(() => {
     const controller = new AbortController();
 
@@ -109,16 +153,13 @@ export default function ProductDetailPage() {
           return;
         }
 
-        // Find current product by _id
         const current = allProducts.find(p => String(p._id) === String(params.id)) ?? null;
         setProduct(current);
 
         if (current) {
-          // Find related products
           const related = allProducts
             .filter(p => String(p._id) !== String(current._id))
             .slice(0, 4);
-          
           setRelatedProducts(related);
         } else {
           setRelatedProducts([]);
@@ -138,6 +179,47 @@ export default function ProductDetailPage() {
     return () => controller.abort();
   }, [params?.id]);
 
+  // Fetch comments for this specific product
+  const fetchComments = async (productId: string) => {
+    if (!productId) return;
+    
+    try {
+      setCommentsLoading(true);
+      console.log(`Fetching comments for product: ${productId}`);
+      
+      const res = await fetch(`https://coffee-shop-backend-k3un.onrender.com/api/v1/comment?product=${productId}`);
+      
+      if (!res.ok) throw new Error(`Failed to fetch comments: ${res.status}`);
+      
+      const result: CommentsApiResponse = await res.json();
+      
+      if (result.success && result.data.comments) {
+        // Double-check that comments belong to this specific product
+        const filteredComments = result.data.comments.filter(comment => 
+          comment.product && String(comment.product._id) === String(productId)
+        );
+        
+        console.log(`API returned ${result.data.comments.length} comments, filtered to ${filteredComments.length} for product ${productId}`);
+        
+        setComments(filteredComments);
+      } else {
+        setComments([]);
+      }
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+      setComments([]);
+    } finally {
+      setCommentsLoading(false);
+    }
+  };
+
+  // Fetch comments when product is loaded and reviews tab is active
+  useEffect(() => {
+    if (product && activeTab === 'reviews') {
+      fetchComments(product._id);
+    }
+  }, [product, activeTab]);
+
   const incrementQuantity = () => setQuantity(prev => prev + 1);
   const decrementQuantity = () => setQuantity(prev => (prev > 1 ? prev - 1 : 1));
 
@@ -145,12 +227,90 @@ export default function ProductDetailPage() {
     return new Intl.NumberFormat('fa-IR').format(price) + " تومان";
   };
 
-  const handleAddReview = (e: React.FormEvent) => {
+  // CORRECTED COMMENT SUBMISSION FUNCTION
+  const handleAddReview = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Here you would typically send the review to your API
-    console.log('New review:', newReview);
-    setNewReview({ rating: 5, comment: '' });
-    // You can add a success message here
+    setSubmitError('');
+    
+    // Check if user is authenticated
+    if (!isAuthenticated || !user) {
+      setShowLoginAlert(true);
+      return;
+    }
+
+    if (!product || !params?.id) return;
+
+    try {
+      setSubmittingReview(true);
+      
+      // Get authentication token properly
+      const token = localStorage.getItem('token');
+      console.log('User token:', token);
+      console.log('Current user ID:', user._id);
+      console.log('Product ID:', params.id);
+
+      // CORRECTED: Use productId instead of product (based on API error message)
+      const commentData = {
+        content: newReview.comment,
+        rating: newReview.rating,
+        productId: params.id, // ✅ Correct field name from API error
+        userId: user._id      // ✅ Also use userId for consistency
+      };
+
+      console.log('Submitting comment with CORRECTED data:', commentData);
+
+      const res = await fetch('https://coffee-shop-backend-k3un.onrender.com/api/v1/comment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` })
+        },
+        body: JSON.stringify(commentData)
+      });
+
+      console.log('Response status:', res.status);
+
+      const responseText = await res.text();
+      console.log('Response text:', responseText);
+
+      if (!res.ok) {
+        let errorMessage = `خطا در ارسال نظر (کد: ${res.status})`;
+        
+        try {
+          const errorData = JSON.parse(responseText);
+          errorMessage = errorData.message || errorMessage;
+          // Show specific validation errors if available
+          if (errorData.data && errorData.data.length > 0) {
+            const validationErrors = errorData.data.map((err: any) => err.message).join(', ');
+            errorMessage += ` - ${validationErrors}`;
+          }
+        } catch {
+          errorMessage = responseText || errorMessage;
+        }
+        
+        throw new Error(errorMessage);
+      }
+
+      // Parse the successful response
+      const result = JSON.parse(responseText);
+      console.log('Comment submission success:', result);
+      
+      if (result.success) {
+        // Refresh comments for this specific product
+        await fetchComments(params.id as string);
+        // Reset form
+        setNewReview({ rating: 5, comment: '' });
+        // Show success message
+        alert('نظر شما با موفقیت ثبت شد!');
+      } else {
+        throw new Error(result.message || 'خطای ناشناخته از سرور');
+      }
+    } catch (error: any) {
+      console.error('Full error details:', error);
+      setSubmitError(error.message || 'خطا در ثبت نظر. لطفاً دوباره تلاش کنید.');
+    } finally {
+      setSubmittingReview(false);
+    }
   };
 
   const renderStars = (rating: number, size: 'sm' | 'md' | 'lg' = 'md') => {
@@ -177,6 +337,25 @@ export default function ProductDetailPage() {
     );
   };
 
+  // Calculate average rating from comments for THIS product
+  const calculateAverageRating = () => {
+    if (comments.length === 0) return 0;
+    const total = comments.reduce((sum, comment) => sum + comment.rating, 0);
+    return total / comments.length;
+  };
+
+  // Calculate rating distribution for THIS product
+  const getRatingDistribution = () => {
+    const distribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+    comments.forEach(comment => {
+      const stars = Math.floor(comment.rating);
+      if (stars >= 1 && stars <= 5) {
+        distribution[stars as keyof typeof distribution]++;
+      }
+    });
+    return distribution;
+  };
+
   if (loading) return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white pt-24 flex items-center justify-center">
       <div className="text-center">
@@ -200,6 +379,9 @@ export default function ProductDetailPage() {
   const displayPrice = product.priceAfterDiscount || product.price;
   const displayOriginalPrice = product.originalPrice && product.originalPrice > displayPrice ? product.originalPrice : undefined;
   const discountPercentage = displayOriginalPrice ? Math.round(((displayOriginalPrice - displayPrice) / displayOriginalPrice) * 100) : 0;
+
+  const averageRating = calculateAverageRating();
+  const ratingDistribution = getRatingDistribution();
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white pt-24">
@@ -298,9 +480,9 @@ export default function ProductDetailPage() {
 
                 {/* Rating and Reviews */}
                 <div className="flex items-center gap-4 mb-4">
-                  {renderStars(product.rating, 'lg')}
+                  {renderStars(averageRating, 'lg')}
                   <span className="text-gray-600 font-[var(--font-yekan)]">
-                    ({product.reviews} نظر)
+                    ({comments.length} نظر)
                   </span>
                   <span className="text-green-600 text-sm font-[var(--font-yekan)] bg-green-50 px-2 py-1 rounded-full">
                     {product.positiveFeature}
@@ -354,11 +536,9 @@ export default function ProductDetailPage() {
                   </div>
                 </div>
 
-                {/* Action Buttons - Fixed Desktop Layout */}
+                {/* Action Buttons */}
                 <div className="space-y-3 mb-6">
-                  {/* Main Action Buttons - Side by side on desktop */}
                   <div className="flex flex-col sm:flex-row gap-3">
-                    {/* Add to Cart Button */}
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
@@ -368,7 +548,6 @@ export default function ProductDetailPage() {
                             id: product._id,
                             name: product.name,
                             price: displayPrice,
-                           
                           }, quantity);
                         }
                       }}
@@ -378,7 +557,6 @@ export default function ProductDetailPage() {
                       <span>اضافه به سبد خرید</span>
                     </motion.button>
 
-                    {/* AI Assistant Button */}
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
@@ -389,7 +567,6 @@ export default function ProductDetailPage() {
                     </motion.button>
                   </div>
 
-                  {/* Heart and Share Buttons - Neatly below */}
                   <div className="flex gap-2">
                     <motion.button
                       whileHover={{ scale: 1.05 }}
@@ -442,7 +619,7 @@ export default function ProductDetailPage() {
               { id: 'description', label: 'توضیحات محصول' },
               { id: 'features', label: 'ویژگی‌ها' },
               { id: 'specifications', label: 'مشخصات فنی' },
-              { id: 'reviews', label: `نظرات (${product.userReviews.length})` }
+              { id: 'reviews', label: `نظرات (${comments.length})` }
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -525,18 +702,18 @@ export default function ProductDetailPage() {
                 {/* Review Summary */}
                 <div className="flex flex-col md:flex-row gap-8 items-center">
                   <div className="text-center">
-                    <div className="text-4xl font-bold text-amber-600 mb-2">{product.rating.toFixed(1)}</div>
-                    {renderStars(product.rating, 'lg')}
+                    <div className="text-4xl font-bold text-amber-600 mb-2">{averageRating.toFixed(1)}</div>
+                    {renderStars(averageRating, 'lg')}
                     <div className="text-gray-600 font-[var(--font-yekan)] mt-1">
-                      {product.reviews} نظر
+                      {comments.length} نظر
                     </div>
                   </div>
                   
                   {/* Rating Distribution */}
                   <div className="flex-1 space-y-2">
                     {[5, 4, 3, 2, 1].map((stars) => {
-                      const count = product.userReviews.filter(r => Math.floor(r.rating) === stars).length;
-                      const percentage = product.userReviews.length > 0 ? (count / product.userReviews.length) * 100 : 0;
+                      const count = ratingDistribution[stars as keyof typeof ratingDistribution];
+                      const percentage = comments.length > 0 ? (count / comments.length) * 100 : 0;
                       return (
                         <div key={stars} className="flex items-center gap-2">
                           <span className="text-sm text-gray-600 w-8 font-[var(--font-yekan)]">{stars} ستاره</span>
@@ -554,6 +731,41 @@ export default function ProductDetailPage() {
                     })}
                   </div>
                 </div>
+
+                {/* Login Alert */}
+                {showLoginAlert && (
+                  <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+                    <div className="flex items-center justify-between">
+                      <p className="text-red-700 font-[var(--font-yekan)]">
+                        برای ثبت نظر باید وارد حساب کاربری خود شوید.
+                      </p>
+                      <button
+                        onClick={() => setShowLoginAlert(false)}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        ×
+                      </button>
+                    </div>
+                    <Link href="/login" className="text-red-600 hover:text-red-800 font-[var(--font-yekan)] text-sm mt-2 block">
+                        ورود به حساب کاربری
+                    </Link>
+                  </div>
+                )}
+
+                {/* Error Message */}
+                {submitError && (
+                  <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+                    <div className="flex items-center justify-between">
+                      <p className="text-red-700 font-[var(--font-yekan)]">{submitError}</p>
+                      <button
+                        onClick={() => setSubmitError('')}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {/* Add Review Form */}
                 <form onSubmit={handleAddReview} className="bg-amber-50 rounded-xl p-6 border border-amber-200">
@@ -588,41 +800,48 @@ export default function ProductDetailPage() {
                         rows={4}
                         className="w-full px-3 py-2 border border-amber-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 font-[var(--font-yekan)]"
                         placeholder="نظر خود را در مورد این محصول بنویسید..."
+                        required
                       />
                     </div>
                     <button
                       type="submit"
-                      className="bg-amber-500 hover:bg-amber-600 text-white px-6 py-2 rounded-lg font-[var(--font-yekan)] transition-colors"
+                      disabled={submittingReview}
+                      className="bg-amber-500 hover:bg-amber-600 disabled:bg-amber-300 text-white px-6 py-2 rounded-lg font-[var(--font-yekan)] transition-colors disabled:cursor-not-allowed"
                     >
-                      ثبت نظر
+                      {submittingReview ? 'در حال ثبت...' : 'ثبت نظر'}
                     </button>
                   </div>
                 </form>
 
                 {/* User Reviews */}
                 <div className="space-y-6">
-                  {product.userReviews.map((review) => (
-                    <div key={review._id} className="border-b border-amber-100 pb-6 last:border-b-0">
-                      <div className="flex items-center gap-4 mb-3">
-                        <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
-                          <span className="text-amber-600 font-bold font-[var(--font-yekan)]">
-                            {review.user.substring(0, 2)}
-                          </span>
-                        </div>
-                        <div>
-                          {renderStars(review.rating, 'md')}
-                          <div className="text-gray-500 text-sm font-[var(--font-yekan)]">
-                            {new Date(review.createdAt).toLocaleDateString('fa-IR')}
+                  {commentsLoading ? (
+                    <div className="text-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600 mx-auto"></div>
+                      <p className="mt-4 text-gray-600 font-[var(--font-yekan)]">در حال بارگذاری نظرات...</p>
+                    </div>
+                  ) : comments.length > 0 ? (
+                    comments.map((comment) => (
+                      <div key={comment._id} className="border-b border-amber-100 pb-6 last:border-b-0">
+                        <div className="flex items-center gap-4 mb-3">
+                          <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
+                            <span className="text-amber-600 font-bold font-[var(--font-yekan)]">
+                              {comment.user.username?.substring(0, 2) || 'کاربر'}
+                            </span>
+                          </div>
+                          <div>
+                            {renderStars(comment.rating, 'md')}
+                            <div className="text-gray-500 text-sm font-[var(--font-yekan)]">
+                              {new Date(comment.createdAt).toLocaleDateString('fa-IR')}
+                            </div>
                           </div>
                         </div>
+                        <p className="text-gray-700 font-[var(--font-yekan)] leading-relaxed">
+                          {comment.content}
+                        </p>
                       </div>
-                      <p className="text-gray-700 font-[var(--font-yekan)] leading-relaxed">
-                        {review.comment}
-                      </p>
-                    </div>
-                  ))}
-                  
-                  {product.userReviews.length === 0 && (
+                    ))
+                  ) : (
                     <div className="text-center py-8 text-gray-500 font-[var(--font-yekan)]">
                       هنوز نظری برای این محصول ثبت نشده است.
                     </div>
