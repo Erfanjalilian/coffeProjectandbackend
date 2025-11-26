@@ -147,106 +147,214 @@ export default function ProfilePage() {
     setSuccessMessage("");
 
     try {
+      console.log("🚀 STARTING PROFILE UPDATE PROCESS");
+      
       const token = localStorage.getItem('token');
+      console.log("🔑 Token exists:", !!token);
+      
       if (!token) {
+        console.error("❌ No token found in localStorage");
         throw createApiError("لطفاً دوباره وارد شوید", 401);
       }
 
       if (!user?._id) {
+        console.error("❌ No user ID found:", user);
         throw createApiError("شناسه کاربر یافت نشد");
       }
 
-      // Since the main endpoint returns 404, let's try common patterns
-      // Based on REST conventions and common patterns
+      console.log("👤 User ID:", user._id);
+      console.log("📝 Form data to send:", { username: formData.username });
+
+      // Test different endpoint patterns with comprehensive logging
       const endpointsToTry = [
         {
-          url: `${API_BASE_URL}/users/${user._id}`,
-          method: "PUT"
-        },
-        {
-          url: `${API_BASE_URL}/users/${user._id}`,
-          method: "PATCH"
-        },
-        {
           url: `${API_BASE_URL}/user/${user._id}`,
-          method: "PUT"
+          method: "PATCH",
+          description: "User by ID with PATCH"
         },
         {
-          url: `${API_BASE_URL}/user/${user._id}`,
-          method: "PATCH"
-        },
-        {
-          url: `${API_BASE_URL}/users/profile`,
-          method: "PUT"
+          url: `${API_BASE_URL}/users/${user._id}`,
+          method: "PATCH", 
+          description: "Users by ID with PATCH"
         },
         {
           url: `${API_BASE_URL}/user/profile`,
-          method: "PUT"
+          method: "PATCH",
+          description: "User profile endpoint with PATCH"
         },
         {
-          url: `${API_BASE_URL}/users/me`,
-          method: "PUT"
+          url: `${API_BASE_URL}/users/profile`,
+          method: "PATCH",
+          description: "Users profile endpoint with PATCH"
         },
         {
           url: `${API_BASE_URL}/user/me`,
-          method: "PUT"
+          method: "PATCH",
+          description: "Current user with PATCH"
+        },
+        {
+          url: `${API_BASE_URL}/users/me`,
+          method: "PATCH",
+          description: "Current users with PATCH"
+        },
+        {
+          url: `${API_BASE_URL}/user/${user._id}`,
+          method: "PUT",
+          description: "User by ID with PUT"
+        },
+        {
+          url: `${API_BASE_URL}/users/${user._id}`,
+          method: "PUT",
+          description: "Users by ID with PUT"
         }
       ];
 
       let lastError: Error | null = null;
+      let successfulResponse: any = null;
+      let lastResponseStatus: number | null = null;
+      let lastResponseBody: string | null = null;
 
-      for (const { url, method } of endpointsToTry) {
+      for (const { url, method, description } of endpointsToTry) {
         try {
-          console.log(`🔄 Trying: ${method} ${url}`);
+          console.log(`\n🔄 ATTEMPT: ${method} ${url}`);
+          console.log(`📋 Description: ${description}`);
           
+          const requestBody = {
+            username: formData.username
+          };
+          
+          console.log("📦 Request body:", JSON.stringify(requestBody, null, 2));
+          console.log("🔑 Authorization header:", `Bearer ${token.substring(0, 20)}...`);
+
+          const startTime = Date.now();
           const response = await fetch(url, {
             method: method,
             headers: {
               "Content-Type": "application/json",
               "Authorization": `Bearer ${token}`
             },
-            body: JSON.stringify({
-              username: formData.username
-            }),
+            body: JSON.stringify(requestBody),
           });
 
-          console.log(`📥 Response status: ${response.status}`);
+          const responseTime = Date.now() - startTime;
+          console.log(`⏱️ Response time: ${responseTime}ms`);
+          console.log(`📥 Response status: ${response.status} ${response.statusText}`);
 
-          if (response.ok) {
-            const responseData = await response.json() as ApiResponse<any>;
-            console.log(`✅ Success with ${method} ${url}:`, responseData);
-            
-            // Update user context with new data
-            if (updateUser) {
-              const updatedUser = {
-                ...user,
-                username: formData.username
-              };
-              updateUser(updatedUser);
+          lastResponseStatus = response.status;
+
+          // Log response headers
+          console.log("📨 Response headers:", Object.fromEntries(response.headers.entries()));
+
+          try {
+            const responseText = await response.text();
+            lastResponseBody = responseText;
+            console.log("📄 Response body:", responseText);
+
+            if (response.ok) {
+              let responseData;
+              try {
+                responseData = responseText ? JSON.parse(responseText) : {};
+                console.log(`✅ SUCCESS with ${method} ${url}`);
+                console.log("🎯 Response data:", responseData);
+                
+                successfulResponse = responseData;
+                
+                // Update user context with new data
+                if (updateUser) {
+                  const updatedUser = {
+                    ...user,
+                    username: formData.username,
+                    ...(responseData.data && { ...responseData.data })
+                  };
+                  updateUser(updatedUser);
+                  console.log("👤 User context updated successfully");
+                }
+
+                setSuccessMessage("نام کاربری با موفقیت به‌روزرسانی شد");
+                setTimeout(() => setSuccessMessage(""), 3000);
+                setIsUpdateSupported(true);
+                break; // Exit the loop on success
+              } catch (parseError) {
+                console.error("❌ JSON parse error:", parseError);
+                // Even if JSON parsing fails, if status is 200, consider it success
+                if (response.ok) {
+                  console.log("✅ Considering as success despite JSON parse error");
+                  successfulResponse = { success: true };
+                  
+                  if (updateUser) {
+                    const updatedUser = {
+                      ...user,
+                      username: formData.username
+                    };
+                    updateUser(updatedUser);
+                  }
+
+                  setSuccessMessage("نام کاربری با موفقیت به‌روزرسانی شد");
+                  setTimeout(() => setSuccessMessage(""), 3000);
+                  setIsUpdateSupported(true);
+                  break;
+                }
+              }
+            } else {
+              console.log(`❌ FAILED: ${method} ${url} - Status: ${response.status}`);
+              
+              let errorData;
+              try {
+                errorData = responseText ? JSON.parse(responseText) : { message: response.statusText };
+              } catch {
+                errorData = { message: responseText || response.statusText };
+              }
+              
+              console.log("❌ Error details:", errorData);
+              
+              lastError = createApiError(
+                errorData.message || `خطای ${response.status} برای ${description}`,
+                response.status
+              );
+
+              // Don't try other endpoints for these status codes
+              if ([400, 401, 403, 422].includes(response.status)) {
+                console.log(`🛑 Stopping due to status code: ${response.status}`);
+                break;
+              }
             }
-
-            setSuccessMessage("نام کاربری با موفقیت به‌روزرسانی شد");
-            setTimeout(() => setSuccessMessage(""), 3000);
-            return; // Success!
-          } else {
-            const errorText = await response.text();
-            console.log(`❌ ${method} ${url} failed: ${response.status}`, errorText);
-            lastError = createApiError(`خطای ${response.status}`, response.status);
+          } catch (textError) {
+            console.error("❌ Error reading response text:", textError);
+            lastError = textError as Error;
           }
-        } catch (err) {
-          console.error(`❌ ${method} ${url} error:`, err);
-          lastError = err as Error;
+
+        } catch (fetchError) {
+          console.error(`❌ Fetch error for ${method} ${url}:`, fetchError);
+          lastError = fetchError as Error;
+          
+          // If it's a network error, don't try other endpoints
+          if (fetchError instanceof TypeError) {
+            console.log("🛑 Stopping due to network error");
+            break;
+          }
         }
       }
 
-      // If we tried all endpoints and none worked
-      setIsUpdateSupported(false);
-      throw createApiError("سیستم بروزرسانی پروفایل در حال حاضر در دسترس نیست. لطفاً با پشتیبانی تماس بگیرید", 404);
+      if (!successfulResponse) {
+        console.error("🎯 ALL ENDPOINTS FAILED");
+        console.log("📊 Last response status:", lastResponseStatus);
+        console.log("📄 Last response body:", lastResponseBody);
+        console.log("🐛 Last error:", lastError);
+        
+        setIsUpdateSupported(false);
+        throw lastError || createApiError(
+          "سیستم بروزرسانی پروفایل در حال حاضر در دسترس نیست. لطفاً با پشتیبانی تماس بگیرید", 
+          404
+        );
+      }
 
     } catch (err) {
-      console.error("Profile update error:", err);
-      setError(resolveErrorMessage(err));
+      console.error("💥 FINAL PROFILE UPDATE ERROR:", err);
+      const errorMessage = resolveErrorMessage(err);
+      console.log("📢 User-facing error message:", errorMessage);
+      setError(errorMessage);
     } finally {
+      console.log("🏁 Profile update process completed");
       setIsSaving(false);
     }
   };
@@ -356,6 +464,15 @@ export default function ProfilePage() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2 }}
             >
+              {/* Debug Info - Only show in development */}
+              {process.env.NODE_ENV === 'development' && (
+                <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                  <p className="text-blue-700 text-sm font-[var(--font-yekan)]">
+                    <strong>Debug Mode:</strong> Open browser console to see detailed API logs
+                  </p>
+                </div>
+              )}
+
               {/* Error Message */}
               {error && (
                 <motion.div
@@ -419,7 +536,7 @@ export default function ProfilePage() {
                         name="username"
                         value={formData.username}
                         onChange={handleInputChange}
-                        disabled={!isUpdateSupported}
+                        disabled={!isUpdateSupported || isSaving}
                         className="w-full px-4 py-3 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 font-[var(--font-yekan)] bg-white disabled:bg-gray-50 disabled:text-gray-500"
                         placeholder="نام کاربری خود را وارد کنید"
                       />
