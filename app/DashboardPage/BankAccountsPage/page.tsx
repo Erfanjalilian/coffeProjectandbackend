@@ -75,6 +75,9 @@ export default function BankAccountsPage() {
     "گردشگری", "حکمت ایرانیان", "موسسه اعتباری توسعه", "موسسه اعتباری ثامن"
   ];
 
+  // API base URL
+  const API_BASE_URL = 'https://coffee-shop-backend-k3un.onrender.com/api/v1';
+
   // ------------------ Effects ------------------
   // Check authentication and redirect
   useEffect(() => {
@@ -91,7 +94,13 @@ export default function BankAccountsPage() {
       if (!currentUser?._id) return;
 
       try {
-        const usersResponse = await fetch('https://coffee-shop-backend-k3un.onrender.com/api/v1/user');
+        const token = localStorage.getItem("token");
+        const usersResponse = await fetch(`${API_BASE_URL}/user`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
         const usersData = await usersResponse.json();
 
         if (usersData.success) {
@@ -124,8 +133,23 @@ export default function BankAccountsPage() {
     setIsLoadingAccounts(true);
 
     try {
-      const response = await fetch('https://coffee-shop-backend-k3un.onrender.com/api/v1/bankAccount');
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_BASE_URL}/bankAccount`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      console.log('📡 Fetching bank accounts...');
+      console.log('🔐 Token available:', !!token);
+      
+      if (!response.ok) {
+        throw new Error(`API returned ${response.status}: ${response.statusText}`);
+      }
+
       const data = await response.json();
+      console.log('✅ Bank accounts data:', data);
 
       if (data.success) {
         const userBankAccounts = data.data.bankAccounts.filter((acc: BankAccount) => acc.user._id === currentUser._id);
@@ -148,10 +172,11 @@ export default function BankAccountsPage() {
 
         setBankAccounts(accountsWithUserNames);
       } else {
+        console.error('❌ API returned success: false');
         setBankAccounts([]);
       }
     } catch (error) {
-      console.error("Error fetching bank accounts:", error);
+      console.error("💥 Error fetching bank accounts:", error);
       setBankAccounts([]);
     } finally {
       setIsLoadingAccounts(false);
@@ -167,14 +192,29 @@ export default function BankAccountsPage() {
   };
 
   const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Remove all non-digit characters and limit to 16 digits
     let value = e.target.value.replace(/\D/g, '').slice(0, 16);
+    
+    // Format with spaces every 4 digits (LTR formatting)
     const formattedValue = value.replace(/(\d{4})(?=\d)/g, '$1 ');
+    
     setFormData(prev => ({ ...prev, cardNumber: formattedValue }));
   };
 
   const handleShebaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.toUpperCase().replace(/\s/g, '');
+    let value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    
+    // Ensure it starts with IR and has proper length
+    if (!value.startsWith('IR')) {
+      value = 'IR' + value.replace('IR', '');
+    }
+    
+    // Limit to IR + 24 digits (26 characters total)
+    value = value.slice(0, 26);
+    
+    // Format with spaces every 4 characters (LTR formatting)
     const formattedValue = value.replace(/(.{4})/g, '$1 ').trim();
+    
     setFormData(prev => ({ ...prev, shebaNumber: formattedValue }));
   };
 
@@ -183,42 +223,99 @@ export default function BankAccountsPage() {
     if (!currentUser?._id) return;
     setIsSaving(true);
 
-    const accountData = {
-      bankName: formData.bankName,
-      cardNumber: formData.cardNumber.replace(/\s/g, ''),
-      shebaNumber: formData.shebaNumber.replace(/\s/g, ''),
-      accountType: "حساب جاری",
-      isActive: true,
-      user: { _id: currentUser._id, phone: currentUser.phone }
-    };
-
     try {
-      const response = await fetch('https://coffee-shop-backend-k3un.onrender.com/api/v1/bankAccount', {
+      const token = localStorage.getItem("token");
+      
+      // Prepare the account data according to backend structure
+      // Remove all spaces and ensure proper formatting for backend
+      const accountData = {
+        bankName: formData.bankName,
+        cardNumber: formData.cardNumber.replace(/\s/g, ''),
+        shebaNumber: formData.shebaNumber.replace(/\s/g, ''),
+        accountType: "حساب جاری",
+        isActive: true
+      };
+
+      console.log('💾 Saving bank account:', accountData);
+      console.log('🔐 Token available:', !!token);
+
+      const response = await fetch(`${API_BASE_URL}/bankAccount`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json' 
+        },
         body: JSON.stringify(accountData)
       });
 
+      console.log('📡 Save response status:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`API returned ${response.status}: ${errorText}`);
+      }
+
       const result = await response.json();
+      console.log('✅ Save successful:', result);
+
       if (result.success) {
         await fetchBankAccounts();
         setIsAddingAccount(false);
-        setFormData({ bankName: "", cardNumber: "", shebaNumber: "", accountHolderName: "", isDefault: false });
+        setFormData({ 
+          bankName: "", 
+          cardNumber: "", 
+          shebaNumber: "", 
+          accountHolderName: "", 
+          isDefault: false 
+        });
+        alert('حساب بانکی با موفقیت اضافه شد');
+      } else {
+        throw new Error(result.message || 'خطا در ذخیره حساب بانکی');
       }
     } catch (error) {
-      console.error("Error saving account:", error);
+      console.error("💥 Error saving bank account:", error);
+      alert('خطا در ذخیره حساب بانکی. لطفاً دوباره تلاش کنید.');
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleDeleteAccount = async (id: string) => {
+    if (!confirm('آیا از حذف این حساب بانکی مطمئن هستید؟')) {
+      return;
+    }
+
     try {
-      const response = await fetch(`https://coffee-shop-backend-k3un.onrender.com/api/v1/bankAccount/${id}`, { method: 'DELETE' });
+      const token = localStorage.getItem("token");
+      console.log('🗑️ Deleting bank account:', id);
+
+      const response = await fetch(`${API_BASE_URL}/bankAccount/${id}`, { 
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      console.log('📡 Delete response status:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`API returned ${response.status}: ${errorText}`);
+      }
+
       const result = await response.json();
-      if (result.success) setBankAccounts(prev => prev.filter(acc => acc._id !== id));
+      console.log('✅ Delete successful:', result);
+
+      if (result.success) {
+        setBankAccounts(prev => prev.filter(acc => acc._id !== id));
+        alert('حساب بانکی با موفقیت حذف شد');
+      } else {
+        throw new Error(result.message || 'خطا در حذف حساب بانکی');
+      }
     } catch (error) {
-      console.error("Error deleting account:", error);
+      console.error("💥 Error deleting bank account:", error);
+      alert('خطا در حذف حساب بانکی. لطفاً دوباره تلاش کنید.');
     }
   };
 
@@ -226,7 +323,10 @@ export default function BankAccountsPage() {
     setBankAccounts(prev => prev.map(acc => ({ ...acc, isDefault: acc._id === id })));
   };
 
-  const copyToClipboard = (text: string) => navigator.clipboard.writeText(text);
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    alert('متن کپی شد');
+  };
 
   const formatCardNumber = (num: string) => num.replace(/(\d{4})/g, '$1 ').trim();
   const formatSheba = (num: string) => num.replace(/(.{4})/g, '$1 ').trim();
@@ -330,12 +430,34 @@ export default function BankAccountsPage() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2 font-[var(--font-yekan)]">شماره کارت (۱۶ رقمی) *</label>
-                          <input type="text" name="cardNumber" value={formData.cardNumber} onChange={handleCardNumberChange} required className="w-full px-4 py-3 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 font-[var(--font-yekan)] dir-ltr text-left" placeholder="1234 5678 9012 3456" maxLength={19} />
+                          <input 
+                            type="text" 
+                            name="cardNumber" 
+                            value={formData.cardNumber} 
+                            onChange={handleCardNumberChange} 
+                            required 
+                            className="w-full px-4 py-3 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 font-[var(--font-yekan)] ltr-text-input text-left" 
+                            placeholder="1234 5678 9012 3456" 
+                            maxLength={19}
+                            dir="ltr"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">لطفاً شماره کارت را بدون فاصله و به درستی وارد کنید</p>
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2 font-[var(--font-yekan)]">شماره شبا (اختیاری)</label>
-                          <input type="text" name="shebaNumber" value={formData.shebaNumber} onChange={handleShebaChange} className="w-full px-4 py-3 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 font-[var(--font-yekan)] dir-ltr text-left" placeholder="IR 0000 0000 0000 0000 0000 00" maxLength={29} />
+                          <label className="block text-sm font-medium text-gray-700 mb-2 font-[var(--font-yekan)]">شماره شبا *</label>
+                          <input 
+                            type="text" 
+                            name="shebaNumber" 
+                            value={formData.shebaNumber} 
+                            onChange={handleShebaChange} 
+                            required 
+                            className="w-full px-4 py-3 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 font-[var(--font-yekan)] ltr-text-input text-left" 
+                            placeholder="IR00 0000 0000 0000 0000 0000 00" 
+                            maxLength={32}
+                            dir="ltr"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">شبا باید با IR شروع شود و ۲۴ رقم داشته باشد</p>
                         </div>
                       </div>
 
@@ -411,7 +533,7 @@ export default function BankAccountsPage() {
                           <div>
                             <span className="font-semibold">شماره کارت:</span>
                             <div className="flex items-center gap-2 mt-1">
-                              <p className="font-mono dir-ltr">{formatCardNumber(account.cardNumber)}</p>
+                              <p className="font-mono ltr-text" dir="ltr">{formatCardNumber(account.cardNumber)}</p>
                               <button onClick={() => copyToClipboard(account.cardNumber)} className="text-amber-600 hover:text-amber-700 transition-colors" title="کپی شماره کارت"><FiCopy size={14} /></button>
                             </div>
                           </div>
@@ -419,7 +541,7 @@ export default function BankAccountsPage() {
                             <div>
                               <span className="font-semibold">شماره شبا:</span>
                               <div className="flex items-center gap-2 mt-1">
-                                <p className="font-mono dir-ltr text-xs">{formatSheba(account.shebaNumber)}</p>
+                                <p className="font-mono ltr-text text-xs" dir="ltr">{formatSheba(account.shebaNumber)}</p>
                                 <button onClick={() => copyToClipboard(account.shebaNumber)} className="text-amber-600 hover:text-amber-700 transition-colors" title="کپی شماره شبا"><FiCopy size={14} /></button>
                               </div>
                             </div>
@@ -452,7 +574,7 @@ export default function BankAccountsPage() {
                     <ul className="text-gray-700 space-y-2 font-[var(--font-yekan)] text-sm">
                       <li className="flex items-start gap-2"><span className="text-amber-600 mt-1">•</span><span>اطلاعات حساب بانکی شما به صورت امن ذخیره می‌شود</span></li>
                       <li className="flex items-start gap-2"><span className="text-amber-600 mt-1">•</span><span>شماره کارت باید ۱۶ رقمی و معتبر باشد</span></li>
-                      <li className="flex items-start gap-2"><span className="text-amber-600 mt-1">•</span><span>می‌توانید یک حساب را به عنوان پیش‌فرض تنظیم کنید</span></li>
+                      <li className="flex items-start gap-2"><span className="text-amber-600 mt-1">•</span><span>شماره شبا باید با IR شروع شود و ۲۴ رقم داشته باشد</span></li>
                       <li className="flex items-start gap-2"><span className="text-amber-600 mt-1">•</span><span>حساب پیش‌فرض برای پرداخت‌های سریع‌تر استفاده می‌شود</span></li>
                     </ul>
                   </div>
@@ -462,6 +584,22 @@ export default function BankAccountsPage() {
           </div>
         </div>
       </div>
+
+      {/* Add CSS for LTR text inputs */}
+      <style jsx global>{`
+        .ltr-text-input {
+          direction: ltr;
+          text-align: left;
+        }
+        .ltr-text {
+          direction: ltr;
+          text-align: left;
+        }
+        input[dir="ltr"] {
+          direction: ltr !important;
+          text-align: left !important;
+        }
+      `}</style>
     </div>
   );
 }
