@@ -369,7 +369,7 @@ export default function Header() {
                 className="block w-full px-4 py-3 text-right hover:text-amber-700 font-[var(--font-yekan)] border-b border-amber-100 flex items-center justify-start gap-3"
               >
                 <FiSettings size={16} />
-                ویرایش پروفایل
+               اطلاعات شخصی
               </motion.button>
             </Link>
             
@@ -379,10 +379,42 @@ export default function Header() {
                 className="block w-full px-4 py-3 text-right hover:text-amber-700 font-[var(--font-yekan)] border-b border-amber-100 flex items-center justify-start gap-3"
               >
                 <FiTruck size={16} />
-                سفارش‌های من
+               علاقه مندی ها
+              </motion.button>
+            </Link>
+             
+              <Link href="/DashboardPage/orders" onClick={() => setIsUserMenuOpen(false)}>
+              <motion.button
+                whileHover={{ backgroundColor: "rgba(245, 158, 11, 0.1)" }}
+                className="block w-full px-4 py-3 text-right hover:text-amber-700 font-[var(--font-yekan)] border-b border-amber-100 flex items-center justify-start gap-3"
+              >
+                <FiTruck size={16} />
+              آدرس های من
               </motion.button>
             </Link>
             
+
+             <Link href="/DashboardPage/orders" onClick={() => setIsUserMenuOpen(false)}>
+              <motion.button
+                whileHover={{ backgroundColor: "rgba(245, 158, 11, 0.1)" }}
+                className="block w-full px-4 py-3 text-right hover:text-amber-700 font-[var(--font-yekan)] border-b border-amber-100 flex items-center justify-start gap-3"
+              >
+                <FiTruck size={16} />
+              حساب های بانکی
+              </motion.button>
+            </Link>
+
+
+
+             <Link href="/DashboardPage/orders" onClick={() => setIsUserMenuOpen(false)}>
+              <motion.button
+                whileHover={{ backgroundColor: "rgba(245, 158, 11, 0.1)" }}
+                className="block w-full px-4 py-3 text-right hover:text-amber-700 font-[var(--font-yekan)] border-b border-amber-100 flex items-center justify-start gap-3"
+              >
+                <FiTruck size={16} />
+              سفارشات
+              </motion.button>
+            </Link>
             <motion.button
               whileHover={{ backgroundColor: "rgba(239, 68, 68, 0.1)" }}
               onClick={() => {

@@ -27,6 +27,8 @@ export default function UserProfileSidebarD({
     { id: "favorites", label: "علاقه‌مندی‌ها", icon: FiHeart, href: "/dashboard/favorites" },
     { id: "addresses", label: "آدرس‌های من", icon: FiMapPin, href: "/DashboardPage/addresses" },
     { id: "bank-accounts", label: "حساب‌های بانکی", icon: FiCreditCard, href: "/DashboardPage/BankAccountsPage" },
+    { id: "bank-accounts", label: "سفارشات", icon: FiCreditCard, href: "/DashboardPage/BankAccountsPage" },
+
   ];
 
   const handleNavigation = () => {
