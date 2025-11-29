@@ -1,6 +1,18 @@
 "use client";
 
-import { FiUser, FiHeart, FiMapPin, FiCreditCard, FiSettings, FiLogOut, FiCoffee, FiX } from "react-icons/fi";
+import { 
+  FiUser, 
+  FiHeart, 
+  FiMapPin, 
+  FiCreditCard, 
+  FiSettings, 
+  FiLogOut, 
+  FiCoffee, 
+  FiX,
+  FiHome,
+  FiShoppingBag,
+  FiPackage
+} from "react-icons/fi";
 import { motion } from "framer-motion";
 import Link from "next/link";
 
@@ -22,13 +34,12 @@ export default function UserProfileSidebarD({
   onNavigate
 }: UserProfileSidebarProps) {
   const menuItems = [
-    { id: "dashboard", label: "داشبورد", icon: FiCoffee, href: "/DashboardPage" },
+    { id: "dashboard", label: "داشبورد", icon: FiHome, href: "/DashboardPage" },
+    { id: "orders", label: "سفارشات", icon: FiPackage, href: "/DashboardPage/OrdersPage" },
     { id: "profile", label: "اطلاعات شخصی", icon: FiUser, href: "/DashboardPage/profile" },
     { id: "favorites", label: "علاقه‌مندی‌ها", icon: FiHeart, href: "/dashboard/favorites" },
     { id: "addresses", label: "آدرس‌های من", icon: FiMapPin, href: "/DashboardPage/addresses" },
     { id: "bank-accounts", label: "حساب‌های بانکی", icon: FiCreditCard, href: "/DashboardPage/BankAccountsPage" },
-    { id: "bank-accounts", label: "سفارشات", icon: FiCreditCard, href: "/DashboardPage/BankAccountsPage" },
-
   ];
 
   const handleNavigation = () => {

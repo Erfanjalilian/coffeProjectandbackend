@@ -88,14 +88,19 @@ export default function OrdersPage() {
     }
   }, [isAuthenticated, isLoading, router]);
 
-  // Fetch user orders
+  // Fetch user orders and filter by current user
   const fetchOrders = async () => {
     try {
       setIsLoadingOrders(true);
       setError(null);
       const token = localStorage.getItem("token");
 
-      const response = await fetch('https://coffee-shop-backend-k3un.onrender.com/api/v1/order', {
+      // Check if user is available
+      if (!user?._id) {
+        throw new Error('اطلاعات کاربر در دسترس نیست');
+      }
+
+      const response = await fetch('https://coffee-shop-backend-k3un.onrender.com/api/v1/order/', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -109,7 +114,12 @@ export default function OrdersPage() {
       const data: OrdersResponse = await response.json();
       
       if (data.success && data.data?.orders) {
-        setOrders(data.data.orders);
+        // Filter orders to show only the current user's orders
+        const userOrders = data.data.orders.filter(order => 
+          order.user._id === user._id
+        );
+        
+        setOrders(userOrders);
       } else {
         throw new Error('خطا در دریافت اطلاعات سفارشات');
       }
@@ -303,6 +313,9 @@ export default function OrdersPage() {
                     <FiPackage className="text-amber-600" />
                     لیست سفارش‌ها
                   </h2>
+                  <p className="text-gray-500 text-sm mt-1 font-[var(--font-yekan)]">
+                    نمایش سفارش‌های کاربر: {getUserWelcomeName()}
+                  </p>
                 </div>
 
                 {isLoadingOrders ? (
@@ -324,10 +337,13 @@ export default function OrdersPage() {
                 ) : orders.length === 0 ? (
                   <div className="p-8 text-center">
                     <FiPackage className="text-gray-300 text-4xl mx-auto mb-3" />
-                    <p className="text-gray-600 font-[var(--font-yekan)] mb-4">هنوز سفارشی ثبت نکرده‌اید</p>
+                    <p className="text-gray-600 font-[var(--font-yekan)] mb-2">شما هنوز هیچ سفارشی ثبت نکرده‌اید</p>
+                    <p className="text-gray-500 text-sm mb-4 font-[var(--font-yekan)]">
+                      اولین سفارش خود را ثبت کنید و از محصولات ما لذت ببرید
+                    </p>
                     <Link href="/products">
                       <button className="bg-amber-600 hover:bg-amber-700 text-white py-2 px-6 rounded-xl font-[var(--font-yekan)] transition-colors">
-                        مشاهده محصولات
+                        مشاهده محصولات و ثبت سفارش
                       </button>
                     </Link>
                   </div>

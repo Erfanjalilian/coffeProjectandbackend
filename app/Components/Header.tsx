@@ -20,6 +20,9 @@ import {
   FiStar,
   FiLogOut,
   FiSettings,
+  FiMapPin,
+  FiCreditCard,
+  FiPackage
 } from "react-icons/fi";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -76,10 +79,7 @@ export default function Header() {
 
   const mobileAdditionalItems: NavItem[] = [
     { name: "فروشنده شوید", icon: FiUser, href: "/BecomeSellerPage" },
-    { name: "پشتیبانی", icon: FiHelpCircle, href: "/support" },
-    { name: "درباره ما", icon: FiHelpCircle, href: "/about" },
-    { name: "تماس با ما", icon: FiHelpCircle, href: "/contact" },
-    { name: "وبلاگ", icon: FiBook, href: "/blog" },
+ 
   ];
 
   // تابع برای گرفتن نام نمایشی کاربر
@@ -358,8 +358,18 @@ export default function Header() {
                 whileHover={{ backgroundColor: "rgba(245, 158, 11, 0.1)" }}
                 className="block w-full px-4 py-3 text-right hover:text-amber-700 font-[var(--font-yekan)] border-b border-amber-100 flex items-center justify-start gap-3"
               >
-                <FiUser size={16} />
+                <FiHome size={16} />
                 پنل کاربری
+              </motion.button>
+            </Link>
+            
+            <Link href="/DashboardPage/OrdersPage" onClick={() => setIsUserMenuOpen(false)}>
+              <motion.button
+                whileHover={{ backgroundColor: "rgba(245, 158, 11, 0.1)" }}
+                className="block w-full px-4 py-3 text-right hover:text-amber-700 font-[var(--font-yekan)] border-b border-amber-100 flex items-center justify-start gap-3"
+              >
+                <FiPackage size={16} />
+                سفارشات
               </motion.button>
             </Link>
             
@@ -368,53 +378,42 @@ export default function Header() {
                 whileHover={{ backgroundColor: "rgba(245, 158, 11, 0.1)" }}
                 className="block w-full px-4 py-3 text-right hover:text-amber-700 font-[var(--font-yekan)] border-b border-amber-100 flex items-center justify-start gap-3"
               >
-                <FiSettings size={16} />
-               اطلاعات شخصی
-              </motion.button>
-            </Link>
-            
-            <Link href="/DashboardPage/orders" onClick={() => setIsUserMenuOpen(false)}>
-              <motion.button
-                whileHover={{ backgroundColor: "rgba(245, 158, 11, 0.1)" }}
-                className="block w-full px-4 py-3 text-right hover:text-amber-700 font-[var(--font-yekan)] border-b border-amber-100 flex items-center justify-start gap-3"
-              >
-                <FiTruck size={16} />
-               علاقه مندی ها
+                <FiUser size={16} />
+                اطلاعات شخصی
               </motion.button>
             </Link>
              
-              <Link href="/DashboardPage/orders" onClick={() => setIsUserMenuOpen(false)}>
+            <Link href="/DashboardPage/favorites" onClick={() => setIsUserMenuOpen(false)}>
               <motion.button
                 whileHover={{ backgroundColor: "rgba(245, 158, 11, 0.1)" }}
                 className="block w-full px-4 py-3 text-right hover:text-amber-700 font-[var(--font-yekan)] border-b border-amber-100 flex items-center justify-start gap-3"
               >
-                <FiTruck size={16} />
-              آدرس های من
+                <FiHeart size={16} />
+                علاقه‌مندی‌ها
               </motion.button>
             </Link>
             
 
-             <Link href="/DashboardPage/orders" onClick={() => setIsUserMenuOpen(false)}>
+            <Link href="/DashboardPage/addresses" onClick={() => setIsUserMenuOpen(false)}>
               <motion.button
                 whileHover={{ backgroundColor: "rgba(245, 158, 11, 0.1)" }}
                 className="block w-full px-4 py-3 text-right hover:text-amber-700 font-[var(--font-yekan)] border-b border-amber-100 flex items-center justify-start gap-3"
               >
-                <FiTruck size={16} />
-              حساب های بانکی
+                <FiMapPin size={16} />
+                آدرس‌های من
               </motion.button>
             </Link>
 
-
-
-             <Link href="/DashboardPage/orders" onClick={() => setIsUserMenuOpen(false)}>
+            <Link href="/DashboardPage/BankAccountsPage" onClick={() => setIsUserMenuOpen(false)}>
               <motion.button
                 whileHover={{ backgroundColor: "rgba(245, 158, 11, 0.1)" }}
                 className="block w-full px-4 py-3 text-right hover:text-amber-700 font-[var(--font-yekan)] border-b border-amber-100 flex items-center justify-start gap-3"
               >
-                <FiTruck size={16} />
-              سفارشات
+                <FiCreditCard size={16} />
+                حساب‌های بانکی
               </motion.button>
             </Link>
+
             <motion.button
               whileHover={{ backgroundColor: "rgba(239, 68, 68, 0.1)" }}
               onClick={() => {
@@ -520,22 +519,40 @@ export default function Header() {
                   <>
                     <Link href="/DashboardPage" onClick={() => setIsMenuOpen(false)}>
                       <motion.button whileHover={{ scale: 1.02 }} className="w-full flex items-center gap-3 p-4 text-gray-700 hover:text-amber-700 hover:bg-amber-100/80 rounded-xl transition-all">
-                        <FiUser size={20} />
+                        <FiHome size={20} />
                         <span className="font-[var(--font-yekan)]">
                           پنل کاربری ({getUserDisplayName()})
                         </span>
                       </motion.button>
                     </Link>
-                    <Link href="/DashboardPage/profile" onClick={() => setIsMenuOpen(false)}>
+                    <Link href="/DashboardPage/OrdersPage" onClick={() => setIsMenuOpen(false)}>
                       <motion.button whileHover={{ scale: 1.02 }} className="w-full flex items-center gap-3 p-4 text-gray-700 hover:text-amber-700 hover:bg-amber-100/80 rounded-xl transition-all">
-                        <FiSettings size={20} />
-                        <span className="font-[var(--font-yekan)]">ویرایش پروفایل</span>
+                        <FiPackage size={20} />
+                        <span className="font-[var(--font-yekan)]"> سفارشات</span>
                       </motion.button>
                     </Link>
-                    <Link href="/DashboardPage/orders" onClick={() => setIsMenuOpen(false)}>
+                    <Link href="/DashboardPage/profile" onClick={() => setIsMenuOpen(false)}>
                       <motion.button whileHover={{ scale: 1.02 }} className="w-full flex items-center gap-3 p-4 text-gray-700 hover:text-amber-700 hover:bg-amber-100/80 rounded-xl transition-all">
-                        <FiTruck size={20} />
-                        <span className="font-[var(--font-yekan)]">سفارش‌های من</span>
+                        <FiUser size={20} />
+                        <span className="font-[var(--font-yekan)]">اطلاعات شخصی</span>
+                      </motion.button>
+                    </Link>
+                    <Link href="/DashboardPage/favorites" onClick={() => setIsMenuOpen(false)}>
+                      <motion.button whileHover={{ scale: 1.02 }} className="w-full flex items-center gap-3 p-4 text-gray-700 hover:text-amber-700 hover:bg-amber-100/80 rounded-xl transition-all">
+                        <FiHeart size={20} />
+                        <span className="font-[var(--font-yekan)]">علاقه‌مندی‌ها</span>
+                      </motion.button>
+                    </Link>
+                    <Link href="/DashboardPage/addresses" onClick={() => setIsMenuOpen(false)}>
+                      <motion.button whileHover={{ scale: 1.02 }} className="w-full flex items-center gap-3 p-4 text-gray-700 hover:text-amber-700 hover:bg-amber-100/80 rounded-xl transition-all">
+                        <FiMapPin size={20} />
+                        <span className="font-[var(--font-yekan)]">آدرس‌های من</span>
+                      </motion.button>
+                    </Link>
+                    <Link href="/DashboardPage/BankAccountsPage" onClick={() => setIsMenuOpen(false)}>
+                      <motion.button whileHover={{ scale: 1.02 }} className="w-full flex items-center gap-3 p-4 text-gray-700 hover:text-amber-700 hover:bg-amber-100/80 rounded-xl transition-all">
+                        <FiCreditCard size={20} />
+                        <span className="font-[var(--font-yekan)]">حساب‌های بانکی</span>
                       </motion.button>
                     </Link>
                     <motion.button 

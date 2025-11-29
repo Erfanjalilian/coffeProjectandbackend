@@ -1,7 +1,7 @@
 "use client";
 
-
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 interface Category {
   _id: string;
@@ -12,6 +12,7 @@ interface Category {
   isActive: boolean;
   showOnHomepage: boolean;
   productsCount: number;
+  slug: string;
 }
 
 interface ApiResponse {
@@ -74,6 +75,7 @@ export default function HeroSection() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -108,6 +110,14 @@ export default function HeroSection() {
     fetchCategories();
   }, []);
 
+  // Handle category click - navigate to products page with category filter
+  const handleCategoryClick = (categoryName: string) => {
+    // Save selected category to localStorage
+    localStorage.setItem('selectedCategory', categoryName);
+    // Navigate to products page
+    router.push('/CoffeeCategoryPage');
+  };
+
   // Combine API categories with predefined color schemes and fallback items
   const displayCategories = categories.map((category, index) => {
     const colorScheme = predefinedColorSchemes[index % predefinedColorSchemes.length];
@@ -116,6 +126,7 @@ export default function HeroSection() {
       id: category._id,
       title: category.name,
       description: category.description,
+      slug: category.slug,
       items: fallbackItems, // Using fallback items since API doesn't provide sub-items
       ...colorScheme
     };
@@ -126,6 +137,7 @@ export default function HeroSection() {
     id: `fallback-${index}`,
     title: `دسته‌بندی ${index + 1}`,
     description: 'توضیحات دسته‌بندی',
+    slug: `category-${index}`,
     items: fallbackItems,
     ...scheme
   }));
@@ -191,7 +203,8 @@ export default function HeroSection() {
           {finalCategories.map((cat) => (
             <div
               key={cat.id}
-              className={`relative bg-gradient-to-br ${cat.bgGradient} border border-white rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 group overflow-hidden min-h-[320px] w-full`}
+              className={`relative bg-gradient-to-br ${cat.bgGradient} border border-white rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 group overflow-hidden min-h-[320px] w-full cursor-pointer`}
+              onClick={() => handleCategoryClick(cat.title)}
             >
               {/* Background Elements */}
               <div className={`absolute inset-0 bg-gradient-to-br ${cat.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}></div>
@@ -211,7 +224,6 @@ export default function HeroSection() {
                       className="relative bg-white/80 backdrop-blur-sm border border-white rounded-2xl overflow-hidden cursor-pointer shadow-md hover:shadow-xl transition-all duration-300 group/item"
                     >
                       {/* Image Container */}
-                    
                       
                       {/* Text Overlay */}
                       <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/70 to-transparent">
@@ -236,7 +248,14 @@ export default function HeroSection() {
 
         {/* Call to Action */}
         <div className="text-center mt-12">
-          <button className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-semibold py-4 px-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 font-[var(--font-yekan)] text-lg">
+          <button 
+            onClick={() => {
+              // Clear any selected category when clicking "View All Categories"
+              localStorage.removeItem('selectedCategory');
+              router.push('/CoffeeCategoryPage');
+            }}
+            className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-semibold py-4 px-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 font-[var(--font-yekan)] text-lg"
+          >
             مشاهده همه دسته‌بندی‌ها
           </button>
         </div>

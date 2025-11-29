@@ -136,12 +136,19 @@ export default function CoffeeCategoryPage() {
   // NEW STATE: For Recommended and Discounted filters
   const [quickFilter, setQuickFilter] = useState<'all' | 'recommended' | 'discounted'>('all');
 
+  // NEW: State for selected category from localStorage
+  const [selectedCategoryFromStorage, setSelectedCategoryFromStorage] = useState<string | null>(null);
+
   // Fetch categories and products from API
   useEffect(() => {
     async function loadData() {
       try {
         setCategoriesLoading(true);
         setLoading(true);
+        
+        // Get selected category from localStorage
+        const savedCategory = localStorage.getItem('selectedCategory');
+        setSelectedCategoryFromStorage(savedCategory);
         
         // Fetch categories and products in parallel
         const [categoriesResponse, productsResponse] = await Promise.all([
@@ -166,7 +173,7 @@ export default function CoffeeCategoryPage() {
           price: product.priceAfterDiscount || product.price,
           originalPrice: product.originalPrice,
           image: product.image,
-          category: product.category?.name || 'قهوه',
+          category: product.category?.name || 'بدون دسته‌بندی',
           badge: product.badge,
           rating: product.rating || 0,
           reviews: product.reviews || 0,
@@ -179,7 +186,6 @@ export default function CoffeeCategoryPage() {
         }));
 
         setAllProducts(allProductsData);
-        setCoffeeProducts(allProductsData);
         
         // Calculate product counts for each category
         const categoryProductCounts = new Map();
@@ -195,7 +201,7 @@ export default function CoffeeCategoryPage() {
             id: category._id,
             name: category.name,
             count: categoryProductCounts.get(category.name) || 0,
-            active: index === 0
+            active: false
           }));
 
         // Add "All Categories" option with total count
@@ -206,10 +212,46 @@ export default function CoffeeCategoryPage() {
           active: true
         };
 
-        setCategories([allCategoriesOption, ...mappedCategories]);
+        const allCategories = [allCategoriesOption, ...mappedCategories];
+        setCategories(allCategories);
         
         // Generate dynamic filters from products data
         generateDynamicFilters(allProductsData);
+
+        // NEW: If there's a saved category, apply the filter automatically
+        if (savedCategory) {
+          // Find the category in our categories list
+          const targetCategory = allCategories.find(cat => cat.name === savedCategory);
+          
+          if (targetCategory && targetCategory.name !== "همه دسته‌بندی‌ها") {
+            // Automatically select the category from localStorage
+            setActiveFilters(prev => ({
+              ...prev,
+              selectedCategories: [targetCategory.name]
+            }));
+
+            // Update categories UI state
+            setCategories(prev => prev.map(cat => ({
+              ...cat,
+              active: cat.name === targetCategory.name
+            })));
+
+            // Apply the filter immediately
+            const filteredProducts = allProductsData.filter(product => 
+              product.category === targetCategory.name
+            );
+            setCoffeeProducts(filteredProducts);
+            
+            // Clear the saved category from localStorage after using it
+            localStorage.removeItem('selectedCategory');
+          } else {
+            // If no valid category found, show all products
+            setCoffeeProducts(allProductsData);
+          }
+        } else {
+          // If no saved category, show all products
+          setCoffeeProducts(allProductsData);
+        }
 
       } catch (error) {
         console.error('Error loading data:', error);
@@ -650,6 +692,12 @@ export default function CoffeeCategoryPage() {
           <span>خانه</span>
           <span className="mx-2">/</span>
           <span>دسته‌بندی کالا ها</span>
+          {selectedCategoryFromStorage && (
+            <>
+              <span className="mx-2">/</span>
+              <span className="text-amber-600">{selectedCategoryFromStorage}</span>
+            </>
+          )}
         </motion.div>
 
         {/* REMOVED: The Active Filters Display section has been removed as requested */}
@@ -939,17 +987,20 @@ export default function CoffeeCategoryPage() {
             <div className="mb-6">
               <p className="text-gray-600 font-[var(--font-yekan)]">
                 نمایش {coffeeProducts.length} محصول از {allProducts.length} محصول
+                {selectedCategoryFromStorage && (
+                  <span className="text-amber-600 mr-2"> در دسته‌بندی "{selectedCategoryFromStorage}"</span>
+                )}
               </p>
             </div>
 
-            {/* Products Grid/List */}
+            {/* Products Grid/List - UPDATED MOBILE LAYOUT */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.8 }}
               className={`${
                 viewMode === 'grid'
-                  ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'
+                  ? 'grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 sm:gap-6' // 2 columns on mobile
                   : 'space-y-3'
               }`}
             >
@@ -965,11 +1016,11 @@ export default function CoffeeCategoryPage() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: index * 0.1 }}
                     className={`bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-amber-100 overflow-hidden group cursor-pointer ${
-                      viewMode === 'list' ? 'flex' : ''
+                      viewMode === 'list' ? 'flex' : 'h-full flex flex-col'
                     }`}
                   >
                     {/* Product Image */}
-                    <div className={`relative ${viewMode === 'list' ? 'w-48 flex-shrink-0' : 'h-48'}`}>
+                    <div className={`relative ${viewMode === 'list' ? 'w-48 flex-shrink-0' : 'h-40 sm:h-48'}`}>
                       <ProductImage
                         src={product.image}
                         alt={product.name}
@@ -980,13 +1031,13 @@ export default function CoffeeCategoryPage() {
                       
                       {/* Discount Badge */}
                       {product.discount > 0 && (
-                        <div className="absolute top-3 left-3 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+                        <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold">
                           {product.discount}% تخفیف
                         </div>
                       )}
                       
                       {/* Status Badge */}
-                      <div className="absolute top-3 right-3">
+                      <div className="absolute top-2 right-2">
                         <span className={`text-xs px-2 py-1 rounded-full font-medium font-[var(--font-yekan)] shadow-md ${getStatusBadgeStyle(product.status)}`}>
                           {product.status}
                         </span>
@@ -994,9 +1045,9 @@ export default function CoffeeCategoryPage() {
                     </div>
 
                     {/* Product Info */}
-                    <div className={`p-4 flex-1 ${viewMode === 'list' ? 'flex flex-col justify-between' : ''}`}>
-                      <div>
-                        <h3 className="font-bold text-gray-800 mb-2 text-sm leading-relaxed font-[var(--font-yekan)]">
+                    <div className={`p-3 sm:p-4 flex-1 flex flex-col ${viewMode === 'list' ? 'justify-between' : ''}`}>
+                      <div className="flex-1">
+                        <h3 className="font-bold text-gray-800 mb-2 text-sm leading-relaxed font-[var(--font-yekan)] line-clamp-2">
                           {product.name}
                         </h3>
                         
@@ -1011,31 +1062,31 @@ export default function CoffeeCategoryPage() {
                             ))}
                           </div>
                           <span className="text-xs text-gray-500 font-[var(--font-yekan)]">
-                            ({product.reviews} نظر)
+                            ({product.reviews})
                           </span>
                         </div>
 
                         {/* Positive Feature */}
                         <div className="mb-3">
-                          <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full font-medium font-[var(--font-yekan)] border border-green-200">
+                          <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full font-medium font-[var(--font-yekan)] border border-green-200 line-clamp-1">
                             {product.positiveFeature}
                           </span>
                         </div>
                       </div>
 
                       {/* Price and Actions */}
-                      <div className="space-y-3 mt-4">
+                      <div className="space-y-3 mt-auto">
                         {/* Price Section */}
-                        <div className="flex flex-col gap-1">
+                        <div className="space-y-1">
                           {/* Original Price (if discounted) */}
                           {product.originalPrice && product.originalPrice > product.price && (
-                            <span className="text-sm text-gray-500 line-through font-[var(--font-yekan)]">
+                            <span className="text-xs text-gray-500 line-through font-[var(--font-yekan)] block">
                               {formatProductPrice(product.originalPrice)}
                             </span>
                           )}
                           {/* Current Price */}
-                          <span className={`font-bold text-amber-700 font-[var(--font-yekan)] ${
-                            product.originalPrice && product.originalPrice > product.price ? 'text-lg' : 'text-xl'
+                          <span className={`font-bold text-amber-700 font-[var(--font-yekan)] block ${
+                            product.originalPrice && product.originalPrice > product.price ? 'text-base' : 'text-lg'
                           }`}>
                             {formatProductPrice(product.price)}
                           </span>
@@ -1047,20 +1098,20 @@ export default function CoffeeCategoryPage() {
                           <motion.button
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
-                            className="flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg font-[var(--font-yekan)]"
+                            className="flex items-center justify-center gap-1 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-2 py-2 rounded-xl text-xs font-semibold transition-all shadow-lg font-[var(--font-yekan)]"
                             onClick={(e) => {
                               e.preventDefault();
                             }}
                           >
-                            <FiMessageCircle size={14} />
-                            <span>مشاوره سریع (هوشمند)</span>
+                            <FiMessageCircle size={12} />
+                            <span className="whitespace-nowrap">مشاوره سریع</span>
                           </motion.button>
 
                           {/* Buy Button */}
                           <motion.button
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
-                            className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white px-4 py-3 rounded-xl font-semibold transition-all shadow-lg font-[var(--font-yekan)]"
+                            className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white px-2 py-3 rounded-xl font-semibold transition-all shadow-lg font-[var(--font-yekan)] text-sm"
                             onClick={(e) => {
                               e.preventDefault();
                             }}

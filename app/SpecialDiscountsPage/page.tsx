@@ -1,34 +1,66 @@
 "use client";
 
-import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
-import { FiFilter, FiGrid, FiList, FiStar, FiChevronDown, FiX, FiMessageCircle } from "react-icons/fi";
+import { FiFilter, FiGrid, FiList, FiStar, FiChevronDown, FiX, FiMessageCircle, FiCoffee } from "react-icons/fi";
 import Link from "next/link";
 
 interface Product {
-  id: string;
+  _id: string;
   name: string;
-  price: number;
-  originalPrice?: number;
-  image: string;
-  category: string;
+  description: string;
+  positiveFeature: string;
+  category: any;
   badge: string;
+  images: string[];
+  image: string;
+  status: string;
+  price: number;
+  stock: number;
+  originalPrice: number;
+  discount: number;
+  type: string;
+  dealType?: string;
+  timeLeft?: string;
+  soldCount: number;
+  totalCount: number;
   rating: number;
   reviews: number;
   isPrime: boolean;
-  discount: number;
-  type: string;
-  positiveFeature: string;
-  status: string;
-  dealType?: string;
-  timeLeft?: string;
-  soldCount?: number;
-  totalCount?: number;
+  isPremium: boolean;
+  features: string[];
+  priceAfterDiscount: number;
+  brand?: string;
+  weight?: number;
+  ingredients?: string;
+  benefits?: string;
+  howToUse?: string;
+  hasWarranty?: boolean;
+  warrantyDuration?: number;
+  warrantyDescription?: string;
+  userReviews: any[];
+  recommended: boolean;
+  relatedProducts: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface ApiResponse {
+  status: number;
+  success: boolean;
+  data: {
+    products: Product[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      pages: number;
+    };
+  };
 }
 
 interface Category {
-  id: number;
+  id: string;
   name: string;
   count: number;
   active: boolean;
@@ -48,18 +80,32 @@ interface Filters {
   ratings: number[];
 }
 
+interface ActiveFilters {
+  selectedBrands: string[];
+  selectedPriceRange: string;
+  selectedRatings: number[];
+  selectedCategories: string[];
+  priceRange: [number, number];
+}
+
 export default function SpecialDiscountsPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState('popular');
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [expandedFilter, setExpandedFilter] = useState<string | null>(null);
-  const [selectedPriceRange, setSelectedPriceRange] = useState<string>("");
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000000]);
-  const [customMinPrice, setCustomMinPrice] = useState<string>("");
-  const [customMaxPrice, setCustomMaxPrice] = useState<string>("");
   const [discountProducts, setDiscountProducts] = useState<Product[]>([]);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [filters, setFilters] = useState<Filters>({ brands: [], priceRanges: [], ratings: [] });
+  const [activeFilters, setActiveFilters] = useState<ActiveFilters>({
+    selectedBrands: [],
+    selectedPriceRange: "",
+    selectedRatings: [],
+    selectedCategories: [],
+    priceRange: [0, 1000000]
+  });
+  const [customMinPrice, setCustomMinPrice] = useState<string>("");
+  const [customMaxPrice, setCustomMaxPrice] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -67,35 +113,32 @@ export default function SpecialDiscountsPage() {
       try {
         setLoading(true);
         
-        // استفاده از API جدید تخفیف‌ها از MockAPI.io
-        const response = await fetch('https://683dc5b3199a0039e9e6d25e.mockapi.io/Discount');
-        const data = await response.json();
+        // استفاده از API اصلی بک‌اند
+        const response = await fetch('https://coffee-shop-backend-k3un.onrender.com/api/v1/product');
+        const result: ApiResponse = await response.json();
         
-        console.log("Loaded discount products:", data);
-        setDiscountProducts(data || []);
+        console.log("Loaded products from backend:", result);
         
-        // Set categories and filters (same as before)
-        setCategories([
-          { id: 1, name: "همه دسته‌بندی‌ها", count: data.length, active: true },
-          { id: 2, name: "نوشیدنی", count: data.filter((p: Product) => p.category === "نوشیدنی").length, active: false },
-          { id: 3, name: "تجهیزات", count: data.filter((p: Product) => p.category === "تجهیزات").length, active: false },
-          { id: 4, name: "تجهیزات حرفه‌ای", count: data.filter((p: Product) => p.category === "تجهیزات حرفه‌ای").length, active: false },
-          { id: 5, name: "دانه قهوه", count: data.filter((p: Product) => p.category.includes("دانه")).length, active: false }
-        ]);
-        
-        setFilters({
-          brands: ["دیویدوف", "لاوازا", "ایلی", "استارباکس", "نسپرسو", "کمکس"],
-          priceRanges: [
-            { id: 1, label: "زیر ۱۰۰ هزار تومان", value: "0-100000", min: 0, max: 100000 },
-            { id: 2, label: "۱۰۰ تا ۳۰۰ هزار تومان", value: "100000-300000", min: 100000, max: 300000 },
-            { id: 3, label: "۳۰۰ تا ۵۰۰ هزار تومان", value: "300000-500000", min: 300000, max: 500000 },
-            { id: 4, label: "۵۰۰ هزار تا ۱ میلیون", value: "500000-1000000", min: 500000, max: 1000000 },
-            { id: 5, label: "بالای ۱ میلیون", value: "1000000-5000000", min: 1000000, max: 5000000 }
-          ],
-          ratings: [4, 3, 2, 1]
-        });
+        if (result.success && result.data.products) {
+          // فقط محصولاتی که تخفیف دارند را نمایش بده
+          const productsWithDiscount = result.data.products.filter(product => 
+            product.discount > 0
+          );
+          
+          console.log("Products with discount:", productsWithDiscount);
+          setAllProducts(productsWithDiscount);
+          setDiscountProducts(productsWithDiscount);
+          
+          // Generate dynamic categories and filters
+          generateDynamicFilters(productsWithDiscount);
+        } else {
+          setAllProducts([]);
+          setDiscountProducts([]);
+        }
       } catch (error) {
         console.error('Error loading discount data:', error);
+        setAllProducts([]);
+        setDiscountProducts([]);
       } finally {
         setLoading(false);
       }
@@ -104,19 +147,320 @@ export default function SpecialDiscountsPage() {
     loadData();
   }, []);
 
+  // Apply filters whenever activeFilters change
+  useEffect(() => {
+    applyFilters();
+  }, [activeFilters, allProducts]);
+
+  // Generate dynamic filters based on actual product data
+  const generateDynamicFilters = (products: Product[]) => {
+    if (products.length === 0) {
+      setFilters({
+        brands: ["برندهای موجود"],
+        priceRanges: [
+          { id: 1, label: "زیر ۱۰۰ هزار تومان", value: "0-100000", min: 0, max: 100000 },
+          { id: 2, label: "۱۰۰ تا ۳۰۰ هزار تومان", value: "100000-300000", min: 100000, max: 300000 },
+          { id: 3, label: "۳۰۰ تا ۵۰۰ هزار تومان", value: "300000-500000", min: 300000, max: 500000 },
+          { id: 4, label: "۵۰۰ هزار تا ۱ میلیون", value: "500000-1000000", min: 500000, max: 1000000 },
+          { id: 5, label: "بالای ۱ میلیون", value: "1000000-5000000", min: 1000000, max: 5000000 }
+        ],
+        ratings: [4, 3, 2, 1]
+      });
+      
+      setCategories([
+        { id: "all", name: "همه دسته‌بندی‌ها", count: 0, active: true }
+      ]);
+      return;
+    }
+
+    // Generate categories from products
+    const categoryCounts = new Map();
+    products.forEach(product => {
+      const categoryName = product.category?.name || 'دسته‌بندی نشده';
+      categoryCounts.set(categoryName, (categoryCounts.get(categoryName) || 0) + 1);
+    });
+
+    const categoryArray = Array.from(categoryCounts, ([name, count]) => ({
+      id: name,
+      name,
+      count,
+      active: false
+    }));
+
+    // Add "All Categories" option
+    setCategories([
+      { id: "all", name: "همه دسته‌بندی‌ها", count: products.length, active: true },
+      ...categoryArray
+    ]);
+
+    // Extract unique brands
+    const uniqueBrands = Array.from(new Set(
+      products
+        .map(p => p.brand)
+        .filter(brand => brand && brand.trim() !== "")
+    ));
+
+    // Generate price ranges based on actual prices
+    const prices = products.map(p => p.priceAfterDiscount || p.price).filter(price => price > 0);
+    const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+    const maxPrice = prices.length > 0 ? Math.max(...prices) : 1000000;
+    
+    const dynamicPriceRanges = generatePriceRanges(minPrice, maxPrice);
+
+    // Extract available ratings
+    const availableRatings = Array.from(new Set(products
+      .map(product => Math.floor(product.rating))
+      .filter(rating => rating > 0)
+    )).sort((a, b) => b - a);
+
+    const dynamicRatings = availableRatings.length > 0 ? availableRatings : [4, 3, 2, 1];
+
+    setFilters({
+      brands: uniqueBrands.length > 0 ? uniqueBrands as string[] : ["برندهای موجود"],
+      priceRanges: dynamicPriceRanges,
+      ratings: dynamicRatings
+    });
+
+    // Initialize custom price inputs with actual data
+    setCustomMinPrice(minPrice.toString());
+    setCustomMaxPrice(maxPrice.toString());
+    setActiveFilters(prev => ({
+      ...prev,
+      priceRange: [minPrice, maxPrice]
+    }));
+  };
+
+  // Apply all active filters
+  const applyFilters = () => {
+    let filteredProducts = [...allProducts];
+
+    // Filter by brands
+    if (activeFilters.selectedBrands.length > 0) {
+      filteredProducts = filteredProducts.filter(product => 
+        product.brand && activeFilters.selectedBrands.includes(product.brand)
+      );
+    }
+
+    // Filter by price range
+    filteredProducts = filteredProducts.filter(product => {
+      const productPrice = product.priceAfterDiscount || product.price;
+      return productPrice >= activeFilters.priceRange[0] && productPrice <= activeFilters.priceRange[1];
+    });
+
+    // Filter by ratings
+    if (activeFilters.selectedRatings.length > 0) {
+      filteredProducts = filteredProducts.filter(product => 
+        activeFilters.selectedRatings.some(rating => Math.floor(product.rating) >= rating)
+      );
+    }
+
+    // Filter by categories (excluding "All Categories")
+    if (activeFilters.selectedCategories.length > 0 && 
+        !activeFilters.selectedCategories.includes("همه دسته‌بندی‌ها")) {
+      filteredProducts = filteredProducts.filter(product => 
+        activeFilters.selectedCategories.includes(product.category?.name || 'دسته‌بندی نشده')
+      );
+    }
+
+    setDiscountProducts(filteredProducts);
+  };
+
+  // Handle brand filter change
+  const handleBrandFilter = (brand: string) => {
+    setActiveFilters(prev => {
+      const isSelected = prev.selectedBrands.includes(brand);
+      const updatedBrands = isSelected
+        ? prev.selectedBrands.filter(b => b !== brand)
+        : [...prev.selectedBrands, brand];
+      
+      return {
+        ...prev,
+        selectedBrands: updatedBrands
+      };
+    });
+  };
+
+  // Handle rating filter change
+  const handleRatingFilter = (rating: number) => {
+    setActiveFilters(prev => {
+      const isSelected = prev.selectedRatings.includes(rating);
+      const updatedRatings = isSelected
+        ? prev.selectedRatings.filter(r => r !== rating)
+        : [...prev.selectedRatings, rating];
+      
+      return {
+        ...prev,
+        selectedRatings: updatedRatings
+      };
+    });
+  };
+
+  // Handle category filter change
+  const handleCategoryFilter = (categoryId: string, categoryName: string) => {
+    setActiveFilters(prev => {
+      let updatedCategories: string[];
+      
+      if (categoryName === "همه دسته‌بندی‌ها") {
+        // If "All Categories" is selected, clear other category selections
+        updatedCategories = prev.selectedCategories.includes("همه دسته‌بندی‌ها") 
+          ? [] 
+          : ["همه دسته‌بندی‌ها"];
+      } else {
+        // For specific categories
+        const isSelected = prev.selectedCategories.includes(categoryName);
+        updatedCategories = isSelected
+          ? prev.selectedCategories.filter(c => c !== categoryName && c !== "همه دسته‌بندی‌ها")
+          : [...prev.selectedCategories.filter(c => c !== "همه دسته‌بندی‌ها"), categoryName];
+      }
+      
+      return {
+        ...prev,
+        selectedCategories: updatedCategories
+      };
+    });
+
+    // Update the categories UI state
+    setCategories(prev => prev.map(cat => ({
+      ...cat,
+      active: cat.id === categoryId ? !cat.active : cat.active
+    })));
+  };
+
+  // Handle price range selection
   const handlePriceRangeSelect = (range: PriceRange) => {
-    setSelectedPriceRange(range.value);
-    setPriceRange([range.min, range.max]);
+    setActiveFilters(prev => ({
+      ...prev,
+      selectedPriceRange: range.value,
+      priceRange: [range.min, range.max]
+    }));
     setCustomMinPrice(range.min.toString());
     setCustomMaxPrice(range.max.toString());
   };
 
+  // Handle custom price range
   const handleCustomPriceApply = () => {
     const min = parseInt(customMinPrice) || 0;
     const max = parseInt(customMaxPrice) || 1000000;
-    setPriceRange([min, max]);
-    setSelectedPriceRange("custom");
+    
+    // Validate and ensure min is not greater than max
+    const validatedMin = Math.min(min, max);
+    const validatedMax = Math.max(min, max);
+    
+    setActiveFilters(prev => ({
+      ...prev,
+      selectedPriceRange: "custom",
+      priceRange: [validatedMin, validatedMax]
+    }));
+    
+    // Update the input fields with validated values
+    setCustomMinPrice(validatedMin.toString());
+    setCustomMaxPrice(validatedMax.toString());
   };
+
+  // Handle individual custom price input changes
+  const handleCustomMinPriceChange = (value: string) => {
+    const numericValue = value.replace(/[^0-9]/g, '');
+    setCustomMinPrice(numericValue);
+    
+    // Update price range in real-time if both values are valid
+    const min = parseInt(numericValue) || 0;
+    const max = parseInt(customMaxPrice) || 1000000;
+    
+    const validatedMin = Math.min(min, max);
+    const validatedMax = Math.max(min, max);
+    
+    setActiveFilters(prev => ({
+      ...prev,
+      selectedPriceRange: "custom",
+      priceRange: [validatedMin, validatedMax]
+    }));
+  };
+
+  const handleCustomMaxPriceChange = (value: string) => {
+    const numericValue = value.replace(/[^0-9]/g, '');
+    setCustomMaxPrice(numericValue);
+    
+    // Update price range in real-time if both values are valid
+    const min = parseInt(customMinPrice) || 0;
+    const max = parseInt(numericValue) || 1000000;
+    
+    const validatedMin = Math.min(min, max);
+    const validatedMax = Math.max(min, max);
+    
+    setActiveFilters(prev => ({
+      ...prev,
+      selectedPriceRange: "custom",
+      priceRange: [validatedMin, validatedMax]
+    }));
+  };
+
+  // Clear all filters
+  const clearAllFilters = () => {
+    // Get the actual min and max prices from all products
+    const prices = allProducts.map(p => p.priceAfterDiscount || p.price).filter(price => price > 0);
+    const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+    const maxPrice = prices.length > 0 ? Math.max(...prices) : 1000000;
+    
+    setActiveFilters({
+      selectedBrands: [],
+      selectedPriceRange: "",
+      selectedRatings: [],
+      selectedCategories: [],
+      priceRange: [minPrice, maxPrice]
+    });
+    
+    setCustomMinPrice(minPrice.toString());
+    setCustomMaxPrice(maxPrice.toString());
+    
+    // Reset categories UI - only "All Categories" active
+    setCategories(prev => prev.map(cat => ({
+      ...cat,
+      active: cat.id === "all"
+    })));
+  };
+
+  // Generate price ranges based on actual price data
+  const generatePriceRanges = (minPrice: number, maxPrice: number): PriceRange[] => {
+    if (minPrice === maxPrice || maxPrice - minPrice < 10000) {
+      return [
+        {
+          id: 1,
+          label: `${formatPrice(minPrice)}`,
+          value: `${minPrice}-${maxPrice}`,
+          min: minPrice,
+          max: maxPrice
+        }
+      ];
+    }
+
+    const ranges: PriceRange[] = [];
+    const rangeCount = Math.min(5, Math.ceil((maxPrice - minPrice) / 100000) || 1);
+    const step = Math.ceil((maxPrice - minPrice) / rangeCount);
+    
+    for (let i = 0; i < rangeCount; i++) {
+      const rangeMin = minPrice + (i * step);
+      const rangeMax = i === rangeCount - 1 ? maxPrice : minPrice + ((i + 1) * step);
+      
+      ranges.push({
+        id: i + 1,
+        label: `${formatPrice(rangeMin)} - ${formatPrice(rangeMax)}`,
+        value: `${rangeMin}-${rangeMax}`,
+        min: rangeMin,
+        max: rangeMax
+      });
+    }
+    
+    return ranges;
+  };
+
+  // Check if any filters are active
+  const hasActiveFilters = 
+    activeFilters.selectedBrands.length > 0 ||
+    activeFilters.selectedRatings.length > 0 ||
+    activeFilters.selectedCategories.length > 0 ||
+    activeFilters.selectedPriceRange !== "" ||
+    activeFilters.priceRange[0] > 0 ||
+    activeFilters.priceRange[1] < 1000000;
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('fa-IR').format(price) + " تومان";
@@ -137,6 +481,32 @@ export default function SpecialDiscountsPage() {
       default:
         return "bg-gradient-to-r from-amber-600 to-amber-700 text-white";
     }
+  };
+
+  // Image placeholder component
+  const ProductImage = ({ src, alt, className }: { src: string; alt: string; className: string }) => {
+    const [imageError, setImageError] = useState(false);
+    
+    const handleImageError = () => {
+      setImageError(true);
+    };
+
+    if (imageError || !src || src.includes('undefined')) {
+      return (
+        <div className={`${className} bg-gradient-to-br from-amber-100 to-amber-200 flex items-center justify-center`}>
+          <FiCoffee className="text-amber-400 text-2xl" />
+        </div>
+      );
+    }
+
+    return (
+      <img
+        src={src}
+        alt={alt}
+        className={className}
+        onError={handleImageError}
+      />
+    );
   };
 
   const FilterSection = ({ title, children, filterKey }: { title: string; children: React.ReactNode; filterKey: string }) => (
@@ -195,7 +565,7 @@ export default function SpecialDiscountsPage() {
         </motion.div>
 
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* Desktop Sidebar Filters - Same as Categories Page */}
+          {/* Desktop Sidebar Filters */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -203,9 +573,19 @@ export default function SpecialDiscountsPage() {
             className="lg:w-64 flex-shrink-0 hidden lg:block"
           >
             <div className="bg-white rounded-2xl shadow-lg border border-amber-200 p-6 sticky top-32">
-              <div className="flex items-center gap-2 mb-6">
-                <FiFilter className="text-amber-600" />
-                <h3 className="font-bold text-gray-800 font-[var(--font-yekan)]">فیلترها</h3>
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2">
+                  <FiFilter className="text-amber-600" />
+                  <h3 className="font-bold text-gray-800 font-[var(--font-yekan)]">فیلترها</h3>
+                </div>
+                {hasActiveFilters && (
+                  <button 
+                    onClick={clearAllFilters}
+                    className="text-red-500 hover:text-red-700 text-sm font-[var(--font-yekan)]"
+                  >
+                    حذف همه
+                  </button>
+                )}
               </div>
 
               {/* Categories */}
@@ -223,8 +603,8 @@ export default function SpecialDiscountsPage() {
                       <div className="flex items-center gap-2">
                         <input
                           type="checkbox"
-                          checked={category.active}
-                          onChange={() => {}}
+                          checked={activeFilters.selectedCategories.includes(category.name)}
+                          onChange={() => handleCategoryFilter(category.id, category.name)}
                           className="rounded border-amber-300 text-amber-600 focus:ring-amber-500"
                         />
                         <span className="text-sm text-gray-600 group-hover:text-amber-700 transition-colors font-[var(--font-yekan)]">
@@ -253,14 +633,14 @@ export default function SpecialDiscountsPage() {
                       transition={{ delay: index * 0.1 }}
                       onClick={() => handlePriceRangeSelect(range)}
                       className={`w-full text-right py-3 px-4 rounded-xl border transition-all duration-200 font-[var(--font-yekan)] text-sm ${
-                        selectedPriceRange === range.value
+                        activeFilters.selectedPriceRange === range.value
                           ? 'bg-amber-500 text-white border-amber-500 shadow-md'
                           : 'bg-white text-gray-700 border-amber-200 hover:bg-amber-50 hover:border-amber-300'
                       }`}
                     >
                       <div className="flex items-center justify-between">
                         <span>{range.label}</span>
-                        {selectedPriceRange === range.value && (
+                        {activeFilters.selectedPriceRange === range.value && (
                           <div className="w-2 h-2 bg-white rounded-full"></div>
                         )}
                       </div>
@@ -273,7 +653,7 @@ export default function SpecialDiscountsPage() {
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-sm text-gray-700 font-[var(--font-yekan)]">قیمت دلخواه</span>
                     <span className="text-xs text-amber-600 bg-amber-100 px-2 py-1 rounded-full font-[var(--font-yekan)]">
-                      {formatPrice(priceRange[0])} - {formatPrice(priceRange[1])}
+                      {formatPrice(activeFilters.priceRange[0])} - {formatPrice(activeFilters.priceRange[1])}
                     </span>
                   </div>
                   
@@ -283,7 +663,7 @@ export default function SpecialDiscountsPage() {
                       <input
                         type="text"
                         value={customMinPrice}
-                        onChange={(e) => setCustomMinPrice(e.target.value.replace(/[^0-9]/g, ''))}
+                        onChange={(e) => handleCustomMinPriceChange(e.target.value)}
                         placeholder="۰"
                         className="w-full px-3 py-2 text-sm border border-amber-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 font-[var(--font-yekan)] text-left"
                       />
@@ -293,7 +673,7 @@ export default function SpecialDiscountsPage() {
                       <input
                         type="text"
                         value={customMaxPrice}
-                        onChange={(e) => setCustomMaxPrice(e.target.value.replace(/[^0-9]/g, ''))}
+                        onChange={(e) => handleCustomMaxPriceChange(e.target.value)}
                         placeholder="۱۰۰۰۰۰۰"
                         className="w-full px-3 py-2 text-sm border border-amber-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 font-[var(--font-yekan)] text-left"
                       />
@@ -323,7 +703,12 @@ export default function SpecialDiscountsPage() {
                       transition={{ delay: index * 0.1 }}
                       className="flex items-center gap-2 cursor-pointer group"
                     >
-                      <input type="checkbox" className="rounded border-amber-300 text-amber-600 focus:ring-amber-500" />
+                      <input 
+                        type="checkbox" 
+                        checked={activeFilters.selectedBrands.includes(brand)}
+                        onChange={() => handleBrandFilter(brand)}
+                        className="rounded border-amber-300 text-amber-600 focus:ring-amber-500" 
+                      />
                       <span className="text-sm text-gray-600 group-hover:text-amber-700 transition-colors font-[var(--font-yekan)]">
                         {brand}
                       </span>
@@ -344,7 +729,12 @@ export default function SpecialDiscountsPage() {
                       transition={{ delay: index * 0.1 }}
                       className="flex items-center gap-2 cursor-pointer group"
                     >
-                      <input type="checkbox" className="rounded border-amber-300 text-amber-600 focus:ring-amber-500" />
+                      <input 
+                        type="checkbox" 
+                        checked={activeFilters.selectedRatings.includes(rating)}
+                        onChange={() => handleRatingFilter(rating)}
+                        className="rounded border-amber-300 text-amber-600 focus:ring-amber-500" 
+                      />
                       <div className="flex items-center gap-1">
                         {[...Array(5)].map((_, i) => (
                           <FiStar
@@ -379,7 +769,7 @@ export default function SpecialDiscountsPage() {
               </motion.button>
             </div>
 
-            {/* UPDATED: Consultation Banner (Same as Categories Page) */}
+            {/* Consultation Banner */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -412,33 +802,12 @@ export default function SpecialDiscountsPage() {
               </div>
             </motion.div>
 
-            {/* REMOVED: The redundant "Today's Special Discounts" box has been removed */}
-
-            {/* NEW: Quick Filter Buttons (Same as Categories Page) */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="flex flex-wrap gap-3 mb-6"
-            >
-              {['توصیه شده ها', 'تخفیف دارها'].map((filter, index) => (
-                <motion.button
-                  key={filter}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.4, delay: index * 0.1 }}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all font-[var(--font-yekan)] ${
-                    index === 0
-                      ? 'bg-amber-600 text-white shadow-lg'
-                      : 'bg-white text-gray-700 border border-amber-200 hover:bg-amber-50 hover:text-amber-700'
-                  }`}
-                >
-                  {filter}
-                </motion.button>
-              ))}
-            </motion.div>
+            {/* Results Count */}
+            <div className="mb-6">
+              <p className="text-gray-600 font-[var(--font-yekan)]">
+                نمایش {discountProducts.length} محصول تخفیف‌دار از {allProducts.length} محصول
+              </p>
+            </div>
 
             {/* Products Grid/List */}
             <motion.div
@@ -453,8 +822,8 @@ export default function SpecialDiscountsPage() {
             >
               {discountProducts.map((product, index) => (
                 <Link 
-                  key={product.id} 
-                  href={`/CoffeeCategoryPage/${product.id}`}
+                  key={product._id} 
+                  href={`/CoffeeCategoryPage/${product._id}`}
                   className="block"
                 >
                   <motion.div
@@ -462,16 +831,17 @@ export default function SpecialDiscountsPage() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: index * 0.1 }}
                     className={`bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-amber-100 overflow-hidden group cursor-pointer ${
-                      viewMode === 'list' ? 'flex' : ''
+                      viewMode === 'list' ? 'flex' : 'h-full flex flex-col'
                     }`}
                   >
                     {/* Product Image */}
                     <div className={`relative ${viewMode === 'list' ? 'w-48 flex-shrink-0' : 'h-48'}`}>
-                      <Image
+                      <ProductImage
                         src={product.image}
                         alt={product.name}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                        className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${
+                          viewMode === 'list' ? 'rounded-r-2xl' : 'rounded-t-2xl'
+                        }`}
                       />
                       
                       {/* Discount Badge */}
@@ -483,8 +853,8 @@ export default function SpecialDiscountsPage() {
                       
                       {/* Status Badge */}
                       <div className="absolute top-3 right-3">
-                        <span className={`text-xs px-2 py-1 rounded-full font-medium font-[var(--font-yekan)] shadow-md ${getStatusBadgeStyle(product.status)}`}>
-                          {product.status}
+                        <span className={`text-xs px-2 py-1 rounded-full font-medium font-[var(--font-yekan)] shadow-md ${getStatusBadgeStyle(product.badge)}`}>
+                          {product.badge}
                         </span>
                       </div>
 
@@ -515,7 +885,7 @@ export default function SpecialDiscountsPage() {
                             ))}
                           </div>
                           <span className="text-xs text-gray-500 font-[var(--font-yekan)]">
-                            ({product.reviews} نظر)
+                            ({product.reviews || 0} نظر)
                           </span>
                         </div>
 
@@ -531,21 +901,21 @@ export default function SpecialDiscountsPage() {
                       <div className="space-y-3 mt-4">
                         {/* Price Section */}
                         <div className="flex flex-col gap-1">
-                          {/* Original Price (if discounted) */}
-                          {product.originalPrice && (
+                          {/* Original Price */}
+                          {product.originalPrice && product.originalPrice > product.priceAfterDiscount && (
                             <span className="text-sm text-gray-500 line-through font-[var(--font-yekan)]">
                               {formatProductPrice(product.originalPrice)}
                             </span>
                           )}
                           {/* Current Price */}
                           <span className={`font-bold text-amber-700 font-[var(--font-yekan)] ${
-                            product.originalPrice ? 'text-lg' : 'text-xl'
+                            product.originalPrice && product.originalPrice > product.priceAfterDiscount ? 'text-lg' : 'text-xl'
                           }`}>
-                            {formatProductPrice(product.price)}
+                            {formatProductPrice(product.priceAfterDiscount || product.price)}
                           </span>
                         </div>
 
-                        {/* Buttons Section - UPDATED: Added consultation button */}
+                        {/* Buttons Section */}
                         <div className="flex flex-col gap-2">
                           {/* Smart Consultation Button */}
                           <motion.button
@@ -579,34 +949,26 @@ export default function SpecialDiscountsPage() {
               ))}
             </motion.div>
 
-            {/* Pagination */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.5 }}
-              className="flex justify-center items-center gap-2 mt-12"
-            >
-              {[1, 2, 3, 4, 5].map((page) => (
-                <button
-                  key={page}
-                  className={`w-10 h-10 rounded-xl transition-all font-[var(--font-yekan)] ${
-                    page === 1
-                      ? 'bg-amber-600 text-white shadow-lg'
-                      : 'bg-white text-gray-700 border border-amber-200 hover:bg-amber-50'
-                  }`}
+            {/* No Products Message */}
+            {discountProducts.length === 0 && !loading && (
+              <div className="text-center py-12">
+                <FiCoffee className="text-gray-300 text-4xl mx-auto mb-3" />
+                <p className="text-gray-600 font-[var(--font-yekan)] text-lg">
+                  هیچ محصول تخفیف‌داری با فیلترهای انتخاب شده یافت نشد.
+                </p>
+                <button 
+                  onClick={clearAllFilters}
+                  className="mt-4 bg-amber-500 hover:bg-amber-600 text-white px-6 py-2 rounded-xl font-[var(--font-yekan)]"
                 >
-                  {page}
+                  حذف فیلترها
                 </button>
-              ))}
-              <button className="w-10 h-10 rounded-xl bg-white text-gray-700 border border-amber-200 hover:bg-amber-50 transition-all font-[var(--font-yekan)]">
-                ...
-              </button>
-            </motion.div>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Mobile Filters Modal - Same as Categories Page */}
+      {/* Mobile Filters Modal */}
       <AnimatePresence>
         {showMobileFilters && (
           <>
@@ -647,8 +1009,8 @@ export default function SpecialDiscountsPage() {
                           <div className="flex items-center gap-2">
                             <input
                               type="checkbox"
-                              checked={category.active}
-                              onChange={() => {}}
+                              checked={activeFilters.selectedCategories.includes(category.name)}
+                              onChange={() => handleCategoryFilter(category.id, category.name)}
                               className="rounded border-amber-300 text-amber-600 focus:ring-amber-500"
                             />
                             <span className="text-sm text-gray-600 group-hover:text-amber-700 transition-colors font-[var(--font-yekan)]">
@@ -671,14 +1033,14 @@ export default function SpecialDiscountsPage() {
                           key={range.id}
                           onClick={() => handlePriceRangeSelect(range)}
                           className={`w-full text-right py-3 px-4 rounded-xl border transition-all duration-200 font-[var(--font-yekan)] text-sm ${
-                            selectedPriceRange === range.value
+                            activeFilters.selectedPriceRange === range.value
                               ? 'bg-amber-500 text-white border-amber-500 shadow-md'
                               : 'bg-white text-gray-700 border-amber-200 hover:bg-amber-50 hover:border-amber-300'
                           }`}
                         >
                           <div className="flex items-center justify-between">
                             <span>{range.label}</span>
-                            {selectedPriceRange === range.value && (
+                            {activeFilters.selectedPriceRange === range.value && (
                               <div className="w-2 h-2 bg-white rounded-full"></div>
                             )}
                           </div>
@@ -692,7 +1054,7 @@ export default function SpecialDiscountsPage() {
                             <input
                               type="text"
                               value={customMinPrice}
-                              onChange={(e) => setCustomMinPrice(e.target.value.replace(/[^0-9]/g, ''))}
+                              onChange={(e) => handleCustomMinPriceChange(e.target.value)}
                               placeholder="حداقل قیمت"
                               className="w-full px-3 py-2 text-sm border border-amber-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 font-[var(--font-yekan)] text-left"
                             />
@@ -701,7 +1063,7 @@ export default function SpecialDiscountsPage() {
                             <input
                               type="text"
                               value={customMaxPrice}
-                              onChange={(e) => setCustomMaxPrice(e.target.value.replace(/[^0-9]/g, ''))}
+                              onChange={(e) => handleCustomMaxPriceChange(e.target.value)}
                               placeholder="حداکثر قیمت"
                               className="w-full px-3 py-2 text-sm border border-amber-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 font-[var(--font-yekan)] text-left"
                             />
@@ -722,7 +1084,12 @@ export default function SpecialDiscountsPage() {
                     <div className="space-y-2">
                       {filters.brands.map((brand) => (
                         <label key={brand} className="flex items-center gap-2 cursor-pointer group">
-                          <input type="checkbox" className="rounded border-amber-300 text-amber-600 focus:ring-amber-500" />
+                          <input 
+                            type="checkbox" 
+                            checked={activeFilters.selectedBrands.includes(brand)}
+                            onChange={() => handleBrandFilter(brand)}
+                            className="rounded border-amber-300 text-amber-600 focus:ring-amber-500" 
+                          />
                           <span className="text-sm text-gray-600 group-hover:text-amber-700 transition-colors font-[var(--font-yekan)]">
                             {brand}
                           </span>
@@ -736,7 +1103,12 @@ export default function SpecialDiscountsPage() {
                     <div className="space-y-2">
                       {filters.ratings.map((rating) => (
                         <label key={rating} className="flex items-center gap-2 cursor-pointer group">
-                          <input type="checkbox" className="rounded border-amber-300 text-amber-600 focus:ring-amber-500" />
+                          <input 
+                            type="checkbox" 
+                            checked={activeFilters.selectedRatings.includes(rating)}
+                            onChange={() => handleRatingFilter(rating)}
+                            className="rounded border-amber-300 text-amber-600 focus:ring-amber-500" 
+                          />
                           <div className="flex items-center gap-1">
                             {[...Array(5)].map((_, i) => (
                               <FiStar

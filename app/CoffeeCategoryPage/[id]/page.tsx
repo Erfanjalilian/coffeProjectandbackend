@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { FiStar, FiShoppingCart, FiMessageCircle, FiArrowLeft, FiHeart, FiShare2, FiTruck, FiShield, FiCoffee } from "react-icons/fi";
 import Link from "next/link";
@@ -108,6 +108,83 @@ interface ApiResponse {
   };
 }
 
+// Favorites types and utilities
+interface FavoriteProduct {
+  _id: string;
+  name: string;
+  price: number;
+  priceAfterDiscount: number;
+  originalPrice?: number;
+  image: string;
+  brand?: string;
+  rating: number;
+  positiveFeature: string;
+  addedAt: string;
+}
+
+const FAVORITES_STORAGE_KEY = "user_favorites";
+
+// Favorites utility functions
+const getFavoritesFromStorage = (): FavoriteProduct[] => {
+  if (typeof window === "undefined") return [];
+  try {
+    const favorites = localStorage.getItem(FAVORITES_STORAGE_KEY);
+    return favorites ? JSON.parse(favorites) : [];
+  } catch (error) {
+    console.error("Error reading favorites from localStorage:", error);
+    return [];
+  }
+};
+
+const saveFavoritesToStorage = (favorites: FavoriteProduct[]): void => {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favorites));
+  } catch (error) {
+    console.error("Error saving favorites to localStorage:", error);
+  }
+};
+
+const addToFavorites = (product: Product): FavoriteProduct[] => {
+  const favorites = getFavoritesFromStorage();
+  
+  // Check if product is already in favorites
+  const existingIndex = favorites.findIndex(fav => fav._id === product._id);
+  
+  if (existingIndex === -1) {
+    const favoriteProduct: FavoriteProduct = {
+      _id: product._id,
+      name: product.name,
+      price: product.price,
+      priceAfterDiscount: product.priceAfterDiscount,
+      originalPrice: product.originalPrice,
+      image: product.image,
+      brand: product.brand,
+      rating: product.rating,
+      positiveFeature: product.positiveFeature,
+      addedAt: new Date().toISOString()
+    };
+    
+    const updatedFavorites = [favoriteProduct, ...favorites];
+    saveFavoritesToStorage(updatedFavorites);
+    return updatedFavorites;
+  }
+  
+  return favorites;
+};
+
+const removeFromFavorites = (productId: string): FavoriteProduct[] => {
+  const favorites = getFavoritesFromStorage();
+  const updatedFavorites = favorites.filter(fav => fav._id !== productId);
+  saveFavoritesToStorage(updatedFavorites);
+  return updatedFavorites;
+};
+
+const isProductInFavorites = (productId: string): boolean => {
+  const favorites = getFavoritesFromStorage();
+  return favorites.some(fav => fav._id === productId);
+};
+
 export default function ProductDetailPage() {
   const params = useParams();
   const { addToCart } = useCart();
@@ -124,6 +201,11 @@ export default function ProductDetailPage() {
   const [submittingReview, setSubmittingReview] = useState(false);
   const [showLoginAlert, setShowLoginAlert] = useState(false);
   const [submitError, setSubmitError] = useState<string>('');
+  
+  // Favorites state
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [showFavoriteMessage, setShowFavoriteMessage] = useState(false);
+  const [favoriteMessage, setFavoriteMessage] = useState('');
 
   // Fetch product data
   useEffect(() => {
@@ -161,6 +243,9 @@ export default function ProductDetailPage() {
             .filter(p => String(p._id) !== String(current._id))
             .slice(0, 4);
           setRelatedProducts(related);
+          
+          // Check if current product is in favorites
+          setIsFavorite(isProductInFavorites(current._id));
         } else {
           setRelatedProducts([]);
         }
@@ -219,6 +304,29 @@ export default function ProductDetailPage() {
       fetchComments(product._id);
     }
   }, [product, activeTab]);
+
+  // Handle favorites toggle
+  const handleToggleFavorite = () => {
+    if (!product) return;
+    
+    if (!isAuthenticated) {
+      setShowLoginAlert(true);
+      return;
+    }
+
+    if (isFavorite) {
+      removeFromFavorites(product._id);
+      setIsFavorite(false);
+      setFavoriteMessage('محصول از علاقه‌مندی‌ها حذف شد');
+    } else {
+      addToFavorites(product);
+      setIsFavorite(true);
+      setFavoriteMessage('محصول به علاقه‌مندی‌ها اضافه شد');
+    }
+    
+    setShowFavoriteMessage(true);
+    setTimeout(() => setShowFavoriteMessage(false), 3000);
+  };
 
   const incrementQuantity = () => setQuantity(prev => prev + 1);
   const decrementQuantity = () => setQuantity(prev => (prev > 1 ? prev - 1 : 1));
@@ -385,6 +493,23 @@ export default function ProductDetailPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white pt-24">
+      {/* Favorite Success Message */}
+      <AnimatePresence>
+        {showFavoriteMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50"
+          >
+            <div className="bg-green-500 text-white px-6 py-3 rounded-xl shadow-lg font-[var(--font-yekan)] flex items-center gap-2">
+              <FiHeart className="text-white" />
+              <span>{favoriteMessage}</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Breadcrumb */}
         <motion.div
@@ -571,10 +696,20 @@ export default function ProductDetailPage() {
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      className="flex-1 bg-white border border-amber-300 text-amber-700 py-3 rounded-xl font-semibold font-[var(--font-yekan)] transition-all flex items-center justify-center gap-2"
+                      onClick={handleToggleFavorite}
+                      className={`flex-1 border py-3 rounded-xl font-semibold font-[var(--font-yekan)] transition-all flex items-center justify-center gap-2 ${
+                        isFavorite
+                          ? 'bg-red-50 border-red-300 text-red-600 hover:bg-red-100'
+                          : 'bg-white border-amber-300 text-amber-700 hover:bg-amber-50'
+                      }`}
                     >
-                      <FiHeart size={18} />
-                      <span className="sm:block hidden">لیست علاقه‌مندی</span>
+                      <FiHeart 
+                        size={18} 
+                        className={isFavorite ? 'fill-red-600 text-red-600' : ''} 
+                      />
+                      <span className="sm:block hidden">
+                        {isFavorite ? 'حذف از علاقه‌مندی' : 'لیست علاقه‌مندی'}
+                      </span>
                     </motion.button>
                     <motion.button
                       whileHover={{ scale: 1.05 }}
