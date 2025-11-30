@@ -5,11 +5,12 @@ import FeaturedProducts from "../Components/FeaturedProducts"
 import PromoBanner from "../Components/PromoBanner"
 import ProductsSection from "../Components/ProductsSection"
 import FinalCTA from "../Components/FinalCTA"
+import Articles from "../Articles/page";
 function HomePage(){
     return(
         <div>
             <HeroSlider />
-            <AboutSection />
+            <Articles />
             
             <PromoBanner />
           
