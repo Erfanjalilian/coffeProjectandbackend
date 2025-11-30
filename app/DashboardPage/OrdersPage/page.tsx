@@ -341,7 +341,7 @@ export default function OrdersPage() {
                     <p className="text-gray-500 text-sm mb-4 font-[var(--font-yekan)]">
                       اولین سفارش خود را ثبت کنید و از محصولات ما لذت ببرید
                     </p>
-                    <Link href="/products">
+                    <Link href="/CoffeeCategoryPage">
                       <button className="bg-amber-600 hover:bg-amber-700 text-white py-2 px-6 rounded-xl font-[var(--font-yekan)] transition-colors">
                         مشاهده محصولات و ثبت سفارش
                       </button>
@@ -445,7 +445,7 @@ export default function OrdersPage() {
                   <p className="text-gray-600 font-[var(--font-yekan)] text-sm mb-4">
                     از محصولات جدید و ویژه ما دیدن کنید
                   </p>
-                  <Link href="/products">
+                  <Link href="/ValuablePurchasesPage">
                     <button className="w-full bg-amber-600 hover:bg-amber-700 text-white py-2 rounded-xl font-[var(--font-yekan)] font-semibold transition-colors">
                       مشاهده محصولات
                     </button>

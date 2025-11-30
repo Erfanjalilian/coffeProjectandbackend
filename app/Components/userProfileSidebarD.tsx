@@ -37,7 +37,7 @@ export default function UserProfileSidebarD({
     { id: "dashboard", label: "داشبورد", icon: FiHome, href: "/DashboardPage" },
     { id: "orders", label: "سفارشات", icon: FiPackage, href: "/DashboardPage/OrdersPage" },
     { id: "profile", label: "اطلاعات شخصی", icon: FiUser, href: "/DashboardPage/profile" },
-    { id: "favorites", label: "علاقه‌مندی‌ها", icon: FiHeart, href: "/dashboard/favorites" },
+    { id: "favorites", label: "علاقه‌مندی‌ها", icon: FiHeart, href: "/DashboardPage/favorites" },
     { id: "addresses", label: "آدرس‌های من", icon: FiMapPin, href: "/DashboardPage/addresses" },
     { id: "bank-accounts", label: "حساب‌های بانکی", icon: FiCreditCard, href: "/DashboardPage/BankAccountsPage" },
   ];

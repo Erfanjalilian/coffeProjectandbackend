@@ -3,7 +3,7 @@
 import { useAuth } from "@/contaxt/AuthContext";
 import UserProfileSidebarD from "@/app/Components/userProfileSidebarD";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiCoffee, FiUser, FiHeart, FiMapPin, FiCreditCard, FiMessageCircle, FiEdit, FiShield, FiTruck, FiMenu, FiX, FiSettings } from "react-icons/fi";
+import { FiCoffee, FiUser, FiHeart, FiMapPin, FiCreditCard, FiMessageCircle, FiEdit, FiShield, FiTruck, FiMenu, FiX, FiSettings, FiShoppingCart } from "react-icons/fi";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -28,6 +28,34 @@ interface BankAccount {
   createdAt: string;
 }
 
+// Favorites types and utilities
+interface FavoriteProduct {
+  _id: string;
+  name: string;
+  price: number;
+  priceAfterDiscount: number;
+  originalPrice?: number;
+  image: string;
+  brand?: string;
+  rating: number;
+  positiveFeature: string;
+  addedAt: string;
+}
+
+const FAVORITES_STORAGE_KEY = "user_favorites";
+
+// Favorites utility functions
+const getFavoritesFromStorage = (): FavoriteProduct[] => {
+  if (typeof window === "undefined") return [];
+  try {
+    const favorites = localStorage.getItem(FAVORITES_STORAGE_KEY);
+    return favorites ? JSON.parse(favorites) : [];
+  } catch (error) {
+    console.error("Error reading favorites from localStorage:", error);
+    return [];
+  }
+};
+
 export default function DashboardPage() {
   const { user, logout, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
@@ -36,6 +64,7 @@ export default function DashboardPage() {
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
+  const [favorites, setFavorites] = useState<FavoriteProduct[]>([]);
 
   // Check authentication on component mount
   useEffect(() => {
@@ -44,8 +73,32 @@ export default function DashboardPage() {
     } else if (!isLoading && isAuthenticated) {
       setIsCheckingAuth(false);
       fetchUserData();
+      loadFavorites();
     }
   }, [isAuthenticated, isLoading, router]);
+
+  // Load favorites from localStorage
+  const loadFavorites = () => {
+    try {
+      const userFavorites = getFavoritesFromStorage();
+      setFavorites(userFavorites);
+    } catch (err) {
+      console.error('Error loading favorites:', err);
+    }
+  };
+
+  // Listen for favorites updates
+  useEffect(() => {
+    const handleFavoritesUpdate = () => {
+      loadFavorites();
+    };
+
+    window.addEventListener('favoritesUpdated', handleFavoritesUpdate);
+    
+    return () => {
+      window.removeEventListener('favoritesUpdated', handleFavoritesUpdate);
+    };
+  }, []);
 
   // Fetch user addresses and bank accounts
   const fetchUserData = async () => {
@@ -101,6 +154,11 @@ export default function DashboardPage() {
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [router]);
+
+  // Format price to Persian currency
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('fa-IR').format(price) + ' تومان';
+  };
 
   // Show loading while checking authentication
   if (isLoading || isCheckingAuth) {
@@ -291,7 +349,7 @@ export default function DashboardPage() {
 
               {/* Features Grid - Amazon Style */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Favorites Card */}
+                {/* Favorites Card - UPDATED: Now shows actual favorite products */}
                 <motion.div
                   whileHover={{ y: -4 }}
                   className="bg-white rounded-2xl shadow-lg border border-amber-200 p-6 hover:shadow-xl transition-all duration-300"
@@ -301,20 +359,54 @@ export default function DashboardPage() {
                       <FiHeart className="text-amber-600 text-lg" />
                     </div>
                     <h3 className="text-lg font-bold text-gray-800 font-[var(--font-yekan)]">
-                      علاقه‌مندی‌ها
+                      علاقه‌مندی‌ها {favorites.length > 0 && `(${favorites.length})`}
                     </h3>
                   </div>
-                  <div className="text-center py-8">
-                    <FiHeart className="text-gray-300 text-4xl mx-auto mb-3" />
-                    <p className="text-gray-500 font-[var(--font-yekan)] text-sm">
-                      هیچ محصولی در لیست علاقه‌مندی‌های شما نیست
-                    </p>
-                    <Link href="/products">
-                      <button className="mt-4 text-amber-600 hover:text-amber-700 font-[var(--font-yekan)] text-sm font-semibold">
-                        کشف محصولات →
-                      </button>
-                    </Link>
-                  </div>
+                  
+                  {favorites.length > 0 ? (
+                    <div className="space-y-3 max-h-40 overflow-y-auto">
+                      {favorites.slice(0, 2).map((product) => (
+                        <div key={product._id} className="bg-amber-50 rounded-lg p-3 border border-amber-200">
+                          <div className="flex items-start gap-3">
+                            <div className="bg-gradient-to-br from-amber-100 to-amber-200 rounded-lg w-12 h-12 flex items-center justify-center flex-shrink-0">
+                              <FiCoffee className="text-amber-500" size={20} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-gray-800 font-[var(--font-yekan)] text-sm font-semibold mb-1 truncate">
+                                {product.name}
+                              </p>
+                              <p className="text-amber-700 font-[var(--font-yekan)] text-xs font-bold">
+                                {formatPrice(product.priceAfterDiscount)}
+                              </p>
+                              {product.brand && (
+                                <p className="text-gray-600 font-[var(--font-yekan)] text-xs mt-1">
+                                  برند: {product.brand}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      {favorites.length > 2 && (
+                        <p className="text-gray-500 font-[var(--font-yekan)] text-xs text-center">
+                          و {favorites.length - 2} محصول دیگر در علاقه‌مندی‌ها
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <FiHeart className="text-gray-300 text-4xl mx-auto mb-3" />
+                      <p className="text-gray-500 font-[var(--font-yekan)] text-sm">
+                        هیچ محصولی در لیست علاقه‌مندی‌های شما نیست
+                      </p>
+                    </div>
+                  )}
+                  
+                  <Link href="/DashboardPage/favorites">
+                    <button className="w-full mt-4 bg-amber-100 hover:bg-amber-200 text-amber-700 py-2 rounded-xl font-[var(--font-yekan)] font-semibold transition-colors">
+                      {favorites.length > 0 ? 'مشاهده همه علاقه‌مندی‌ها' : 'افزودن به علاقه‌مندی‌ها'} →
+                    </button>
+                  </Link>
                 </motion.div>
 
                 {/* Addresses Card */}
