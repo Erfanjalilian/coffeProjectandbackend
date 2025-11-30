@@ -41,11 +41,40 @@ interface DropdownPosition {
   right: number;
 }
 
+// Favorites types and utilities
+interface FavoriteProduct {
+  _id: string;
+  name: string;
+  price: number;
+  priceAfterDiscount: number;
+  originalPrice?: number;
+  image: string;
+  brand?: string;
+  rating: number;
+  positiveFeature: string;
+  addedAt: string;
+}
+
+const FAVORITES_STORAGE_KEY = "user_favorites";
+
+// Favorites utility functions
+const getFavoritesFromStorage = (): FavoriteProduct[] => {
+  if (typeof window === "undefined") return [];
+  try {
+    const favorites = localStorage.getItem(FAVORITES_STORAGE_KEY);
+    return favorites ? JSON.parse(favorites) : [];
+  } catch (error) {
+    console.error("Error reading favorites from localStorage:", error);
+    return [];
+  }
+};
+
 export default function Header() {
   const [isLangOpen, setIsLangOpen] = useState<boolean>(false);
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
   const [isScrolled, setIsScrolled] = useState<boolean>(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState<boolean>(false);
+  const [favoritesCount, setFavoritesCount] = useState<number>(0);
   
   const { cart } = useCart();
   const { user, isAuthenticated, logout } = useAuth();
@@ -63,6 +92,41 @@ export default function Header() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Update favorites count from localStorage
+  const updateFavoritesCount = () => {
+    const favorites = getFavoritesFromStorage();
+    setFavoritesCount(favorites.length);
+  };
+
+  // Listen for storage changes (when favorites are added/removed in other tabs)
+  useEffect(() => {
+    updateFavoritesCount(); // Initial load
+    
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === FAVORITES_STORAGE_KEY) {
+        updateFavoritesCount();
+      }
+    };
+
+    // Listen for custom events (when favorites change in the same app)
+    const handleFavoritesChange = () => {
+      updateFavoritesCount();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('favoritesUpdated', handleFavoritesChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('favoritesUpdated', handleFavoritesChange);
+    };
+  }, []);
+
+  // Also update favorites count when authentication state changes
+  useEffect(() => {
+    updateFavoritesCount();
+  }, [isAuthenticated]);
+
   const headerClass: string = `w-full fixed top-0 z-40 transition-all duration-500 ${
     isScrolled
       ? "bg-white/95 backdrop-blur-lg shadow-lg shadow-amber-100/50"
@@ -79,7 +143,6 @@ export default function Header() {
 
   const mobileAdditionalItems: NavItem[] = [
     { name: "فروشنده شوید", icon: FiUser, href: "/BecomeSellerPage" },
- 
   ];
 
   // تابع برای گرفتن نام نمایشی کاربر
@@ -204,16 +267,23 @@ export default function Header() {
             </motion.div>
 
             {/* Wishlist */}
-            <Link href="/wishlist">
+            <Link href="/DashboardPage/favorites">
               <motion.button
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 className="relative p-2 text-gray-700 hover:text-amber-700 rounded-xl hover:bg-amber-50 transition-colors"
               >
                 <FiHeart size={22} />
-                <span className="absolute -top-1 -right-1 bg-amber-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                  ۳
-                </span>
+                {favoritesCount > 0 && (
+                  <motion.span 
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    key={favoritesCount}
+                    className="absolute -top-1 -right-1 bg-gradient-to-r from-amber-600 to-amber-700 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center"
+                  >
+                    {favoritesCount}
+                  </motion.span>
+                )}
               </motion.button>
             </Link>
 
@@ -389,7 +459,7 @@ export default function Header() {
                 className="block w-full px-4 py-3 text-right hover:text-amber-700 font-[var(--font-yekan)] border-b border-amber-100 flex items-center justify-start gap-3"
               >
                 <FiHeart size={16} />
-                علاقه‌مندی‌ها
+                علاقه‌مندی‌ها ({favoritesCount})
               </motion.button>
             </Link>
             
@@ -540,7 +610,9 @@ export default function Header() {
                     <Link href="/DashboardPage/favorites" onClick={() => setIsMenuOpen(false)}>
                       <motion.button whileHover={{ scale: 1.02 }} className="w-full flex items-center gap-3 p-4 text-gray-700 hover:text-amber-700 hover:bg-amber-100/80 rounded-xl transition-all">
                         <FiHeart size={20} />
-                        <span className="font-[var(--font-yekan)]">علاقه‌مندی‌ها</span>
+                        <span className="font-[var(--font-yekan)]">
+                          علاقه‌مندی‌ها {favoritesCount > 0 && `(${favoritesCount})`}
+                        </span>
                       </motion.button>
                     </Link>
                     <Link href="/DashboardPage/addresses" onClick={() => setIsMenuOpen(false)}>
@@ -587,10 +659,12 @@ export default function Header() {
                     </span>
                   </motion.button>
                 </Link>
-                <Link href="/wishlist" onClick={() => setIsMenuOpen(false)}>
+                <Link href="/DashboardPage/favorites" onClick={() => setIsMenuOpen(false)}>
                   <motion.button whileHover={{ scale: 1.02 }} className="w-full flex items-center gap-3 p-4 text-gray-700 hover:text-amber-700 hover:bg-amber-100/80 rounded-xl transition-all">
                     <FiHeart size={20} />
-                    <span className="font-[var(--font-yekan)]">علاقه‌مندی‌ها</span>
+                    <span className="font-[var(--font-yekan)]">
+                      علاقه‌مندی‌ها {favoritesCount > 0 && `(${favoritesCount})`}
+                    </span>
                   </motion.button>
                 </Link>
                 <button onClick={() => setIsLangOpen(!isLangOpen)} className="w-full flex items-center gap-3 p-4 text-gray-700 hover:text-amber-700 hover:bg-amber-100/80 rounded-xl transition-all">

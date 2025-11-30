@@ -36,10 +36,17 @@ const getFavoritesFromStorage = (): FavoriteProduct[] => {
   }
 };
 
+// 🔥 UPDATED: Dispatch event when favorites are removed
 const removeFromFavorites = (productId: string): FavoriteProduct[] => {
   const favorites = getFavoritesFromStorage();
   const updatedFavorites = favorites.filter(fav => fav._id !== productId);
+  
+  // Save to localStorage
   localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(updatedFavorites));
+  
+  // 🔥 ADDED: Dispatch event to notify header and other components
+  window.dispatchEvent(new Event('favoritesUpdated'));
+  
   return updatedFavorites;
 };
 
@@ -90,6 +97,19 @@ export default function FavoritesPage() {
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [router]);
+
+  // Listen for favorites updates from other components (like product page)
+  useEffect(() => {
+    const handleFavoritesUpdate = () => {
+      loadFavorites(); // Reload favorites when they're updated elsewhere
+    };
+
+    window.addEventListener('favoritesUpdated', handleFavoritesUpdate);
+    
+    return () => {
+      window.removeEventListener('favoritesUpdated', handleFavoritesUpdate);
+    };
+  }, []);
 
   // Format price to Persian currency
   const formatPrice = (price: number) => {

@@ -1,17 +1,24 @@
 "use client";
 
 import React, { useEffect, useState, useRef } from "react";
-import Image from "next/image";
-import { FiTrash2, FiShoppingCart, FiCheckCircle, FiTruck, FiShield, FiGift, FiClock, FiPackage, FiHeart, FiAward, FiCreditCard, FiRefreshCw, FiHeadphones, FiChevronRight, FiChevronLeft, FiMessageCircle, FiZap } from "react-icons/fi";
+import { FiTrash2, FiShoppingCart, FiCheckCircle, FiGift, FiChevronRight, FiChevronLeft, FiMessageCircle, FiZap, FiCoffee } from "react-icons/fi";
 import { useCart, CartProduct } from "@/contaxt/CartContext";
 
 type Product = {
-  id: number;
+  id: string;
+  _id: string;
   name: string;
   price: number;
   originalPrice?: number;
+  priceAfterDiscount?: number;
   image: string;
-  category?: string;
+  images: string[];
+  category?: {
+    _id: string;
+    name: string;
+    slug: string;
+  };
+  categoryName?: string;
   badge?: string;
   rating?: number;
   reviews?: number;
@@ -25,6 +32,14 @@ type Product = {
   totalCount?: number;
   isPremium?: boolean;
   features?: string[];
+  brand?: string;
+  weight?: number;
+  ingredients?: string;
+  benefits?: string;
+  howToUse?: string;
+  hasWarranty?: boolean;
+  warrantyDuration?: number;
+  warrantyDescription?: string;
 };
 
 export default function CartPage(): React.ReactElement {
@@ -32,31 +47,72 @@ export default function CartPage(): React.ReactElement {
   const { cart, removeFromCart, updateQuantity, clearCart, addToCart } = cartContext;
 
   const [products, setProducts] = useState<Product[]>([]);
-  const [recentlyViewed, setRecentlyViewed] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [couponCode, setCouponCode] = useState<string>("");
   const [discount, setDiscount] = useState<number>(0);
 
-  // Refs for scrollable containers
-  const alsoBoughtRef = useRef<HTMLDivElement>(null);
-  const recentlyViewedRef = useRef<HTMLDivElement>(null);
+  // Ref for scrollable container
+  const similarProductsRef = useRef<HTMLDivElement>(null);
 
-  // Fetch products from your API
+  // Fetch products from YOUR ACTUAL API
   useEffect(() => {
     let mounted = true;
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        const res = await fetch("https://6810ff2827f2fdac24139dec.mockapi.io/Product");
+        // USING YOUR ACTUAL API ENDPOINT
+        const res = await fetch("https://coffee-shop-backend-k3un.onrender.com/api/v1/product");
+        
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = (await res.json()) as Product[];
-        if (mounted) {
-          setProducts(data);
+        
+        const data = await res.json();
+        console.log("API Response:", data); // Debug log
+        
+        if (mounted && data.success) {
+          // Transform the API data to match our Product type
+          const transformedProducts = data.data.products.map((product: any) => ({
+            id: product._id,
+            _id: product._id,
+            name: product.name,
+            price: product.price,
+            originalPrice: product.originalPrice,
+            priceAfterDiscount: product.priceAfterDiscount,
+            image: product.image,
+            images: product.images || [],
+            category: product.category,
+            categoryName: product.category?.name,
+            badge: product.badge,
+            rating: product.rating || 0,
+            reviews: product.reviews || 0,
+            isPrime: product.isPrime,
+            discount: product.discount,
+            type: product.type,
+            description: product.description,
+            dealType: product.dealType,
+            timeLeft: product.timeLeft,
+            soldCount: product.soldCount,
+            totalCount: product.totalCount,
+            isPremium: product.isPremium,
+            features: product.features || [],
+            brand: product.brand,
+            weight: product.weight,
+            ingredients: product.ingredients,
+            benefits: product.benefits,
+            howToUse: product.howToUse,
+            hasWarranty: product.hasWarranty,
+            warrantyDuration: product.warrantyDuration,
+            warrantyDescription: product.warrantyDescription
+          }));
+          
+          console.log("Transformed Products:", transformedProducts); // Debug log
+          setProducts(transformedProducts);
+        } else {
+          throw new Error("Invalid API response format");
         }
       } catch (e) {
-        console.error("Failed to fetch products:", e);
-        if (mounted) setError("خطا در دریافت اطلاعات محصولات.");
+        console.error("Failed to fetch products from API:", e);
+        if (mounted) setError("خطا در دریافت اطلاعات محصولات از سرور.");
       } finally {
         if (mounted) setLoading(false);
       }
@@ -67,37 +123,79 @@ export default function CartPage(): React.ReactElement {
     };
   }, []);
 
-  // Build recently viewed
-  useEffect(() => {
-    if (products.length > 0) {
-      const sample = [...products].sort(() => 0.5 - Math.random()).slice(0, 8);
-      setRecentlyViewed(sample);
+  // Get similar products based on categories in cart - USING REAL API DATA
+  const getSimilarProducts = () => {
+    if (cart.length === 0 || products.length === 0) {
+      console.log("Cart empty or no products available");
+      return [];
     }
-  }, [products]);
 
-  // Scroll functions for Also Bought section
-  const scrollAlsoBoughtLeft = () => {
-    if (alsoBoughtRef.current) {
-      alsoBoughtRef.current.scrollBy({ left: -300, behavior: 'smooth' });
+    console.log("Available products from API:", products);
+    console.log("Current cart items:", cart);
+
+    // Get unique category IDs from cart items
+    const cartCategoryIds = cart
+      .map(item => {
+        // Find the product in our REAL products list to get its category
+        const product = products.find(p => p.id === item.id);
+        console.log(`Cart item ${item.id} -> Product:`, product);
+        return product?.category?._id;
+      })
+      .filter(Boolean) // Remove undefined values
+      .filter((categoryId, index, self) => self.indexOf(categoryId) === index); // Remove duplicates
+
+    console.log("Cart category IDs:", cartCategoryIds);
+
+    // If no categories found, return random products from REAL API
+    if (cartCategoryIds.length === 0) {
+      console.log("No categories found, returning random products");
+      const randomProducts = [...products]
+        .sort(() => 0.5 - Math.random())
+        .slice(0, Math.min(8, products.length));
+      console.log("Random products selected:", randomProducts);
+      return randomProducts;
+    }
+
+    // Filter REAL products that belong to the same categories as cart items
+    // Exclude products that are already in the cart
+    const cartProductIds = cart.map(item => item.id);
+    const similarProducts = products.filter(product => {
+      const isSameCategory = cartCategoryIds.includes(product.category?._id);
+      const isNotInCart = !cartProductIds.includes(product.id);
+      console.log(`Product ${product.name}: sameCategory=${isSameCategory}, notInCart=${isNotInCart}`);
+      return isSameCategory && isNotInCart;
+    });
+
+    console.log("Similar products found:", similarProducts);
+
+    // If not enough similar products, add some random ones from REAL API
+    if (similarProducts.length < 8) {
+      const additionalProducts = products
+        .filter(product => !cartProductIds.includes(product.id) && !similarProducts.some(p => p.id === product.id))
+        .sort(() => 0.5 - Math.random())
+        .slice(0, 8 - similarProducts.length);
+      
+      console.log("Additional products added:", additionalProducts);
+      const finalProducts = [...similarProducts, ...additionalProducts].slice(0, 8);
+      console.log("Final similar products:", finalProducts);
+      return finalProducts;
+    }
+
+    const finalProducts = similarProducts.slice(0, 8);
+    console.log("Final similar products (enough found):", finalProducts);
+    return finalProducts;
+  };
+
+  // Scroll functions for Similar Products section
+  const scrollSimilarProductsLeft = () => {
+    if (similarProductsRef.current) {
+      similarProductsRef.current.scrollBy({ left: -300, behavior: 'smooth' });
     }
   };
 
-  const scrollAlsoBoughtRight = () => {
-    if (alsoBoughtRef.current) {
-      alsoBoughtRef.current.scrollBy({ left: 300, behavior: 'smooth' });
-    }
-  };
-
-  // Scroll functions for Recently Viewed section
-  const scrollRecentlyViewedLeft = () => {
-    if (recentlyViewedRef.current) {
-      recentlyViewedRef.current.scrollBy({ left: -300, behavior: 'smooth' });
-    }
-  };
-
-  const scrollRecentlyViewedRight = () => {
-    if (recentlyViewedRef.current) {
-      recentlyViewedRef.current.scrollBy({ left: 300, behavior: 'smooth' });
+  const scrollSimilarProductsRight = () => {
+    if (similarProductsRef.current) {
+      similarProductsRef.current.scrollBy({ left: 300, behavior: 'smooth' });
     }
   };
 
@@ -126,11 +224,13 @@ export default function CartPage(): React.ReactElement {
   const formatCurrency = (n: number) =>
     n.toLocaleString("fa-IR") + " تومان";
 
-const convertToCartProduct = (product: Product): Omit<CartProduct, "quantity"> => ({
-  id: product.id.toString(),   // تبدیل به رشته
-  name: product.name,
-  price: product.price          // حتما عدد باشد
-});
+  const convertToCartProduct = (product: Product): Omit<CartProduct, "quantity"> => ({
+    id: product.id,
+    name: product.name,
+    price: product.priceAfterDiscount || product.price
+  });
+
+  const similarProducts = getSimilarProducts();
 
   return (
     <div dir="rtl" className="min-h-screen bg-gradient-to-b from-amber-50 to-amber-100 pt-54 font-[var(--font-yekan)]">
@@ -141,12 +241,12 @@ const convertToCartProduct = (product: Product): Omit<CartProduct, "quantity"> =
           <div className="flex items-center justify-center text-center">
             <div className="flex items-center gap-4">
               <div className="bg-white bg-opacity-20 p-3 rounded-full">
-                <FiAward className="text-white" size={32} />
+                <FiShoppingCart className="text-white" size={32} />
               </div>
               <div>
                 <h2 className="text-2xl font-bold mb-1">فروش ویژه زمستانه! ❄️</h2>
                 <p className="text-amber-100 text-lg">
-                  تا <span className="font-bold text-white">۵۰٪</span> تخفیف روی تمام محصولات + ارسال رایگان برای سفارش‌های بالای ۵۰۰,۰۰۰ تومان
+                  تا <span className="font-bold text-white">۵۰٪</span> تخفیف روی تمام محصولات
                 </p>
               </div>
             </div>
@@ -166,7 +266,6 @@ const convertToCartProduct = (product: Product): Omit<CartProduct, "quantity"> =
                 {idx === 0 ? <FiCheckCircle /> : step.id}
               </div>
               <span className="mt-2 text-sm font-medium text-center px-1">{step.label}</span>
-              {/* FIXED: Changed idx < 3 to idx < 4 to include all connections */}
               {idx < 3 && (
                 <div className="absolute top-4 left-[60%] right-[-20%]">
                   <div className="h-[2px] bg-amber-200 w-full" />
@@ -243,8 +342,12 @@ const convertToCartProduct = (product: Product): Omit<CartProduct, "quantity"> =
                         </div>
                       </div>
 
-                      {/* RIGHT: image */}
-                     
+                      {/* RIGHT: Coffee icon instead of image */}
+                      <div className="order-2 md:order-none flex justify-center">
+                        <div className="w-20 h-20 bg-gradient-to-br from-amber-100 to-amber-200 rounded-xl flex items-center justify-center">
+                          <FiCoffee className="text-amber-500" size={32} />
+                        </div>
+                      </div>
                     </div>
                   );
                 })
@@ -254,25 +357,25 @@ const convertToCartProduct = (product: Product): Omit<CartProduct, "quantity"> =
             {/* Only show these sections when cart is NOT empty */}
             {cart.length > 0 && (
               <>
-                {/* Also Bought Section - Full width container with single row horizontal scrolling */}
+                {/* Similar Products Section - Full width container with single row horizontal scrolling */}
                 <section className="w-full bg-white p-6 rounded-2xl border border-amber-200 shadow-sm relative">
                   <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-3">
                       <FiGift className="text-amber-600 flex-shrink-0" size={24} />
-                      <h2 className="text-2xl font-bold text-amber-900">خریداران این محصولات، این کالاها را هم خریده‌اند</h2>
+                      <h2 className="text-2xl font-bold text-amber-900">محصولات مشابه</h2>
                     </div>
                     
-                    {/* Navigation buttons for Also Bought */}
+                    {/* Navigation buttons for Similar Products */}
                     <div className="flex gap-2">
                       <button
-                        onClick={scrollAlsoBoughtLeft}
+                        onClick={scrollSimilarProductsLeft}
                         className="w-10 h-10 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 transition flex items-center justify-center"
                         aria-label="Scroll left"
                       >
                         <FiChevronRight size={20} />
                       </button>
                       <button
-                        onClick={scrollAlsoBoughtRight}
+                        onClick={scrollSimilarProductsRight}
                         className="w-10 h-10 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 transition flex items-center justify-center"
                         aria-label="Scroll right"
                       >
@@ -282,7 +385,7 @@ const convertToCartProduct = (product: Product): Omit<CartProduct, "quantity"> =
                   </div>
                   
                   {loading && (
-                    <div className="text-amber-600 text-center py-8 text-lg">در حال بارگذاری...</div>
+                    <div className="text-amber-600 text-center py-8 text-lg">در حال بارگذاری محصولات مشابه...</div>
                   )}
                   {error && (
                     <div className="text-red-500 text-center py-8 text-lg">{error}</div>
@@ -290,86 +393,62 @@ const convertToCartProduct = (product: Product): Omit<CartProduct, "quantity"> =
                   
                   {/* Single row with horizontal scrolling */}
                   <div 
-                    ref={alsoBoughtRef}
+                    ref={similarProductsRef}
                     className="w-full flex flex-row gap-6 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-amber-300 scrollbar-track-amber-100"
                   >
-                    {products.slice(0, 8).map((p) => (
-                      <div key={p.id} className="flex-none w-72 bg-amber-50 rounded-2xl p-5 border border-amber-100 shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col">
-                        <div className="relative w-full h-48 rounded-xl overflow-hidden mb-4">
-                          <Image src={p.image} alt={p.name} fill className="object-cover hover:scale-105 transition duration-300" />
-                        </div>
-                        <h3 className="font-bold text-base text-amber-900 line-clamp-2 flex-grow mb-3">{p.name}</h3>
-                        <div className="flex items-center justify-between mb-4">
-                          <p className="text-amber-700 text-lg font-bold">{formatCurrency(p.price)}</p>
-                          {p.originalPrice && p.originalPrice > p.price && (
-                            <p className="text-gray-500 text-sm line-through">{formatCurrency(p.originalPrice)}</p>
+                    {!loading && similarProducts.length > 0 ? (
+                      similarProducts.map((p) => (
+                        <div key={p.id} className="flex-none w-72 bg-amber-50 rounded-2xl p-5 border border-amber-100 shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col">
+                          {/* Coffee icon instead of product image */}
+                          <div className="relative w-full h-48 rounded-xl overflow-hidden mb-4 bg-gradient-to-br from-amber-100 to-amber-200 flex items-center justify-center">
+                            <FiCoffee className="text-amber-500" size={64} />
+                            {p.badge && (
+                              <div className="absolute top-3 left-3">
+                                <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+                                  {p.badge}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          
+                          <h3 className="font-bold text-base text-amber-900 line-clamp-2 flex-grow mb-3">{p.name}</h3>
+                          
+                          {/* Category badge */}
+                          {p.categoryName && (
+                            <div className="mb-2">
+                              <span className="text-xs bg-amber-200 text-amber-800 px-2 py-1 rounded-full">
+                                {p.categoryName}
+                              </span>
+                            </div>
                           )}
+                          
+                          <div className="flex items-center justify-between mb-4">
+                            <p className="text-amber-700 text-lg font-bold">
+                              {formatCurrency(p.priceAfterDiscount || p.price)}
+                            </p>
+                            {p.originalPrice && p.originalPrice > (p.priceAfterDiscount || p.price) && (
+                              <p className="text-gray-500 text-sm line-through">
+                                {formatCurrency(p.originalPrice)}
+                              </p>
+                            )}
+                          </div>
+                          
+                          <button
+                            onClick={() => addToCart?.(convertToCartProduct(p))}
+                            className="w-full bg-amber-600 text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-3 hover:bg-amber-700 transition text-base"
+                          >
+                            <FiShoppingCart />
+                            افزودن به سبد خرید
+                          </button>
                         </div>
-                        <button
-                          onClick={() => addToCart?.(convertToCartProduct(p))}
-                          className="w-full bg-amber-600 text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-3 hover:bg-amber-700 transition text-base"
-                        >
-                          <FiShoppingCart />
-                          افزودن به سبد خرید
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-
-                {/* Recently Viewed Section - Full width container with single row horizontal scrolling */}
-                <section className="w-full bg-white p-6 rounded-2xl border border-amber-200 shadow-sm relative">
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-3">
-                      <FiClock className="text-amber-600 flex-shrink-0" size={24} />
-                      <h2 className="text-2xl font-bold text-amber-900">کالاهایی که اخیراً مشاهده کرده‌اید</h2>
-                    </div>
-                    
-                    {/* Navigation buttons for Recently Viewed */}
-                    <div className="flex gap-2">
-                      <button
-                        onClick={scrollRecentlyViewedLeft}
-                        className="w-10 h-10 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 transition flex items-center justify-center"
-                        aria-label="Scroll left"
-                      >
-                        <FiChevronRight size={20} />
-                      </button>
-                      <button
-                        onClick={scrollRecentlyViewedRight}
-                        className="w-10 h-10 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 transition flex items-center justify-center"
-                        aria-label="Scroll right"
-                      >
-                        <FiChevronLeft size={20} />
-                      </button>
-                    </div>
-                  </div>
-                  
-                  {/* Single row with horizontal scrolling */}
-                  <div 
-                    ref={recentlyViewedRef}
-                    className="w-full flex flex-row gap-6 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-amber-300 scrollbar-track-amber-100"
-                  >
-                    {recentlyViewed.map((p) => (
-                      <div key={p.id} className="flex-none w-72 bg-amber-50 rounded-2xl p-5 border border-amber-100 shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col">
-                        <div className="relative w-full h-48 rounded-xl overflow-hidden mb-4">
-                          <Image src={p.image} alt={p.name} fill className="object-cover hover:scale-105 transition duration-300" />
+                      ))
+                    ) : (
+                      !loading && (
+                        <div className="w-full text-center py-8 text-amber-600">
+                          {products.length === 0 ? "هیچ محصولی در فروشگاه موجود نیست" : "محصول مشابهی یافت نشد"}
                         </div>
-                        <h3 className="font-bold text-base text-amber-900 line-clamp-2 flex-grow mb-3">{p.name}</h3>
-                        <div className="flex items-center justify-between mb-4">
-                          <p className="text-amber-700 text-lg font-bold">{formatCurrency(p.price)}</p>
-                          {p.originalPrice && p.originalPrice > p.price && (
-                            <p className="text-gray-500 text-sm line-through">{formatCurrency(p.originalPrice)}</p>
-                          )}
-                        </div>
-                        <button
-                          onClick={() => addToCart?.(convertToCartProduct(p))}
-                          className="w-full bg-amber-600 text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-3 hover:bg-amber-700 transition text-base"
-                        >
-                          <FiShoppingCart />
-                          افزودن به سبد خرید
-                        </button>
-                      </div>
-                    ))}
+                      )
+                    )}
                   </div>
                 </section>
               </>
@@ -422,22 +501,6 @@ const convertToCartProduct = (product: Product): Omit<CartProduct, "quantity"> =
                         {formatCurrency(500000)}
                       </div>
                     )}
-
-                    {/* Order Info */}
-                    <div className="pt-3 border-t border-amber-100 space-y-3">
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="text-amber-600">تعداد اقلام متفاوت</span>
-                        <span className="font-medium">{cart.length} قلم</span>
-                      </div>
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="text-amber-600">زمان تحویل تخمینی</span>
-                        <span className="font-medium text-green-600">۲-۳ روز کاری</span>
-                      </div>
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="text-amber-600">امکان بازگشت کالا</span>
-                        <span className="font-medium text-green-600">تا ۷ روز</span>
-                      </div>
-                    </div>
                   </div>
 
                   {/* Discount coupon */}
@@ -469,26 +532,6 @@ const convertToCartProduct = (product: Product): Omit<CartProduct, "quantity"> =
                     <span className="font-bold text-2xl text-amber-900">{formatCurrency(finalPrice)}</span>
                   </div>
 
-                  {/* Trust badges */}
-                  <div className="space-y-3 mb-6">
-                    <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                      <FiShield className="text-blue-500 flex-shrink-0" size={18} />
-                      <span className="text-sm text-blue-700">ضمانت اصل بودن کالا</span>
-                    </div>
-                    <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
-                      <FiTruck className="text-green-500 flex-shrink-0" size={18} />
-                      <span className="text-sm text-green-700">ارسال اکسپرس (۲۴ ساعته)</span>
-                    </div>
-                    <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
-                      <FiPackage className="text-purple-500 flex-shrink-0" size={18} />
-                      <span className="text-sm text-purple-700">بسته‌بندی مطمئن</span>
-                    </div>
-                    <div className="flex items-center gap-3 p-3 bg-red-50 rounded-lg border border-red-200">
-                      <FiHeart className="text-red-500 flex-shrink-0" size={18} />
-                      <span className="text-sm text-red-700">پشتیبانی ۲۴/۷</span>
-                    </div>
-                  </div>
-
                   {/* Action buttons */}
                   <div className="space-y-3">
                     <button 
@@ -514,7 +557,6 @@ const convertToCartProduct = (product: Product): Omit<CartProduct, "quantity"> =
               {/* Security notice - Always show */}
               <div className="mt-6 pt-4 border-t border-amber-100">
                 <div className="flex items-center justify-center gap-2 text-xs text-amber-600 text-center leading-relaxed">
-                  <FiShield className="flex-shrink-0" size={14} />
                   اطلاعات شما نزد ما امن است و مطابق با قوانین حریم خصوصی محافظت می‌شود
                 </div>
               </div>
@@ -560,55 +602,6 @@ const convertToCartProduct = (product: Product): Omit<CartProduct, "quantity"> =
               </div>
             </div>
           </aside>
-        </div>
-
-        {/* FEATURES SECTION - Bottom of the page */}
-        <div className="mt-12 bg-white rounded-2xl border border-amber-200 shadow-sm p-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Feature 1: Express Delivery */}
-            <div className="flex flex-col items-center text-center p-4 hover:bg-amber-50 rounded-xl transition duration-300">
-              <div className="bg-green-100 p-4 rounded-full mb-4">
-                <FiTruck className="text-green-600" size={32} />
-              </div>
-              <h3 className="font-bold text-amber-900 text-lg mb-2">ارسال اکسپرس</h3>
-              <p className="text-amber-700 text-sm leading-relaxed">
-                تحویل سریع در تهران تا ۲۴ ساعت و در سایر شهرها تا ۴۸ ساعت
-              </p>
-            </div>
-
-            {/* Feature 2: Cash on Delivery */}
-            <div className="flex flex-col items-center text-center p-4 hover:bg-amber-50 rounded-xl transition duration-300">
-              <div className="bg-blue-100 p-4 rounded-full mb-4">
-                <FiCreditCard className="text-blue-600" size={32} />
-              </div>
-              <h3 className="font-bold text-amber-900 text-lg mb-2">پرداخت در محل</h3>
-              <p className="text-amber-700 text-sm leading-relaxed">
-                امکان پرداخت نقدی یا کارتی در زمان تحویل کالا
-              </p>
-            </div>
-
-            {/* Feature 3: Return Policy */}
-            <div className="flex flex-col items-center text-center p-4 hover:bg-amber-50 rounded-xl transition duration-300">
-              <div className="bg-purple-100 p-4 rounded-full mb-4">
-                <FiRefreshCw className="text-purple-600" size={32} />
-              </div>
-              <h3 className="font-bold text-amber-900 text-lg mb-2">بازگشت ۷ روزه</h3>
-              <p className="text-amber-700 text-sm leading-relaxed">
-                امکان بازگرداندن کالا تا ۷ روز پس از تحویل بدون نیاز به دلیل
-              </p>
-            </div>
-
-            {/* Feature 4: Support */}
-            <div className="flex flex-col items-center text-center p-4 hover:bg-amber-50 rounded-xl transition duration-300">
-              <div className="bg-red-100 p-4 rounded-full mb-4">
-                <FiHeadphones className="text-red-600" size={32} />
-              </div>
-              <h3 className="font-bold text-amber-900 text-lg mb-2">پشتیبانی ۲۴/۷</h3>
-              <p className="text-amber-700 text-sm leading-relaxed">
-                پشتیبانی تلفنی و آنلاین در تمام ساعات شبانه‌روز
-              </p>
-            </div>
-          </div>
         </div>
       </div>
     </div>

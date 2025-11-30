@@ -136,15 +136,19 @@ const getFavoritesFromStorage = (): FavoriteProduct[] => {
   }
 };
 
+// 🔥 UPDATED: Dispatch event when favorites are saved
 const saveFavoritesToStorage = (favorites: FavoriteProduct[]): void => {
   if (typeof window === "undefined") return;
   try {
     localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favorites));
+    // 🔥 ADDED: Dispatch event to notify header and other components
+    window.dispatchEvent(new Event('favoritesUpdated'));
   } catch (error) {
     console.error("Error saving favorites to localStorage:", error);
   }
 };
 
+// 🔥 UPDATED: Dispatch event when adding to favorites
 const addToFavorites = (product: Product): FavoriteProduct[] => {
   const favorites = getFavoritesFromStorage();
   
@@ -173,6 +177,7 @@ const addToFavorites = (product: Product): FavoriteProduct[] => {
   return favorites;
 };
 
+// 🔥 UPDATED: Dispatch event when removing from favorites
 const removeFromFavorites = (productId: string): FavoriteProduct[] => {
   const favorites = getFavoritesFromStorage();
   const updatedFavorites = favorites.filter(fav => fav._id !== productId);
@@ -324,6 +329,7 @@ export default function ProductDetailPage() {
       setFavoriteMessage('محصول به علاقه‌مندی‌ها اضافه شد');
     }
     
+    // 🔥 No need to manually dispatch event - it's handled in saveFavoritesToStorage
     setShowFavoriteMessage(true);
     setTimeout(() => setShowFavoriteMessage(false), 3000);
   };
@@ -634,11 +640,7 @@ export default function ProductDetailPage() {
                 <div className="flex flex-wrap gap-4 text-sm text-gray-600 mb-6 font-[var(--font-yekan)]">
                   <span>موجودی: {product.stock} عدد</span>
                   <span>فروخته شده: {product.soldCount} عدد</span>
-                  {product.dealType === 'lightning' && product.timeLeft && (
-                    <span className="text-red-500 font-semibold">
-                      زمان باقی‌مانده: {product.timeLeft}
-                    </span>
-                  )}
+                  {/* 🚫 REMOVED: Time remaining section */}
                 </div>
 
                 {/* Quantity Selector */}
