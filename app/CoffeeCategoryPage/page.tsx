@@ -1,8 +1,8 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect, useMemo } from "react";
-import { FiFilter, FiGrid, FiList, FiStar, FiChevronDown, FiX, FiMessageCircle, FiCoffee } from "react-icons/fi";
+import { useState, useEffect} from "react";
+import { FiFilter, FiStar, FiChevronDown, FiX, FiMessageCircle, FiCoffee } from "react-icons/fi";
 import Link from "next/link";
 
 interface Product {
@@ -81,6 +81,7 @@ interface ProductsApiResponse {
   success: boolean;
   data: {
     products: Array<{
+      type: string;
       _id: string;
       name: string;
       description: string;
