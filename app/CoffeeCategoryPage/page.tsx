@@ -21,6 +21,7 @@ interface Product {
   positiveFeature: string;
   status: string;
   brand?: string;
+  recommended?: boolean; // ✅ ADDED: Recommended field
 }
 
 interface Category {
@@ -99,6 +100,7 @@ interface ProductsApiResponse {
       features: string[];
       priceAfterDiscount: number;
       brand?: string;
+      recommended?: boolean; // ✅ ADDED: Recommended field
       userReviews: Array<{
         rating: number;
       }>;
@@ -179,10 +181,11 @@ export default function CoffeeCategoryPage() {
           reviews: product.reviews || 0,
           isPrime: product.isPrime,
           discount: product.discount,
-          type: 'regular',
+          type: product.type || 'regular', // ✅ UPDATED: Use actual type from API
           positiveFeature: product.positiveFeature,
           status: getStatusFromBadge(product.badge),
-          brand: product.brand
+          brand: product.brand,
+          recommended: product.recommended || false // ✅ ADDED: Map recommended field
         }));
 
         setAllProducts(allProductsData);
@@ -359,12 +362,11 @@ export default function CoffeeCategoryPage() {
       );
     }
 
-    // NEW: Apply quick filters (Recommended and Discounted)
+    // ✅ UPDATED: Apply quick filters (Recommended and Discounted) with correct logic
     if (quickFilter === 'recommended') {
-      // Filter recommended products (you can define your own logic here)
-      // For example: products with rating >= 4 or isPrime products
+      // ✅ FIXED: Filter products that have recommended: true
       filteredProducts = filteredProducts.filter(product => 
-        product.rating >= 4 || product.isPrime
+        product.recommended === true
       );
     } else if (quickFilter === 'discounted') {
       // Filter discounted products
@@ -1066,9 +1068,9 @@ export default function CoffeeCategoryPage() {
                           </span>
                         </div>
 
-                        {/* Positive Feature */}
+                        {/* Positive Feature - ✅ FIXED: Removed background color */}
                         <div className="mb-3">
-                          <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full font-medium font-[var(--font-yekan)] border border-green-200 line-clamp-1">
+                          <span className="text-xs text-green-600 font-medium font-[var(--font-yekan)] line-clamp-1">
                             {product.positiveFeature}
                           </span>
                         </div>
@@ -1108,6 +1110,7 @@ export default function CoffeeCategoryPage() {
                           </motion.button>
 
                           {/* Buy Button */}
+                          
                           <motion.button
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
@@ -1116,8 +1119,11 @@ export default function CoffeeCategoryPage() {
                               e.preventDefault();
                             }}
                           >
+                            
                             خرید
+                           
                           </motion.button>
+                          
                         </div>
                       </div>
                     </div>
