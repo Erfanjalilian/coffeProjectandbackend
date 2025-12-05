@@ -296,7 +296,7 @@ export default function Articles() {
           {featuredArticles.length > 0 && (
             <div className="text-center mt-6">
               <Link
-                href="/articles"
+                href="/ArticlesPage"
                 className="bg-white text-amber-700 border-2 border-amber-300 px-8 py-3 rounded-2xl font-semibold hover:bg-amber-50 transition-colors font-[var(--font-yekan)] inline-block"
               >
                 مشاهده همه مطالب
