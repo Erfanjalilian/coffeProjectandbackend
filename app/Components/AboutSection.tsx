@@ -298,7 +298,7 @@ export default function LatestNewsAndDiscoveries() {
             <div className="text-center mt-6">
               <button
                 className="bg-white text-amber-700 border-2 border-amber-300 px-8 py-3 rounded-2xl font-semibold hover:bg-amber-50 transition-colors font-[var(--font-yekan)]"
-                onClick={() => window.location.href = '/articles'}
+                onClick={() => window.location.href = '/ArticlesPage'}
               >
                 مشاهده همه مطالب
               </button>
