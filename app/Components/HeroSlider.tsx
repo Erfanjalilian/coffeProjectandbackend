@@ -84,7 +84,7 @@ function CategoryCard({
 }) {
   return (
     <div
-      className={`relative ${cat.bgColor} border border-gray-200 rounded-xl p-4 shadow-sm min-h-[280px] cursor-pointer`}
+      className={`relative ${cat.bgColor} border border-gray-200 rounded-xl p-4 shadow-sm min-h-[280px] cursor-pointer backdrop-blur-sm bg-white/70`}
       onClick={() => onClick(cat.slug, cat.title)}
       role="button"
       tabIndex={0}
@@ -114,7 +114,7 @@ function CategoryCard({
           {cat.items.map((item, index: number) => (
             <div
               key={index}
-              className="bg-white border border-gray-100 rounded-lg p-3 flex flex-col items-center justify-center text-center"
+              className="bg-white/80 border border-gray-100/50 rounded-lg p-3 flex flex-col items-center justify-center text-center backdrop-blur-sm"
             >
               <div className={`w-8 h-8 ${cat.accent} rounded-full mb-1`}></div>
               <span className="text-xs font-[var(--font-yekan)] text-gray-800">
@@ -125,8 +125,8 @@ function CategoryCard({
         </div>
         
         {cat.productsCount > 0 && (
-          <div className="mt-3 pt-3 border-t border-gray-100">
-            <span className="text-xs text-gray-500 font-[var(--font-yekan)]">
+          <div className="mt-3 pt-3 border-t border-gray-100/50">
+            <span className="text-xs text-gray-600 font-[var(--font-yekan)]">
               {cat.productsCount} محصول
             </span>
           </div>
@@ -254,24 +254,39 @@ export default function HeroSection() {
   // Loading state
   if (loading) {
     return (
-      <section className="w-full bg-amber-50 py-12 px-4 md:px-8 lg:px-16 mt-34">
-        <div className="max-w-6xl mx-auto">
+      <section 
+        className="w-full bg-gradient-to-b from-amber-50 to-white py-12 px-4 md:px-8 lg:px-16 mt-34 relative"
+        style={{
+          backgroundImage: "url('/your-background-image.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundAttachment: "fixed"
+        }}
+      >
+        {/* Dark overlay with glass effect */}
+        <div className="absolute inset-0 bg-black/30 backdrop-blur-sm"></div>
+        
+        <div className="max-w-6xl mx-auto relative z-10">
+          <div className="text-center mb-8">
+            <div className="h-8 bg-white/30 rounded-lg w-48 mx-auto mb-2 animate-pulse"></div>
+            <div className="h-4 bg-white/30 rounded w-64 mx-auto animate-pulse"></div>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {[...Array(6)].map((_, index) => (
               <div
                 key={index}
-                className="bg-gray-100 border border-gray-200 rounded-xl p-4 min-h-[280px] animate-pulse"
+                className="bg-white/20 border border-white/30 rounded-xl p-4 min-h-[280px] animate-pulse backdrop-blur-sm"
               >
                 <div className="flex items-center mb-4">
-                  <div className="w-10 h-10 bg-gray-300 rounded-lg ml-3"></div>
+                  <div className="w-10 h-10 bg-white/30 rounded-lg ml-3"></div>
                   <div className="flex-1">
-                    <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
-                    <div className="h-3 bg-gray-300 rounded w-1/2"></div>
+                    <div className="h-4 bg-white/30 rounded w-3/4 mb-2"></div>
+                    <div className="h-3 bg-white/30 rounded w-1/2"></div>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   {[...Array(4)].map((_, i) => (
-                    <div key={i} className="bg-gray-200 rounded-lg p-3 h-20"></div>
+                    <div key={i} className="bg-white/30 rounded-lg p-3 h-20"></div>
                   ))}
                 </div>
               </div>
@@ -285,14 +300,25 @@ export default function HeroSection() {
   // Error state
   if (error) {
     return (
-      <section className="w-full bg-amber-50 py-12 px-4 md:px-8 lg:px-16 mt-34">
-        <div className="max-w-6xl mx-auto text-center">
-          <div className="text-red-600 text-lg font-[var(--font-yekan)] mb-4">
+      <section 
+        className="w-full bg-gradient-to-b from-amber-50 to-white py-12 px-4 md:px-8 lg:px-16 mt-34 relative"
+        style={{
+          backgroundImage: "url('/your-background-image.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundAttachment: "fixed"
+        }}
+      >
+        {/* Dark overlay with glass effect */}
+        <div className="absolute inset-0 bg-black/30 backdrop-blur-sm"></div>
+        
+        <div className="max-w-6xl mx-auto text-center relative z-10">
+          <div className="text-white text-lg font-[var(--font-yekan)] mb-4">
             {error}
           </div>
           <button
             onClick={() => window.location.reload()}
-            className="bg-amber-600 text-white px-6 py-3 rounded-lg font-[var(--font-yekan)] hover:bg-amber-700"
+            className="bg-amber-600 text-white px-6 py-3 rounded-lg font-[var(--font-yekan)] hover:bg-amber-700 backdrop-blur-sm bg-white/20"
           >
             تلاش مجدد
           </button>
@@ -304,9 +330,20 @@ export default function HeroSection() {
   // Empty state
   if (displayCategories.length === 0) {
     return (
-      <section className="w-full bg-amber-50 py-12 px-4 md:px-8 lg:px-16 mt-34">
-        <div className="max-w-6xl mx-auto text-center">
-          <div className="text-gray-600 text-lg font-[var(--font-yekan)] mb-4">
+      <section 
+        className="w-full bg-gradient-to-b from-amber-50 to-white py-12 px-4 md:px-8 lg:px-16 mt-34 relative"
+        style={{
+          backgroundImage: "url('/your-background-image.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundAttachment: "fixed"
+        }}
+      >
+        {/* Dark overlay with glass effect */}
+        <div className="absolute inset-0 bg-black/30 backdrop-blur-sm"></div>
+        
+        <div className="max-w-6xl mx-auto text-center relative z-10">
+          <div className="text-white text-lg font-[var(--font-yekan)] mb-4">
             هیچ دسته‌بندی فعالی یافت نشد
           </div>
         </div>
@@ -315,14 +352,26 @@ export default function HeroSection() {
   }
 
   return (
-    <section className="w-full bg-amber-50 py-12 px-4 md:px-8 lg:px-16 mt-34">
-      <div className="max-w-6xl mx-auto">
+    <section 
+      className="w-full py-12 px-4 md:px-8 lg:px-16 mt-34 relative"
+      style={{
+        backgroundImage: "url('/Images/premium_photo-1675237625862-d982e7f44696.avif')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundAttachment: "fixed",
+        minHeight: "100vh"
+      }}
+    >
+      {/* Dark overlay with glass effect */}
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"></div>
+      
+      <div className="max-w-6xl mx-auto relative z-10">
         {/* Section Title */}
         <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold text-gray-800 font-[var(--font-yekan)] mb-2">
+          <h2 className="text-2xl font-bold text-white font-[var(--font-yekan)] mb-2 drop-shadow-lg">
             دسته‌بندی‌های محصولات
           </h2>
-          <p className="text-gray-600 font-[var(--font-yekan)]">
+          <p className="text-white/90 font-[var(--font-yekan)] drop-shadow">
             محصولات خود را بر اساس دسته‌بندی مورد نظر جستجو کنید
           </p>
         </div>
@@ -342,7 +391,7 @@ export default function HeroSection() {
         <div className="text-center mt-10">
           <button 
             onClick={handleViewAllCategories}
-            className="bg-amber-600 text-white font-semibold py-3 px-8 rounded-lg font-[var(--font-yekan)] text-base focus:outline-none focus:ring-2 focus:ring-amber-500 hover:bg-amber-700 transition-colors duration-200"
+            className="bg-amber-600 text-white font-semibold py-3 px-8 rounded-lg font-[var(--font-yekan)] text-base focus:outline-none focus:ring-2 focus:ring-amber-500 hover:bg-amber-700 transition-colors duration-200 backdrop-blur-sm bg-white/20 border border-white/30"
             aria-label="مشاهده همه دسته‌بندی‌ها"
           >
             مشاهده همه دسته‌بندی‌ها
