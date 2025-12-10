@@ -345,7 +345,7 @@ export default function ProductDetailPage() {
       id: product._id,
       name: product.name,
       price: displayPrice,
-      image: product.image,
+      
     }, quantity);
     
     setCartMessage(`${quantity} عدد "${product.name}" به سبد خرید اضافه شد`);
