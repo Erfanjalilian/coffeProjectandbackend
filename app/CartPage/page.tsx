@@ -69,45 +69,47 @@ export default function CartPage(): React.ReactElement {
         const data = await res.json();
         console.log("API Response:", data); // Debug log
         
-        if (mounted && data.success && Array.isArray(data.data?.products)) {
-          // Transform the API data to match our Product type
-            const transformedProducts = data.data.products.map((product: any) => ({
-            id: product._id,
-            _id: product._id,
-            name: product.name,
-            price: product.price,
-            originalPrice: product.originalPrice,
-            priceAfterDiscount: product.priceAfterDiscount,
-            image: product.image,
-            images: product.images || [],
-            category: product.category,
-            categoryName: product.category?.name,
-            badge: product.badge,
-            rating: product.rating || 0,
-            reviews: product.reviews || 0,
-            isPrime: product.isPrime,
-            discount: product.discount,
-            type: product.type,
-            description: product.description,
-            dealType: product.dealType,
-            timeLeft: product.timeLeft,
-            soldCount: product.soldCount,
-            totalCount: product.totalCount,
-            isPremium: product.isPremium,
-            features: product.features || [],
-            brand: product.brand,
-            weight: product.weight,
-            ingredients: product.ingredients,
-            benefits: product.benefits,
-            howToUse: product.howToUse,
-            hasWarranty: product.hasWarranty,
-            warrantyDuration: product.warrantyDuration,
-            warrantyDescription: product.warrantyDescription
-          }));
-          
-          console.log("Transformed Products:", transformedProducts); // Debug log
-          setProducts(transformedProducts);
-        }
+  if (mounted && data.success && Array.isArray(data.data?.products)) {
+  const transformedProducts = data.data.products.map((product: any) => ({
+    id: product._id,
+    _id: product._id,
+    name: product.name,
+    price: product.price,
+    originalPrice: product.originalPrice,
+    priceAfterDiscount: product.priceAfterDiscount,
+    image: product.image,
+    images: product.images || [],
+    category: product.category,
+    categoryName: product.category?.name,
+    badge: product.badge,
+    rating: product.rating || 0,
+    reviews: product.reviews || 0,
+    isPrime: product.isPrime,
+    discount: product.discount,
+    type: product.type,
+    description: product.description,
+    dealType: product.dealType,
+    timeLeft: product.timeLeft,
+    soldCount: product.soldCount,
+    totalCount: product.totalCount,
+    isPremium: product.isPremium,
+    features: product.features || [],
+    brand: product.brand,
+    weight: product.weight,
+    ingredients: product.ingredients,
+    benefits: product.benefits,
+    howToUse: product.howToUse,
+    hasWarranty: product.hasWarranty,
+    warrantyDuration: product.warrantyDuration,
+    warrantyDescription: product.warrantyDescription
+  }));
+
+  setProducts(transformedProducts);
+} else {
+  console.error("Invalid API response format:", data);
+  setError("خطا در دریافت اطلاعات محصولات از سرور.");
+}
+
       } catch (e) {
         console.error("Failed to fetch products from API:", e);
         if (mounted) setError("خطا در دریافت اطلاعات محصولات از سرور.");
