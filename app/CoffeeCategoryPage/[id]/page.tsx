@@ -29,6 +29,7 @@ interface Comment {
   _id: string;
   content: string;
   product: {
+    id(id: any): unknown;
     _id: string;
     name: string;
   };
@@ -54,6 +55,7 @@ interface CommentsApiResponse {
 }
 
 interface Product {
+  id: string;
   _id: string;
   name: string;
   slug: string;
@@ -216,7 +218,7 @@ export default function ProductDetailPage() {
   const [showCartMessage, setShowCartMessage] = useState(false);
   const [cartMessage, setCartMessage] = useState('');
 
-  // Fetch product data
+  // Fetch product data - FIXED: More flexible API response handling
   useEffect(() => {
     const controller = new AbortController();
 
@@ -228,39 +230,80 @@ export default function ProductDetailPage() {
           signal: controller.signal
         });
         
-        if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+        if (!res.ok) {
+          console.error(`Fetch failed with status: ${res.status}`);
+          setProduct(null);
+          setRelatedProducts([]);
+          setLoading(false);
+          return;
+        }
         
-        const result: ApiResponse = await res.json();
-        
-        if (!result.success || !result.data.products) {
-          throw new Error('Failed to fetch products from backend');
+        let result;
+        try {
+          result = await res.json();
+        } catch (parseError) {
+          console.error('Failed to parse JSON response:', parseError);
+          setProduct(null);
+          setRelatedProducts([]);
+          setLoading(false);
+          return;
         }
 
-        const allProducts = result.data.products;
+        // FIXED: More flexible response checking
+        console.log('API Response:', result);
+        
+        // Check if we have products data
+        let allProducts: Product[] = [];
+        
+        if (result && result.data && Array.isArray(result.data.products)) {
+          allProducts = result.data.products;
+        } else if (result && Array.isArray(result.products)) {
+          allProducts = result.products;
+        } else if (Array.isArray(result)) {
+          allProducts = result;
+        } else {
+          console.warn('No products array found in response:', result);
+          allProducts = [];
+        }
+
+        console.log('Extracted products:', allProducts);
 
         if (!params?.id) {
           setProduct(null);
           setRelatedProducts([]);
+          setLoading(false);
           return;
         }
 
-        const current = allProducts.find(p => String(p._id) === String(params.id)) ?? null;
+        // Find current product
+        const current = allProducts.find(p => {
+          if (!p) return false;
+          return String(p._id) === String(params.id) || 
+                 String(p.id) === String(params.id) || 
+                 String(p.slug) === String(params.id);
+        }) ?? null;
+        
         setProduct(current);
 
         if (current) {
+          // Get related products
           const related = allProducts
-            .filter(p => String(p._id) !== String(current._id))
+            .filter(p => p && String(p._id || p.id) !== String(current._id || current.id))
             .slice(0, 4);
           setRelatedProducts(related);
           
           // Check if current product is in favorites
-          setIsFavorite(isProductInFavorites(current._id));
+          setIsFavorite(isProductInFavorites(current._id || current.id));
         } else {
+          console.log('Product not found, params.id:', params.id);
           setRelatedProducts([]);
         }
 
       } catch (error: any) {
-        if (error.name === 'AbortError') return;
+        if (error.name === 'AbortError') {
+          console.log('Request was aborted');
+          return;
+        }
         console.error('Error loading products:', error);
         setProduct(null);
         setRelatedProducts([]);
@@ -270,7 +313,9 @@ export default function ProductDetailPage() {
     }
 
     loadProductsOnce();
-    return () => controller.abort();
+    return () => {
+      controller.abort();
+    };
   }, [params?.id]);
 
   // Fetch comments for this specific product
@@ -283,22 +328,41 @@ export default function ProductDetailPage() {
       
       const res = await fetch(`https://coffee-shop-backend-k3un.onrender.com/api/v1/comment?product=${productId}`);
       
-      if (!res.ok) throw new Error(`Failed to fetch comments: ${res.status}`);
-      
-      const result: CommentsApiResponse = await res.json();
-      
-      if (result.success && result.data.comments) {
-        // Double-check that comments belong to this specific product
-        const filteredComments = result.data.comments.filter(comment => 
-          comment.product && String(comment.product._id) === String(productId)
-        );
-        
-        console.log(`API returned ${result.data.comments.length} comments, filtered to ${filteredComments.length} for product ${productId}`);
-        
-        setComments(filteredComments);
-      } else {
+      if (!res.ok) {
+        console.error(`Failed to fetch comments: ${res.status}`);
         setComments([]);
+        return;
       }
+      
+      let result;
+      try {
+        result = await res.json();
+      } catch (parseError) {
+        console.error('Failed to parse comments JSON:', parseError);
+        setComments([]);
+        return;
+      }
+      
+      // FIXED: Flexible comments response handling
+      let commentsArray: Comment[] = [];
+      
+      if (result && result.data && Array.isArray(result.data.comments)) {
+        commentsArray = result.data.comments;
+      } else if (result && Array.isArray(result.comments)) {
+        commentsArray = result.comments;
+      } else if (Array.isArray(result)) {
+        commentsArray = result;
+      }
+      
+      // Double-check that comments belong to this specific product
+      const filteredComments = commentsArray.filter(comment => {
+        if (!comment || !comment.product) return false;
+        return String(comment.product._id) === String(productId) || 
+               String(comment.product.id) === String(productId);
+      });
+      
+      console.log(`Filtered comments: ${filteredComments.length} for product ${productId}`);
+      setComments(filteredComments);
     } catch (error) {
       console.error('Error fetching comments:', error);
       setComments([]);
@@ -310,7 +374,7 @@ export default function ProductDetailPage() {
   // Fetch comments when product is loaded and reviews tab is active
   useEffect(() => {
     if (product && activeTab === 'reviews') {
-      fetchComments(product._id);
+      fetchComments(product._id || product.id);
     }
   }, [product, activeTab]);
 
@@ -323,8 +387,11 @@ export default function ProductDetailPage() {
       return;
     }
 
+    const productId = product._id || product.id;
+    if (!productId) return;
+
     if (isFavorite) {
-      removeFromFavorites(product._id);
+      removeFromFavorites(productId);
       setIsFavorite(false);
       setFavoriteMessage('محصول از علاقه‌مندی‌ها حذف شد');
     } else {
@@ -341,13 +408,16 @@ export default function ProductDetailPage() {
   const handleAddToCart = () => {
     if (!product) return;
 
+    const productId = product._id || product.id;
+    const productName = product.name || 'محصول';
+
     addToCart({
-      id: product._id,
-      name: product.name,
+      id: productId,
+      name: productName,
       price: displayPrice,
     }, quantity);
     
-    setCartMessage(`${quantity} عدد "${product.name}" به سبد خرید اضافه شد`);
+    setCartMessage(`${quantity} عدد "${productName}" به سبد خرید اضافه شد`);
     setShowCartMessage(true);
     setTimeout(() => setShowCartMessage(false), 3000);
   };
@@ -381,15 +451,18 @@ export default function ProductDetailPage() {
       console.log('Current user ID:', user._id);
       console.log('Product ID:', params.id);
 
+      const productId = params.id;
+      const userId = user._id || user.id;
+
       // CORRECTED: Use productId instead of product (based on API error message)
       const commentData = {
         content: newReview.comment,
         rating: newReview.rating,
-        productId: params.id, // ✅ Correct field name from API error
-        userId: user._id      // ✅ Also use userId for consistency
+        productId: productId,
+        userId: userId
       };
 
-      console.log('Submitting comment with CORRECTED data:', commentData);
+      console.log('Submitting comment with data:', commentData);
 
       const res = await fetch('https://coffee-shop-backend-k3un.onrender.com/api/v1/comment', {
         method: 'POST',
@@ -410,11 +483,11 @@ export default function ProductDetailPage() {
         
         try {
           const errorData = JSON.parse(responseText);
-          errorMessage = errorData.message || errorMessage;
+          errorMessage = errorData.message || errorData.error || errorMessage;
           // Show specific validation errors if available
-          if (errorData.data && errorData.data.length > 0) {
-            const validationErrors = errorData.data.map((err: any) => err.message).join(', ');
-            errorMessage += ` - ${validationErrors}`;
+          if (errorData.data && Array.isArray(errorData.data)) {
+            const validationErrors = errorData.data.map((err: any) => err.message || err.msg).join(', ');
+            if (validationErrors) errorMessage += ` - ${validationErrors}`;
           }
         } catch {
           errorMessage = responseText || errorMessage;
@@ -424,10 +497,16 @@ export default function ProductDetailPage() {
       }
 
       // Parse the successful response
-      const result = JSON.parse(responseText);
+      let result;
+      try {
+        result = JSON.parse(responseText);
+      } catch {
+        throw new Error('پاسخ نامعتبر از سرور دریافت شد');
+      }
+      
       console.log('Comment submission success:', result);
       
-      if (result.success) {
+      if (result.success || result.status === 'success') {
         // Refresh comments for this specific product
         await fetchComments(params.id as string);
         // Reset form
@@ -435,7 +514,7 @@ export default function ProductDetailPage() {
         // Show success message
         alert('نظر شما با موفقیت ثبت شد!');
       } else {
-        throw new Error(result.message || 'خطای ناشناخته از سرور');
+        throw new Error(result.message || result.error || 'خطای ناشناخته از سرور');
       }
     } catch (error: any) {
       console.error('Full error details:', error);
@@ -452,18 +531,21 @@ export default function ProductDetailPage() {
       lg: 'w-5 h-5'
     };
     
+    // Ensure rating is a valid number
+    const validRating = typeof rating === 'number' && !isNaN(rating) ? rating : 0;
+    
     return (
       <div className="flex items-center gap-1">
         {[...Array(5)].map((_, i) => (
           <FiStar
             key={i}
             className={`${sizes[size]} ${
-              i < Math.floor(rating) ? 'text-blue-400 fill-blue-400' : 'text-gray-300'
+              i < Math.floor(validRating) ? 'text-blue-400 fill-blue-400' : 'text-gray-300'
             }`}
           />
         ))}
         <span className={`${size === 'lg' ? 'text-sm' : 'text-xs'} text-gray-600 mr-1`}>
-          {rating.toFixed(1)}
+          {validRating.toFixed(1)}
         </span>
       </div>
     );
@@ -471,45 +553,58 @@ export default function ProductDetailPage() {
 
   // Calculate average rating from comments for THIS product
   const calculateAverageRating = () => {
-    if (comments.length === 0) return 0;
-    const total = comments.reduce((sum, comment) => sum + comment.rating, 0);
-    return total / comments.length;
+    if (!Array.isArray(comments) || comments.length === 0) return 0;
+    const total = comments.reduce((sum, comment) => {
+      if (comment && typeof comment.rating === 'number') {
+        return sum + comment.rating;
+      }
+      return sum;
+    }, 0);
+    return comments.length > 0 ? total / comments.length : 0;
   };
 
   // Calculate rating distribution for THIS product
   const getRatingDistribution = () => {
     const distribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+    if (!Array.isArray(comments)) return distribution;
+    
     comments.forEach(comment => {
-      const stars = Math.floor(comment.rating);
-      if (stars >= 1 && stars <= 5) {
-        distribution[stars as keyof typeof distribution]++;
+      if (comment && typeof comment.rating === 'number') {
+        const stars = Math.floor(comment.rating);
+        if (stars >= 1 && stars <= 5) {
+          distribution[stars as keyof typeof distribution]++;
+        }
       }
     });
     return distribution;
   };
 
   // Show loading state
-  if (loading) return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white pt-24 flex items-center justify-center">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-        <p className="mt-4 text-gray-600 font-[var(--font-yekan)]">در حال بارگذاری محصول...</p>
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white pt-24 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600 font-[var(--font-yekan)]">در حال بارگذاری محصول...</p>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
 
-  if (!product) return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white pt-24 flex items-center justify-center">
-      <div className="text-center">
-        <h2 className="text-2xl font-bold text-gray-800 mb-4 font-[var(--font-yekan)]">محصول یافت نشد</h2>
-        <Link href="/CoffeeCategoryPage" className="text-blue-600 hover:text-blue-700 font-[var(--font-yekan)]">
-          بازگشت به دسته‌بندی
-        </Link>
+  if (!product) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white pt-24 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4 font-[var(--font-yekan)]">محصول یافت نشد</h2>
+          <Link href="/CoffeeCategoryPage" className="text-blue-600 hover:text-blue-700 font-[var(--font-yekan)]">
+            بازگشت به دسته‌بندی
+          </Link>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
 
-  const displayPrice = product.priceAfterDiscount || product.price;
+  const displayPrice = (product.priceAfterDiscount || product.price) || 0;
   const displayOriginalPrice = product.originalPrice && product.originalPrice > displayPrice ? product.originalPrice : undefined;
   const discountPercentage = displayOriginalPrice ? Math.round(((displayOriginalPrice - displayPrice) / displayOriginalPrice) * 100) : 0;
 
@@ -560,7 +655,7 @@ export default function ProductDetailPage() {
           <span className="mx-2">/</span>
           <Link href="/CoffeeCategoryPage" className="hover:text-blue-700 transition-colors">دسته‌بندی‌ها</Link>
           <span className="mx-2">/</span>
-          <span className="text-blue-700 font-semibold">{product.name}</span>
+          <span className="text-blue-700 font-semibold">{product.name || 'محصول'}</span>
         </motion.div>
 
         {/* Back Button - Mobile */}
@@ -630,7 +725,7 @@ export default function ProductDetailPage() {
               {/* Product Header */}
               <div>
                 <h1 className="text-2xl lg:text-3xl font-bold text-gray-800 mb-3 font-[var(--font-yekan)] leading-relaxed">
-                  {product.name}
+                  {product.name || 'محصول'}
                 </h1>
                 
                 {/* Brand and Category */}
@@ -652,7 +747,7 @@ export default function ProductDetailPage() {
                     ({comments.length} نظر)
                   </span>
                   <span className="text-blue-600 text-sm font-[var(--font-yekan)] bg-blue-50 px-2 py-1 rounded-full">
-                    {product.positiveFeature}
+                    {product.positiveFeature || 'محصول ویژه'}
                   </span>
                 </div>
               </div>
@@ -674,8 +769,8 @@ export default function ProductDetailPage() {
 
                 {/* Stock and Sales Info */}
                 <div className="flex flex-wrap gap-4 text-sm text-gray-600 mb-6 font-[var(--font-yekan)]">
-                  <span>موجودی: {product.stock} عدد</span>
-                  <span>فروخته شده: {product.soldCount} عدد</span>
+                  <span>موجودی: {product.stock || 0} عدد</span>
+                  <span>فروخته شده: {product.soldCount || 0} عدد</span>
                 </div>
 
                 {/* Quantity Selector */}
@@ -698,7 +793,7 @@ export default function ProductDetailPage() {
                   </div>
                 </div>
 
-                {/* Action Buttons - UPDATED: Removed "Ask Me" and "Share" buttons */}
+                {/* Action Buttons */}
                 <div className="space-y-3 mb-6">
                   <div className="flex flex-col sm:flex-row gap-3">
                     <motion.button
@@ -787,7 +882,7 @@ export default function ProductDetailPage() {
             {activeTab === 'description' && (
               <div className="space-y-4">
                 <p className="text-gray-700 font-[var(--font-yekan)] leading-relaxed text-lg">
-                  {product.description}
+                  {product.description || 'توضیحاتی برای این محصول وجود ندارد.'}
                 </p>
                 {product.benefits && (
                   <div>
@@ -804,7 +899,7 @@ export default function ProductDetailPage() {
               </div>
             )}
 
-            {activeTab === 'features' && product.features && (
+            {activeTab === 'features' && product.features && Array.isArray(product.features) && (
               <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {product.features.map((feature, index) => (
                   <li key={index} className="flex items-center gap-2 text-gray-700 font-[var(--font-yekan)]">
@@ -973,7 +1068,7 @@ export default function ProductDetailPage() {
                         <div className="flex items-center gap-4 mb-3">
                           <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
                             <span className="text-blue-600 font-bold font-[var(--font-yekan)]">
-                              {comment.user.username?.substring(0, 2) || 'کاربر'}
+                              {comment.user?.username?.substring(0, 2) || 'کاربر'}
                             </span>
                           </div>
                           <div>
@@ -1009,7 +1104,7 @@ export default function ProductDetailPage() {
             <h2 className="text-2xl font-bold mb-6 font-[var(--font-yekan)]">محصولات مشابه</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {relatedProducts.map((p) => (
-                <Link key={p._id} href={`/CoffeeCategoryPage/${p._id}`} className="block">
+                <Link key={p._id || p.id} href={`/CoffeeCategoryPage/${p._id || p.id}`} className="block">
                   <div className="bg-white rounded-2xl shadow-lg border border-blue-200 p-4 hover:shadow-xl transition-all duration-300 cursor-pointer">
                     <div className="relative h-48 w-full rounded-xl overflow-hidden mb-3 bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
                       <div className="text-center">
@@ -1025,19 +1120,19 @@ export default function ProductDetailPage() {
                       )}
                     </div>
                     <h3 className="font-[var(--font-yekan)] font-semibold text-gray-800 mb-2 line-clamp-2">
-                      {p.name}
+                      {p.name || 'محصول'}
                     </h3>
                     <div className="flex items-center gap-2 mb-2">
-                      {renderStars(p.rating, 'sm')}
+                      {renderStars(p.rating || 0, 'sm')}
                       <span className="text-xs text-gray-500 font-[var(--font-yekan)]">
-                        ({p.reviews})
+                        ({p.reviews || 0})
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-blue-700 font-bold font-[var(--font-yekan)] text-lg">
-                        {formatPrice(p.priceAfterDiscount || p.price)}
+                        {formatPrice(p.priceAfterDiscount || p.price || 0)}
                       </span>
-                      {p.originalPrice && p.originalPrice > (p.priceAfterDiscount || p.price) && (
+                      {p.originalPrice && p.originalPrice > (p.priceAfterDiscount || p.price || 0) && (
                         <span className="text-gray-500 line-through text-sm font-[var(--font-yekan)]">
                           {formatPrice(p.originalPrice)}
                         </span>

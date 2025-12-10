@@ -6,6 +6,7 @@ const USER_STORAGE_KEY = "user";
 const TOKEN_STORAGE_KEY = "token";
 
 export interface User {
+  id: string;
   _id: string;
   username: string;
   phone: string;
