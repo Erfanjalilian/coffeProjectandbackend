@@ -1,10 +1,11 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 
 export default function PromoBanner() {
   return (
-    <section className="relative w-full h-[60vh] my-20 overflow-hidden rounded-2xl shadow-lg">
+    <section className="relative w-full h-[60vh] my-20 overflow-hidden shadow-lg">
       {/* پس‌زمینه */}
       <div className="absolute inset-0">
         <Image
@@ -28,10 +29,11 @@ export default function PromoBanner() {
         <p className="text-lg sm:text-2xl mb-8 max-w-2xl text-gray-200">
           طعم واقعی قهوه را با محصولات ویژه ما تجربه کنید — از بهترین دانه‌ها تا لحظه‌ای لذت‌بخش.
         </p>
-
-        <button className="bg-amber-700 hover:bg-amber-800 text-white font-semibold py-3 px-8 rounded-full shadow-lg transition-colors">
+   <Link href={"/CoffeeCategoryPage"}>
+        <button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-full shadow-lg transition-colors">
           مشاهده محصولات
         </button>
+        </Link>
       </div>
     </section>
   );

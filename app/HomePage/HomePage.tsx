@@ -9,13 +9,17 @@ import Articles from "../Articles/page";
 function HomePage(){
     return(
         <div>
+            <br/><br/><br/>
+            <PromoBanner />
+            
             <HeroSlider />
             <Articles />
             
-            <PromoBanner />
+            
           
             <WhyChooseUs />
             <FinalCTA />
+            
         </div>
     )
 }

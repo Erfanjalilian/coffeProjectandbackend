@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 interface SeoData {
   metaKeywords: string[];
@@ -43,20 +44,32 @@ interface ApiResponse {
 
 // Color schemes based on your API color field or fallback
 const PREDEFINED_COLOR_SCHEMES = [
-  { bgColor: "bg-amber-50", accent: "bg-amber-500", textColor: "text-amber-500" },
-  { bgColor: "bg-emerald-50", accent: "bg-emerald-500", textColor: "text-emerald-500" },
   { bgColor: "bg-blue-50", accent: "bg-blue-500", textColor: "text-blue-500" },
-  { bgColor: "bg-purple-50", accent: "bg-purple-500", textColor: "text-purple-500" },
-  { bgColor: "bg-rose-50", accent: "bg-rose-500", textColor: "text-rose-500" },
+  { bgColor: "bg-blue-100", accent: "bg-blue-600", textColor: "text-blue-600" },
+  { bgColor: "bg-blue-50", accent: "bg-blue-500", textColor: "text-blue-500" },
+  { bgColor: "bg-indigo-50", accent: "bg-indigo-500", textColor: "text-indigo-500" },
+  { bgColor: "bg-sky-50", accent: "bg-sky-500", textColor: "text-sky-500" },
   { bgColor: "bg-cyan-50", accent: "bg-cyan-500", textColor: "text-cyan-500" },
 ] as const;
 
-// Sub-items for each category card
+// Sub-items for each category card with corresponding images
 const CATEGORY_SUB_ITEMS = [
-  { name: "محصول ویژه" },
-  { name: "پرفروش‌ها" },
-  { name: "جدیدترین‌ها" },
-  { name: "تخفیف دار" }
+  { 
+    name: "محصول ویژه", 
+    image: "/Images/photo-1461023058943-07fcbe16d735.avif" 
+  },
+  { 
+    name: "پرفروش‌ها", 
+    image: "/Images/photo-1514432324607-a09d9b4aefdd.avif" 
+  },
+  { 
+    name: "جدیدترین‌ها", 
+    image: "/Images/photo-1514066558159-fc8c737ef259.avif" 
+  },
+  { 
+    name: "تخفیف دار", 
+    image: "/Images/photo-1514432324607-a09d9b4aefdd.avif" 
+  }
 ] as const;
 
 // Display category interface
@@ -96,7 +109,7 @@ function CategoryCard({
 
   return (
     <div
-      className={`relative ${cat.bgColor} border border-gray-200 rounded-xl p-4 shadow-sm min-h-[280px] cursor-pointer backdrop-blur-sm bg-white/70 hover:shadow-md transition-shadow duration-200 will-change-transform`}
+      className={`relative ${cat.bgColor} border border-gray-200 rounded-xl p-4 shadow-sm min-h-[320px] cursor-pointer backdrop-blur-sm bg-white/70 hover:shadow-md transition-shadow duration-200 will-change-transform`}
       onClick={handleClick}
       role="button"
       tabIndex={0}
@@ -126,10 +139,35 @@ function CategoryCard({
           {cat.items.map((item, index: number) => (
             <div
               key={index}
-              className="bg-white/80 border border-gray-100/50 rounded-lg p-3 flex flex-col items-center justify-center text-center backdrop-blur-sm hover:bg-white/90 transition-colors duration-150"
+              className="bg-white/80 border border-gray-100/50 rounded-lg p-2 flex flex-col items-center justify-center text-center backdrop-blur-sm hover:bg-white/90 transition-colors duration-150"
             >
-              <div className={`w-8 h-8 ${cat.accent} rounded-full mb-1 flex-shrink-0`}></div>
-              <span className="text-xs font-[var(--font-yekan)] text-gray-800 truncate w-full">
+              {/* Image Container - Rectangular and full width */}
+              <div className="relative w-full h-16 mb-2 rounded-lg overflow-hidden flex items-center justify-center bg-blue-50">
+                <Image
+                  src={item.image}
+                  alt={item.name}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 200px) 100vw, 200px"
+                  priority={false}
+                  onError={(e) => {
+                    // Fallback if image fails to load
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    const fallbackDiv = target.parentElement?.querySelector('.image-fallback') as HTMLElement;
+                    if (fallbackDiv) {
+                      fallbackDiv.style.display = 'flex';
+                    }
+                  }}
+                />
+                {/* Fallback content in case image fails to load */}
+                <div className="image-fallback hidden absolute inset-0 items-center justify-center">
+                  <div className={`w-10 h-10 ${cat.accent} rounded-lg flex items-center justify-center`}>
+                    <span className="text-white font-bold text-xs">{index + 1}</span>
+                  </div>
+                </div>
+              </div>
+              <span className="text-xs font-[var(--font-yekan)] text-gray-800 truncate w-full mt-1">
                 {item.name}
               </span>
             </div>
@@ -265,36 +303,29 @@ export default function HeroSection() {
   if (loading) {
     return (
       <section 
-        className="w-full py-12 px-4 md:px-8 lg:px-16 mt-34 relative overflow-hidden"
-        style={{
-          background: "linear-gradient(to bottom, rgba(251, 243, 232, 0.9), rgba(255, 255, 255, 0.9)), url('/Images/premium_photo-1675237625862-d982e7f44696.avif')",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          // Removed background-attachment: fixed
-          backgroundRepeat: "no-repeat"
-        }}
+        className="w-full py-12 px-4 md:px-8 lg:px-16 mt-34 relative overflow-hidden bg-gradient-to-b from-blue-50 to-white"
       >
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-8">
-            <div className="h-8 bg-amber-100/50 rounded-lg w-48 mx-auto mb-2 animate-pulse"></div>
-            <div className="h-4 bg-amber-100/50 rounded w-64 mx-auto animate-pulse"></div>
+            <div className="h-8 bg-blue-100/50 rounded-lg w-48 mx-auto mb-2 animate-pulse"></div>
+            <div className="h-4 bg-blue-100/50 rounded w-64 mx-auto animate-pulse"></div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {[...Array(6)].map((_, index) => (
               <div
                 key={index}
-                className="bg-white/50 border border-amber-100 rounded-xl p-4 min-h-[280px] animate-pulse"
+                className="bg-white/50 border border-blue-100 rounded-xl p-4 min-h-[320px] animate-pulse"
               >
                 <div className="flex items-center mb-4">
-                  <div className="w-10 h-10 bg-amber-100 rounded-lg ml-3"></div>
+                  <div className="w-10 h-10 bg-blue-100 rounded-lg ml-3"></div>
                   <div className="flex-1">
-                    <div className="h-4 bg-amber-100 rounded w-3/4 mb-2"></div>
-                    <div className="h-3 bg-amber-100 rounded w-1/2"></div>
+                    <div className="h-4 bg-blue-100 rounded w-3/4 mb-2"></div>
+                    <div className="h-3 bg-blue-100 rounded w-1/2"></div>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   {[...Array(4)].map((_, i) => (
-                    <div key={i} className="bg-amber-50 rounded-lg p-3 h-20"></div>
+                    <div key={i} className="bg-blue-50 rounded-lg p-3 h-20"></div>
                   ))}
                 </div>
               </div>
@@ -309,19 +340,15 @@ export default function HeroSection() {
   if (error) {
     return (
       <section 
-        className="w-full py-12 px-4 md:px-8 lg:px-16 mt-34 relative"
-        style={{
-          background: "linear-gradient(to bottom, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.3))",
-          minHeight: "60vh"
-        }}
+        className="w-full py-12 px-4 md:px-8 lg:px-16 mt-34 relative bg-gradient-to-b from-blue-50 to-white"
       >
         <div className="max-w-6xl mx-auto text-center">
-          <div className="text-white text-lg font-[var(--font-yekan)] mb-4">
+          <div className="text-gray-800 text-lg font-[var(--font-yekan)] mb-4">
             {error}
           </div>
           <button
             onClick={() => window.location.reload()}
-            className="bg-amber-600 text-white px-6 py-3 rounded-lg font-[var(--font-yekan)] hover:bg-amber-700 transition-colors duration-200"
+            className="bg-blue-600 text-white px-6 py-3 rounded-lg font-[var(--font-yekan)] hover:bg-blue-700 transition-colors duration-200"
           >
             تلاش مجدد
           </button>
@@ -334,14 +361,10 @@ export default function HeroSection() {
   if (displayCategories.length === 0) {
     return (
       <section 
-        className="w-full py-12 px-4 md:px-8 lg:px-16 mt-34 relative"
-        style={{
-          background: "linear-gradient(to bottom, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.3))",
-          minHeight: "60vh"
-        }}
+        className="w-full py-12 px-4 md:px-8 lg:px-16 mt-34 relative bg-gradient-to-b from-blue-50 to-white"
       >
         <div className="max-w-6xl mx-auto text-center">
-          <div className="text-white text-lg font-[var(--font-yekan)] mb-4">
+          <div className="text-gray-800 text-lg font-[var(--font-yekan)] mb-4">
             هیچ دسته‌بندی فعالی یافت نشد
           </div>
         </div>
@@ -351,26 +374,15 @@ export default function HeroSection() {
 
   return (
     <section 
-      className="w-full py-12 px-4 md:px-8 lg:px-16 mt-34 relative overflow-hidden"
-      style={{
-        // Using linear-gradient overlay instead of separate div for better performance
-        background: "linear-gradient(to bottom, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.3)), url('/Images/premium_photo-1675237625862-d982e7f44696.avif')",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        // Removed background-attachment: fixed - this is the main cause of lag
-        backgroundRepeat: "no-repeat",
-        // Use will-change for GPU acceleration
-        willChange: "transform"
-      }}
+      className="w-full py-12 px-4 md:px-8 lg:px-16 mt-34 relative overflow-hidden bg-gradient-to-b from-blue-50 to-white"
     >
-      {/* Reduced backdrop-blur intensity */}
       <div className="max-w-6xl mx-auto">
         {/* Section Title */}
         <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold text-white font-[var(--font-yekan)] mb-2 drop-shadow-lg">
+          <h2 className="text-2xl font-bold text-gray-800 font-[var(--font-yekan)] mb-2">
             دسته‌بندی‌های محصولات
           </h2>
-          <p className="text-white/90 font-[var(--font-yekan)] drop-shadow">
+          <p className="text-gray-600 font-[var(--font-yekan)]">
             محصولات خود را بر اساس دسته‌بندی مورد نظر جستجو کنید
           </p>
         </div>
@@ -390,7 +402,7 @@ export default function HeroSection() {
         <div className="text-center mt-10">
           <button 
             onClick={handleViewAllCategories}
-            className="bg-amber-600 text-white font-semibold py-3 px-8 rounded-lg font-[var(--font-yekan)] text-base focus:outline-none focus:ring-2 focus:ring-amber-500 hover:bg-amber-700 transition-colors duration-200 backdrop-blur-sm border border-amber-400/30 shadow-lg"
+            className="bg-blue-600 text-white font-semibold py-3 px-8 rounded-lg font-[var(--font-yekan)] text-base focus:outline-none focus:ring-2 focus:ring-blue-500 hover:bg-blue-700 transition-colors duration-200 border border-blue-400/30 shadow-lg"
             aria-label="مشاهده همه دسته‌بندی‌ها"
           >
             مشاهده همه دسته‌بندی‌ها

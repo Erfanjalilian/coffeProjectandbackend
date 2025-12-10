@@ -63,16 +63,16 @@ export default function ArticlesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Article icons to display instead of images
+  // Article icons to display instead of images - Updated colors to iKasb palette
   const articleIcons = [
-    { icon: <FiBook />, color: "from-amber-500 to-amber-600" },
-    { icon: <LuBookOpen />, color: "from-orange-500 to-orange-600" },
-    { icon: <FiCoffee />, color: "from-rose-500 to-rose-600" },
-    { icon: <FiMessageCircle />, color: "from-emerald-500 to-emerald-600" },
-    { icon: <FiZap />, color: "from-violet-500 to-violet-600" },
-    { icon: <FiTrendingUp />, color: "from-blue-500 to-blue-600" },
-    { icon: <FiStar />, color: "from-pink-500 to-pink-600" },
-    { icon: <FiAward />, color: "from-cyan-500 to-cyan-600" },
+    { icon: <FiBook />, color: "from-blue-500 to-blue-600" },
+    { icon: <LuBookOpen />, color: "from-blue-600 to-blue-700" },
+    { icon: <FiCoffee />, color: "from-blue-500 to-blue-600" },
+    { icon: <FiMessageCircle />, color: "from-blue-600 to-blue-700" },
+    { icon: <FiZap />, color: "from-blue-500 to-blue-600" },
+    { icon: <FiTrendingUp />, color: "from-blue-600 to-blue-700" },
+    { icon: <FiStar />, color: "from-blue-500 to-blue-600" },
+    { icon: <FiAward />, color: "from-blue-600 to-blue-700" },
   ];
 
   useEffect(() => {
@@ -125,17 +125,17 @@ export default function ArticlesPage() {
   const getArticleBadgeStyle = (badge: string) => {
     switch (badge) {
       case "ویژه":
-        return "bg-gradient-to-r from-amber-500 to-amber-600 text-white";
+        return "bg-gradient-to-r from-orange-500 to-orange-600 text-white";
       default:
-        return "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white";
+        return "bg-gradient-to-r from-blue-500 to-blue-600 text-white";
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-amber-50/50 to-orange-50/30 pt-24 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-b from-blue-50/50 to-white pt-24 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
           <p className="mt-4 text-gray-600 font-[var(--font-yekan)]">در حال بارگذاری مقالات...</p>
         </div>
       </div>
@@ -144,9 +144,9 @@ export default function ArticlesPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-amber-50/50 to-orange-50/30 pt-24 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-b from-blue-50/50 to-white pt-24 flex items-center justify-center">
         <div className="text-center max-w-md mx-4">
-          <div className="bg-white rounded-2xl shadow-lg border border-amber-200 p-8">
+          <div className="bg-white rounded-2xl shadow-lg border border-blue-200 p-8">
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <FiBook className="w-8 h-8 text-red-500" />
             </div>
@@ -158,7 +158,7 @@ export default function ArticlesPage() {
             </p>
             <button
               onClick={() => window.location.reload()}
-              className="bg-gradient-to-r from-amber-500 to-amber-600 text-white px-6 py-2 rounded-xl font-semibold font-[var(--font-yekan)] hover:shadow-lg transition-all"
+              className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-2 rounded-xl font-semibold font-[var(--font-yekan)] hover:shadow-lg transition-all"
             >
               تلاش مجدد
             </button>
@@ -169,7 +169,7 @@ export default function ArticlesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50/50 to-orange-50/30 pt-34">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50/50 to-white pt-34">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumb */}
         <motion.div
@@ -177,11 +177,11 @@ export default function ArticlesPage() {
           animate={{ opacity: 1, y: 0 }}
           className="text-sm text-gray-600 mb-6 font-[var(--font-yekan)]"
         >
-          <Link href="/" className="hover:text-amber-700 cursor-pointer transition-colors">
+          <Link href="/" className="hover:text-blue-700 cursor-pointer transition-colors">
             خانه
           </Link>
           <span className="mx-2">/</span>
-          <span className="text-amber-700 font-semibold">مقالات</span>
+          <span className="text-blue-700 font-semibold">مقالات</span>
         </motion.div>
 
         {/* Page Header */}
@@ -202,7 +202,7 @@ export default function ArticlesPage() {
             </div>
             
             <div className="flex items-center gap-2">
-              <div className="bg-gradient-to-r from-amber-500 to-amber-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 font-[var(--font-yekan)]">
+              <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-2 rounded-xl flex items-center gap-2 font-[var(--font-yekan)]">
                 <FiBook className="text-white" />
                 <span className="font-semibold">{articles.length} مقاله</span>
               </div>
@@ -210,12 +210,12 @@ export default function ArticlesPage() {
           </div>
         </motion.div>
 
-        {/* Consultation Banner - Similar to Valuable Purchases */}
+        {/* Consultation Banner - Updated to iKasb colors */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="bg-gradient-to-r from-amber-500 to-orange-600 rounded-2xl shadow-lg border border-amber-400 p-6 mb-8 relative overflow-hidden"
+          className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl shadow-lg border border-blue-500 p-6 mb-8 relative overflow-hidden hidden lg:block"
         >
           <div className="absolute top-0 left-0 w-24 h-24 bg-white/10 rounded-full -translate-x-12 -translate-y-12"></div>
           <div className="absolute bottom-0 right-0 w-20 h-20 bg-white/10 rounded-full translate-x-10 translate-y-10"></div>
@@ -229,7 +229,7 @@ export default function ArticlesPage() {
                 <h3 className="text-lg font-bold text-white mb-1 font-[var(--font-yekan)]">
                   مشاوره تخصصی انتخاب قهوه
                 </h3>
-                <p className="text-amber-100 font-[var(--font-yekan)] text-sm leading-relaxed">
+                <p className="text-blue-100 font-[var(--font-yekan)] text-sm leading-relaxed">
                   برای دریافت راهنمایی تخصصی در انتخاب قهوه مناسب، با کارشناسان ما مشورت کنید
                 </p>
               </div>
@@ -238,7 +238,7 @@ export default function ArticlesPage() {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="flex items-center gap-2 bg-white hover:bg-amber-50 text-amber-700 px-6 py-3 rounded-xl font-semibold transition-all shadow-lg font-[var(--font-yekan)] whitespace-nowrap"
+              className="flex items-center gap-2 bg-white hover:bg-blue-50 text-blue-700 px-6 py-3 rounded-xl font-semibold transition-all shadow-lg font-[var(--font-yekan)] whitespace-nowrap"
             >
               <FiMessageCircle size={18} />
               <span>مشاوره رایگان</span>
@@ -266,7 +266,7 @@ export default function ArticlesPage() {
               >
                 <Link
                   href={`/Articles/${article._id}`}
-                  className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-amber-100 overflow-hidden group block h-full"
+                  className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-blue-100 overflow-hidden group block h-full"
                 >
                   {/* Article Icon Section - Instead of Image */}
                   <div className={`relative h-40 overflow-hidden bg-gradient-to-br ${iconData.color} flex items-center justify-center`}>
@@ -299,7 +299,7 @@ export default function ArticlesPage() {
                   {/* Article Content */}
                   <div className="p-5">
                     {/* Article Title */}
-                    <h3 className="font-bold text-gray-800 mb-3 text-lg leading-relaxed font-[var(--font-yekan)] line-clamp-2 group-hover:text-amber-700 transition-colors">
+                    <h3 className="font-bold text-gray-800 mb-3 text-lg leading-relaxed font-[var(--font-yekan)] line-clamp-2 group-hover:text-blue-700 transition-colors">
                       {article.title}
                     </h3>
                     
@@ -324,7 +324,7 @@ export default function ArticlesPage() {
                     <div className="flex items-center justify-between">
                       <motion.div
                         whileHover={{ x: -5 }}
-                        className="flex items-center gap-2 text-amber-600 font-semibold text-sm font-[var(--font-yekan)] group-hover:text-amber-700 transition-colors"
+                        className="flex items-center gap-2 text-blue-600 font-semibold text-sm font-[var(--font-yekan)] group-hover:text-blue-700 transition-colors"
                       >
                         <span>مطالعه مقاله</span>
                         <FiChevronLeft className="group-hover:-translate-x-1 transition-transform" />
@@ -333,7 +333,7 @@ export default function ArticlesPage() {
                       {/* Article Stats */}
                       <div className="flex items-center gap-2">
                         {article.relatedProducts.length > 0 && (
-                          <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full">
+                          <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
                             {article.relatedProducts.length} محصول مرتبط
                           </span>
                         )}
@@ -353,9 +353,9 @@ export default function ArticlesPage() {
             animate={{ opacity: 1, y: 0 }}
             className="text-center py-12"
           >
-            <div className="bg-white rounded-2xl shadow-lg border border-amber-200 p-8 max-w-md mx-auto">
-              <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <FiBook className="w-10 h-10 text-amber-500" />
+            <div className="bg-white rounded-2xl shadow-lg border border-blue-200 p-8 max-w-md mx-auto">
+              <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <FiBook className="w-10 h-10 text-blue-500" />
               </div>
               <h3 className="text-lg font-bold text-gray-800 mb-2 font-[var(--font-yekan)]">
                 مقاله‌ای یافت نشد
@@ -375,15 +375,15 @@ export default function ArticlesPage() {
             transition={{ duration: 0.6, delay: 0.4 }}
             className="mt-8 flex justify-center"
           >
-            <div className="flex items-center gap-2 bg-white rounded-xl shadow-lg border border-amber-100 p-2">
+            <div className="flex items-center gap-2 bg-white rounded-xl shadow-lg border border-blue-100 p-2">
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                 <button
                   key={page}
                   onClick={() => setCurrentPage(page)}
                   className={`px-4 py-2 rounded-lg font-[var(--font-yekan)] transition-all ${
                     currentPage === page
-                      ? "bg-gradient-to-r from-amber-500 to-amber-600 text-white"
-                      : "text-gray-600 hover:bg-amber-50 hover:text-amber-700"
+                      ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white"
+                      : "text-gray-600 hover:bg-blue-50 hover:text-blue-700"
                   }`}
                 >
                   {page}
@@ -402,7 +402,7 @@ export default function ArticlesPage() {
             className="mt-12"
           >
             <div className="flex items-center gap-3 mb-6">
-              <div className="bg-gradient-to-r from-amber-500 to-amber-600 p-2 rounded-lg">
+              <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-2 rounded-lg">
                 <LuCrown className="text-white text-lg" />
               </div>
               <div>
@@ -428,18 +428,18 @@ export default function ArticlesPage() {
                   >
                     <Link
                       href={`/Articles/${featuredArticle._id}`}
-                      className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-amber-200 overflow-hidden group block h-full"
+                      className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-blue-200 overflow-hidden group block h-full"
                     >
                       <div className="p-6">
                         <div className="flex items-start gap-4">
                           <div className="flex-shrink-0">
-                            <div className="w-16 h-16 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center text-white text-2xl">
+                            <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center text-white text-2xl">
                               {getRandomIcon(index).icon}
                             </div>
                           </div>
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
-                              <span className="text-xs font-bold text-amber-700 bg-amber-100 px-2 py-1 rounded-full">
+                              <span className="text-xs font-bold text-orange-600 bg-orange-100 px-2 py-1 rounded-full">
                                 ویژه
                               </span>
                               <span className="text-xs text-gray-500 flex items-center gap-1">
@@ -447,7 +447,7 @@ export default function ArticlesPage() {
                                 {featuredArticle.readTime}
                               </span>
                             </div>
-                            <h4 className="font-bold text-gray-800 mb-2 font-[var(--font-yekan)] group-hover:text-amber-700 transition-colors">
+                            <h4 className="font-bold text-gray-800 mb-2 font-[var(--font-yekan)] group-hover:text-blue-700 transition-colors">
                               {featuredArticle.title}
                             </h4>
                             <p className="text-gray-600 text-sm mb-3 font-[var(--font-yekan)] line-clamp-2">
@@ -457,7 +457,7 @@ export default function ArticlesPage() {
                               <span className="text-xs text-gray-500 font-[var(--font-yekan)]">
                                 {featuredArticle.author}
                               </span>
-                              <span className="text-amber-600 text-sm font-semibold font-[var(--font-yekan)] flex items-center gap-1">
+                              <span className="text-blue-600 text-sm font-semibold font-[var(--font-yekan)] flex items-center gap-1">
                                 مطالعه مقاله
                                 <FiChevronLeft className="group-hover:-translate-x-1 transition-transform" />
                               </span>

@@ -326,17 +326,6 @@ export default function SpecialDiscountsPage() {
     })));
   };
 
-  // Handle price range selection
-  const handlePriceRangeSelect = (range: PriceRange) => {
-    setActiveFilters(prev => ({
-      ...prev,
-      selectedPriceRange: range.value,
-      priceRange: [range.min, range.max]
-    }));
-    setCustomMinPrice(range.min.toString());
-    setCustomMaxPrice(range.max.toString());
-  };
-
   // Handle custom price range
   const handleCustomPriceApply = () => {
     const min = parseInt(customMinPrice) || 0;
@@ -473,13 +462,13 @@ export default function SpecialDiscountsPage() {
   const getStatusBadgeStyle = (status: string) => {
     switch (status) {
       case "فروش ویژه":
-        return "bg-gradient-to-r from-red-500 to-red-600 text-white";
+        return "bg-gradient-to-r from-orange-500 to-orange-600 text-white";
       case "جدید":
-        return "bg-gradient-to-r from-green-500 to-green-600 text-white";
+        return "bg-gradient-to-r from-blue-500 to-blue-600 text-white";
       case "پر فروش":
-        return "bg-gradient-to-r from-amber-500 to-amber-600 text-white";
+        return "bg-gradient-to-r from-blue-600 to-blue-700 text-white";
       default:
-        return "bg-gradient-to-r from-amber-600 to-amber-700 text-white";
+        return "bg-gradient-to-r from-blue-600 to-blue-700 text-white";
     }
   };
 
@@ -493,8 +482,8 @@ export default function SpecialDiscountsPage() {
 
     if (imageError || !src || src.includes('undefined')) {
       return (
-        <div className={`${className} bg-gradient-to-br from-amber-100 to-amber-200 flex items-center justify-center`}>
-          <FiCoffee className="text-amber-400 text-2xl" />
+        <div className={`${className} bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center`}>
+          <FiCoffee className="text-blue-400 text-2xl" />
         </div>
       );
     }
@@ -510,7 +499,7 @@ export default function SpecialDiscountsPage() {
   };
 
   const FilterSection = ({ title, children, filterKey }: { title: string; children: React.ReactNode; filterKey: string }) => (
-    <div className="border-b border-amber-200 last:border-b-0">
+    <div className="border-b border-blue-200 last:border-b-0">
       <button
         onClick={() => setExpandedFilter(expandedFilter === filterKey ? null : filterKey)}
         className="w-full py-4 flex items-center justify-between text-right font-[var(--font-yekan)]"
@@ -520,7 +509,7 @@ export default function SpecialDiscountsPage() {
           animate={{ rotate: expandedFilter === filterKey ? 180 : 0 }}
           transition={{ duration: 0.3 }}
         >
-          <FiChevronDown className="text-amber-600" />
+          <FiChevronDown className="text-blue-600" />
         </motion.div>
       </button>
       <AnimatePresence>
@@ -541,9 +530,9 @@ export default function SpecialDiscountsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white pt-24 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white pt-24 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
           <p className="mt-4 text-gray-600 font-[var(--font-yekan)]">در حال بارگذاری تخفیف‌ها...</p>
         </div>
       </div>
@@ -551,7 +540,7 @@ export default function SpecialDiscountsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white pt-34">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white pt-34">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumb */}
         <motion.div
@@ -559,7 +548,7 @@ export default function SpecialDiscountsPage() {
           animate={{ opacity: 1, y: 0 }}
           className="text-sm text-gray-600 mb-6 font-[var(--font-yekan)] mt-8 lg:mt-0"
         >
-          <span>خانه</span>
+          <span className="hover:text-blue-700 cursor-pointer">خانه</span>
           <span className="mx-2">/</span>
           <span>تخفیف های امروز</span>
         </motion.div>
@@ -572,10 +561,10 @@ export default function SpecialDiscountsPage() {
             transition={{ duration: 0.6 }}
             className="lg:w-64 flex-shrink-0 hidden lg:block"
           >
-            <div className="bg-white rounded-2xl shadow-lg border border-amber-200 p-6 sticky top-32">
+            <div className="bg-white rounded-2xl shadow-lg border border-blue-200 p-6 sticky top-32">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-2">
-                  <FiFilter className="text-amber-600" />
+                  <FiFilter className="text-blue-600" />
                   <h3 className="font-bold text-gray-800 font-[var(--font-yekan)]">فیلترها</h3>
                 </div>
                 {hasActiveFilters && (
@@ -605,13 +594,13 @@ export default function SpecialDiscountsPage() {
                           type="checkbox"
                           checked={activeFilters.selectedCategories.includes(category.name)}
                           onChange={() => handleCategoryFilter(category.id, category.name)}
-                          className="rounded border-amber-300 text-amber-600 focus:ring-amber-500"
+                          className="rounded border-blue-300 text-blue-600 focus:ring-blue-500"
                         />
-                        <span className="text-sm text-gray-600 group-hover:text-amber-700 transition-colors font-[var(--font-yekan)]">
+                        <span className="text-sm text-gray-600 group-hover:text-blue-700 transition-colors font-[var(--font-yekan)]">
                           {category.name}
                         </span>
                       </div>
-                      <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full">
+                      <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
                         {category.count}
                       </span>
                     </motion.label>
@@ -622,37 +611,14 @@ export default function SpecialDiscountsPage() {
               {/* Modern Price Range Filter */}
               <div className="mb-6">
                 <h4 className="font-semibold text-gray-700 mb-4 font-[var(--font-yekan)]">محدوده قیمت</h4>
-                
-                {/* Quick Price Range Buttons */}
-                <div className="space-y-2 mb-4">
-                  {filters.priceRanges.map((range, index) => (
-                    <motion.button
-                      key={range.id}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      onClick={() => handlePriceRangeSelect(range)}
-                      className={`w-full text-right py-3 px-4 rounded-xl border transition-all duration-200 font-[var(--font-yekan)] text-sm ${
-                        activeFilters.selectedPriceRange === range.value
-                          ? 'bg-amber-500 text-white border-amber-500 shadow-md'
-                          : 'bg-white text-gray-700 border-amber-200 hover:bg-amber-50 hover:border-amber-300'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span>{range.label}</span>
-                        {activeFilters.selectedPriceRange === range.value && (
-                          <div className="w-2 h-2 bg-white rounded-full"></div>
-                        )}
-                      </div>
-                    </motion.button>
-                  ))}
-                </div>
+
+                {/* REMOVED: Quick Price Range Buttons section */}
 
                 {/* Custom Price Range Input */}
-                <div className="bg-amber-50 rounded-xl p-4 border border-amber-200">
+                <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-sm text-gray-700 font-[var(--font-yekan)]">قیمت دلخواه</span>
-                    <span className="text-xs text-amber-600 bg-amber-100 px-2 py-1 rounded-full font-[var(--font-yekan)]">
+                    <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full font-[var(--font-yekan)]">
                       {formatPrice(activeFilters.priceRange[0])} - {formatPrice(activeFilters.priceRange[1])}
                     </span>
                   </div>
@@ -665,7 +631,7 @@ export default function SpecialDiscountsPage() {
                         value={customMinPrice}
                         onChange={(e) => handleCustomMinPriceChange(e.target.value)}
                         placeholder="۰"
-                        className="w-full px-3 py-2 text-sm border border-amber-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 font-[var(--font-yekan)] text-left"
+                        className="w-full px-3 py-2 text-sm border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-[var(--font-yekan)] text-left"
                       />
                     </div>
                     <div className="flex-1">
@@ -675,7 +641,7 @@ export default function SpecialDiscountsPage() {
                         value={customMaxPrice}
                         onChange={(e) => handleCustomMaxPriceChange(e.target.value)}
                         placeholder="۱۰۰۰۰۰۰"
-                        className="w-full px-3 py-2 text-sm border border-amber-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 font-[var(--font-yekan)] text-left"
+                        className="w-full px-3 py-2 text-sm border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-[var(--font-yekan)] text-left"
                       />
                     </div>
                   </div>
@@ -684,7 +650,7 @@ export default function SpecialDiscountsPage() {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={handleCustomPriceApply}
-                    className="w-full bg-amber-500 hover:bg-amber-600 text-white py-2 rounded-lg text-sm font-medium transition-all font-[var(--font-yekan)]"
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-medium transition-all font-[var(--font-yekan)]"
                   >
                     اعمال محدوده
                   </motion.button>
@@ -707,9 +673,9 @@ export default function SpecialDiscountsPage() {
                         type="checkbox" 
                         checked={activeFilters.selectedBrands.includes(brand)}
                         onChange={() => handleBrandFilter(brand)}
-                        className="rounded border-amber-300 text-amber-600 focus:ring-amber-500" 
+                        className="rounded border-blue-300 text-blue-600 focus:ring-blue-500" 
                       />
-                      <span className="text-sm text-gray-600 group-hover:text-amber-700 transition-colors font-[var(--font-yekan)]">
+                      <span className="text-sm text-gray-600 group-hover:text-blue-700 transition-colors font-[var(--font-yekan)]">
                         {brand}
                       </span>
                     </motion.label>
@@ -733,13 +699,13 @@ export default function SpecialDiscountsPage() {
                         type="checkbox" 
                         checked={activeFilters.selectedRatings.includes(rating)}
                         onChange={() => handleRatingFilter(rating)}
-                        className="rounded border-amber-300 text-amber-600 focus:ring-amber-500" 
+                        className="rounded border-blue-300 text-blue-600 focus:ring-blue-500" 
                       />
                       <div className="flex items-center gap-1">
                         {[...Array(5)].map((_, i) => (
                           <FiStar
                             key={i}
-                            className={`w-3 h-3 ${i < rating ? 'text-amber-400 fill-amber-400' : 'text-gray-300'}`}
+                            className={`w-3 h-3 ${i < rating ? 'text-blue-400 fill-blue-400' : 'text-gray-300'}`}
                           />
                         ))}
                         <span className="text-xs text-gray-500 mr-1">و بالاتر</span>
@@ -759,33 +725,33 @@ export default function SpecialDiscountsPage() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setShowMobileFilters(true)}
-                className="w-full bg-white border-2 border-amber-300 rounded-2xl p-4 flex items-center justify-between shadow-lg font-[var(--font-yekan)]"
+                className="w-full bg-white border-2 border-blue-300 rounded-2xl p-4 flex items-center justify-between shadow-lg font-[var(--font-yekan)]"
               >
                 <div className="flex items-center gap-2">
-                  <FiFilter className="text-amber-600" />
+                  <FiFilter className="text-blue-600" />
                   <span className="font-semibold text-gray-800">فیلترها و مرتب‌سازی</span>
                 </div>
-                <FiChevronDown className="text-amber-600" />
+                <FiChevronDown className="text-blue-600" />
               </motion.button>
             </div>
 
-            {/* Consultation Banner */}
+            {/* Consultation Banner - Hidden on mobile */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              className="bg-gradient-to-r from-amber-50 to-amber-100 rounded-2xl shadow-lg border border-amber-200 p-6 mb-6"
+              className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl shadow-lg border border-blue-200 p-6 mb-6 hidden lg:block"
             >
               <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
-                  <div className="bg-amber-500 rounded-full p-3">
+                  <div className="bg-blue-600 rounded-full p-3">
                     <FiMessageCircle className="text-white text-xl" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-amber-800 mb-1 font-[var(--font-yekan)]">
+                    <h3 className="text-lg font-bold text-blue-800 mb-1 font-[var(--font-yekan)]">
                       نیاز به مشاوره دارید؟
                     </h3>
-                    <p className="text-amber-700 font-[var(--font-yekan)] text-sm">
+                    <p className="text-blue-700 font-[var(--font-yekan)] text-sm">
                       برای دریافت راهنمایی تخصصی در انتخاب محصول، روی دکمه "از من بپرس" کلیک کنید
                     </p>
                   </div>
@@ -794,7 +760,7 @@ export default function SpecialDiscountsPage() {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="flex items-center gap-2 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white px-6 py-3 rounded-xl font-semibold transition-all shadow-lg font-[var(--font-yekan)] whitespace-nowrap"
+                  className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-6 py-3 rounded-xl font-semibold transition-all shadow-lg font-[var(--font-yekan)] whitespace-nowrap"
                 >
                   <FiMessageCircle size={18} />
                   <span>از من بپرس</span>
@@ -824,18 +790,20 @@ export default function SpecialDiscountsPage() {
                 <Link 
                   key={product._id} 
                   href={`/CoffeeCategoryPage/${product._id}`}
+                   target="_blank" // Add this
+                   rel="noopener noreferrer" 
                   className="block"
                 >
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: index * 0.1 }}
-                    className={`bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-amber-100 overflow-hidden group cursor-pointer ${
+                    className={`bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-blue-100 overflow-hidden group cursor-pointer ${
                       viewMode === 'list' ? 'flex' : 'h-full flex flex-col'
                     }`}
                   >
-                    {/* Product Image */}
-                    <div className={`relative ${viewMode === 'list' ? 'w-48 flex-shrink-0' : 'h-48'}`}>
+                    {/* Product Image - INCREASED HEIGHT */}
+                    <div className={`relative ${viewMode === 'list' ? 'w-48 flex-shrink-0' : 'h-56 sm:h-64'}`}>
                       <ProductImage
                         src={product.image}
                         alt={product.name}
@@ -846,7 +814,7 @@ export default function SpecialDiscountsPage() {
                       
                       {/* Discount Badge */}
                       {product.discount > 0 && (
-                        <div className="absolute top-3 left-3 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+                        <div className="absolute top-3 left-3 bg-orange-500 text-white text-xs px-2 py-1 rounded-full font-bold">
                           {product.discount}% تخفیف
                         </div>
                       )}
@@ -880,7 +848,7 @@ export default function SpecialDiscountsPage() {
                             {[...Array(5)].map((_, i) => (
                               <FiStar
                                 key={i}
-                                className={`w-3 h-3 ${i < Math.floor(product.rating) ? 'text-amber-400 fill-amber-400' : 'text-gray-300'}`}
+                                className={`w-3 h-3 ${i < Math.floor(product.rating) ? 'text-blue-400 fill-blue-400' : 'text-gray-300'}`}
                               />
                             ))}
                           </div>
@@ -891,7 +859,7 @@ export default function SpecialDiscountsPage() {
 
                         {/* Positive Feature */}
                         <div className="mb-3">
-                          <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full font-medium font-[var(--font-yekan)] border border-green-200">
+                          <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full font-medium font-[var(--font-yekan)] border border-blue-200">
                             {product.positiveFeature}
                           </span>
                         </div>
@@ -908,7 +876,7 @@ export default function SpecialDiscountsPage() {
                             </span>
                           )}
                           {/* Current Price */}
-                          <span className={`font-bold text-amber-700 font-[var(--font-yekan)] ${
+                          <span className={`font-bold text-blue-700 font-[var(--font-yekan)] ${
                             product.originalPrice && product.originalPrice > product.priceAfterDiscount ? 'text-lg' : 'text-xl'
                           }`}>
                             {formatProductPrice(product.priceAfterDiscount || product.price)}
@@ -917,24 +885,13 @@ export default function SpecialDiscountsPage() {
 
                         {/* Buttons Section */}
                         <div className="flex flex-col gap-2">
-                          {/* Smart Consultation Button */}
-                          <motion.button
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            className="flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg font-[var(--font-yekan)]"
-                            onClick={(e) => {
-                              e.preventDefault();
-                            }}
-                          >
-                            <FiMessageCircle size={14} />
-                            <span>مشاوره سریع (هوشمند)</span>
-                          </motion.button>
+                          {/* REMOVED: Smart Consultation Button */}
 
                           {/* Buy Button */}
                           <motion.button
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
-                            className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white px-4 py-3 rounded-xl font-semibold transition-all shadow-lg font-[var(--font-yekan)]"
+                            className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-4 py-3 rounded-xl font-semibold transition-all shadow-lg font-[var(--font-yekan)]"
                             onClick={(e) => {
                               e.preventDefault();
                             }}
@@ -958,7 +915,7 @@ export default function SpecialDiscountsPage() {
                 </p>
                 <button 
                   onClick={clearAllFilters}
-                  className="mt-4 bg-amber-500 hover:bg-amber-600 text-white px-6 py-2 rounded-xl font-[var(--font-yekan)]"
+                  className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-xl font-[var(--font-yekan)]"
                 >
                   حذف فیلترها
                 </button>
@@ -987,37 +944,37 @@ export default function SpecialDiscountsPage() {
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
               className="fixed top-0 left-0 right-0 bottom-0 bg-white z-50 lg:hidden flex flex-col"
             >
-              {/* Header */}
-              <div className="flex items-center justify-between p-4 border-b border-amber-200 bg-amber-50">
-                <h2 className="text-xl font-bold text-amber-800 font-[var(--font-yekan)]">فیلترها و مرتب‌سازی</h2>
+              {/* Header - Improved spacing */}
+              <div className="flex items-center justify-between p-5 border-b border-blue-200 bg-blue-50">
+                <h2 className="text-xl font-bold text-blue-800 font-[var(--font-yekan)]">فیلترها و مرتب‌سازی</h2>
                 <button
                   onClick={() => setShowMobileFilters(false)}
-                  className="p-2 text-gray-600 hover:text-amber-700"
+                  className="p-3 text-gray-600 hover:text-blue-700 rounded-full hover:bg-blue-100"
                 >
                   <FiX size={24} />
                 </button>
               </div>
 
-              {/* Filters Content */}
-              <div className="flex-1 overflow-y-auto p-4">
-                <div className="bg-white rounded-2xl border border-amber-200">
+              {/* Filters Content - Improved margins and spacing */}
+              <div className="flex-1 overflow-y-auto px-5 py-4">
+                <div className="bg-white rounded-2xl border border-blue-200 p-5">
                   {/* Categories */}
                   <FilterSection title="دسته‌بندی‌ها" filterKey="categories">
-                    <div className="space-y-2">
+                    <div className="space-y-3 mt-3">
                       {categories.map((category) => (
-                        <label key={category.id} className="flex items-center justify-between cursor-pointer group">
-                          <div className="flex items-center gap-2">
+                        <label key={category.id} className="flex items-center justify-between cursor-pointer group px-1">
+                          <div className="flex items-center gap-3">
                             <input
                               type="checkbox"
                               checked={activeFilters.selectedCategories.includes(category.name)}
                               onChange={() => handleCategoryFilter(category.id, category.name)}
-                              className="rounded border-amber-300 text-amber-600 focus:ring-amber-500"
+                              className="w-5 h-5 rounded border-blue-300 text-blue-600 focus:ring-blue-500"
                             />
-                            <span className="text-sm text-gray-600 group-hover:text-amber-700 transition-colors font-[var(--font-yekan)]">
+                            <span className="text-sm text-gray-600 group-hover:text-blue-700 transition-colors font-[var(--font-yekan)]">
                               {category.name}
                             </span>
                           </div>
-                          <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full">
+                          <span className="text-xs bg-blue-100 text-blue-700 px-2.5 py-1.5 rounded-full">
                             {category.count}
                           </span>
                         </label>
@@ -1027,51 +984,36 @@ export default function SpecialDiscountsPage() {
 
                   {/* Price Range */}
                   <FilterSection title="محدوده قیمت" filterKey="price">
-                    <div className="space-y-3">
-                      {filters.priceRanges.map((range) => (
-                        <button
-                          key={range.id}
-                          onClick={() => handlePriceRangeSelect(range)}
-                          className={`w-full text-right py-3 px-4 rounded-xl border transition-all duration-200 font-[var(--font-yekan)] text-sm ${
-                            activeFilters.selectedPriceRange === range.value
-                              ? 'bg-amber-500 text-white border-amber-500 shadow-md'
-                              : 'bg-white text-gray-700 border-amber-200 hover:bg-amber-50 hover:border-amber-300'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <span>{range.label}</span>
-                            {activeFilters.selectedPriceRange === range.value && (
-                              <div className="w-2 h-2 bg-white rounded-full"></div>
-                            )}
-                          </div>
-                        </button>
-                      ))}
+                    <div className="space-y-4 mt-3">
+                      {/* REMOVED: Price range buttons */}
                       
                       {/* Custom Price Range for Mobile */}
-                      <div className="bg-amber-50 rounded-xl p-4 border border-amber-200">
-                        <div className="flex gap-2 mb-3">
+                      <div className="bg-blue-50 rounded-xl p-5 border border-blue-200">
+                        <div className="flex gap-3 mb-4">
                           <div className="flex-1">
+                            <label className="block text-xs text-gray-500 mb-2 font-[var(--font-yekan)]">حداقل قیمت</label>
                             <input
                               type="text"
                               value={customMinPrice}
                               onChange={(e) => handleCustomMinPriceChange(e.target.value)}
-                              placeholder="حداقل قیمت"
-                              className="w-full px-3 py-2 text-sm border border-amber-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 font-[var(--font-yekan)] text-left"
+                              placeholder="۰"
+                              className="w-full px-4 py-3 text-sm border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-[var(--font-yekan)] text-left"
                             />
                           </div>
                           <div className="flex-1">
+                            <label className="block text-xs text-gray-500 mb-2 font-[var(--font-yekan)]">حداکثر قیمت</label>
                             <input
                               type="text"
                               value={customMaxPrice}
                               onChange={(e) => handleCustomMaxPriceChange(e.target.value)}
-                              placeholder="حداکثر قیمت"
-                              className="w-full px-3 py-2 text-sm border border-amber-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 font-[var(--font-yekan)] text-left"
+                              placeholder="۱۰۰۰۰۰۰"
+                              className="w-full px-4 py-3 text-sm border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-[var(--font-yekan)] text-left"
                             />
                           </div>
                         </div>
                         <button
                           onClick={handleCustomPriceApply}
-                          className="w-full bg-amber-500 hover:bg-amber-600 text-white py-2 rounded-lg text-sm font-medium transition-all font-[var(--font-yekan)]"
+                          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg text-sm font-medium transition-all font-[var(--font-yekan)]"
                         >
                           اعمال محدوده
                         </button>
@@ -1081,16 +1023,16 @@ export default function SpecialDiscountsPage() {
 
                   {/* Brands */}
                   <FilterSection title="برندها" filterKey="brands">
-                    <div className="space-y-2">
+                    <div className="space-y-3 mt-3">
                       {filters.brands.map((brand) => (
-                        <label key={brand} className="flex items-center gap-2 cursor-pointer group">
+                        <label key={brand} className="flex items-center gap-3 cursor-pointer group px-1">
                           <input 
                             type="checkbox" 
                             checked={activeFilters.selectedBrands.includes(brand)}
                             onChange={() => handleBrandFilter(brand)}
-                            className="rounded border-amber-300 text-amber-600 focus:ring-amber-500" 
+                            className="w-5 h-5 rounded border-blue-300 text-blue-600 focus:ring-blue-500" 
                           />
-                          <span className="text-sm text-gray-600 group-hover:text-amber-700 transition-colors font-[var(--font-yekan)]">
+                          <span className="text-sm text-gray-600 group-hover:text-blue-700 transition-colors font-[var(--font-yekan)]">
                             {brand}
                           </span>
                         </label>
@@ -1100,20 +1042,20 @@ export default function SpecialDiscountsPage() {
 
                   {/* Ratings */}
                   <FilterSection title="امتیاز" filterKey="ratings">
-                    <div className="space-y-2">
+                    <div className="space-y-3 mt-3">
                       {filters.ratings.map((rating) => (
-                        <label key={rating} className="flex items-center gap-2 cursor-pointer group">
+                        <label key={rating} className="flex items-center gap-3 cursor-pointer group px-1">
                           <input 
                             type="checkbox" 
                             checked={activeFilters.selectedRatings.includes(rating)}
                             onChange={() => handleRatingFilter(rating)}
-                            className="rounded border-amber-300 text-amber-600 focus:ring-amber-500" 
+                            className="w-5 h-5 rounded border-blue-300 text-blue-600 focus:ring-blue-500" 
                           />
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-2">
                             {[...Array(5)].map((_, i) => (
                               <FiStar
                                 key={i}
-                                className={`w-3 h-3 ${i < rating ? 'text-amber-400 fill-amber-400' : 'text-gray-300'}`}
+                                className={`w-4 h-4 ${i < rating ? 'text-blue-400 fill-blue-400' : 'text-gray-300'}`}
                               />
                             ))}
                             <span className="text-xs text-gray-500 mr-1">و بالاتر</span>
@@ -1126,12 +1068,12 @@ export default function SpecialDiscountsPage() {
               </div>
 
               {/* Apply Button */}
-              <div className="p-4 border-t border-amber-200 bg-white">
+              <div className="p-5 border-t border-blue-200 bg-white">
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => setShowMobileFilters(false)}
-                  className="w-full bg-gradient-to-r from-amber-600 to-amber-700 text-white py-3 rounded-2xl font-semibold shadow-lg font-[var(--font-yekan)]"
+                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 rounded-2xl font-semibold shadow-lg font-[var(--font-yekan)]"
                 >
                   اعمال فیلترها
                 </motion.button>

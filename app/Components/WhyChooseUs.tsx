@@ -13,34 +13,34 @@ export default function WhyChooseUs() {
   const features: Feature[] = [
     {
       id: 1,
-      icon: <FaCoffee className="text-4xl text-amber-700" />,
+      icon: <FaCoffee className="text-4xl text-blue-600" />,
       title: "کیفیت بالا",
       description: "استفاده از بهترین دانه‌های عربیکا و روبوستا برای طعمی بی‌نظیر.",
     },
     {
       id: 2,
-      icon: <FaShippingFast className="text-4xl text-amber-700" />,
+      icon: <FaShippingFast className="text-4xl text-blue-600" />,
       title: "ارسال سریع",
       description: "سفارشات عمده با سرعت بالا و بسته‌بندی حرفه‌ای ارسال می‌شوند.",
     },
     {
       id: 3,
-      icon: <FaDollarSign className="text-4xl text-amber-700" />,
+      icon: <FaDollarSign className="text-4xl text-blue-600" />,
       title: "قیمت مناسب",
       description: "قیمت منصفانه برای خرید عمده و همکاری طولانی مدت.",
     },
     {
       id: 4,
-      icon: <FaStar className="text-4xl text-amber-700" />,
+      icon: <FaStar className="text-4xl text-blue-600" />,
       title: "رضایت مشتری",
       description: "تضمین کیفیت و رضایت کامل مشتریان عمده و کافه‌ها.",
     },
   ];
 
   return (
-    <section className="bg-gray-50 py-20">
+    <section className="bg-gradient-to-b from-blue-50 to-white py-20">
       <div className="max-w-6xl mx-auto px-4">
-        <h2 className="text-3xl sm:text-4xl font-bold text-amber-800 mb-12 text-center">
+        <h2 className="text-3xl sm:text-4xl font-bold text-blue-800 mb-12 text-center font-[var(--font-yekan)]">
           چرا ما را انتخاب کنید؟
         </h2>
 
@@ -48,11 +48,11 @@ export default function WhyChooseUs() {
           {features.map((feature) => (
             <div
               key={feature.id}
-              className="bg-white rounded-xl p-6 flex flex-col items-center text-center shadow-lg hover:shadow-2xl transition-all"
+              className="bg-white rounded-xl p-6 flex flex-col items-center text-center shadow-lg hover:shadow-2xl transition-all border border-blue-100 hover:border-blue-200"
             >
               <div className="mb-4">{feature.icon}</div>
-              <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
-              <p className="text-gray-600">{feature.description}</p>
+              <h3 className="text-xl font-semibold mb-2 text-gray-800 font-[var(--font-yekan)]">{feature.title}</h3>
+              <p className="text-gray-600 font-[var(--font-yekan)]">{feature.description}</p>
             </div>
           ))}
         </div>

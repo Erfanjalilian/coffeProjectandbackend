@@ -129,8 +129,8 @@ export default function Header() {
 
   const headerClass: string = `w-full fixed top-0 z-40 transition-all duration-500 ${
     isScrolled
-      ? "bg-white/95 backdrop-blur-lg shadow-lg shadow-amber-100/50"
-      : "bg-gradient-to-b from-white to-amber-50/80 backdrop-blur-sm"
+      ? "bg-white/95 backdrop-blur-lg shadow-lg shadow-blue-100/30"
+      : "bg-gradient-to-b from-white to-blue-50/50 backdrop-blur-sm"
   }`;
 
   const navItems: NavItem[] = [
@@ -189,14 +189,14 @@ export default function Header() {
           initial={{ y: -50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.6 }}
-          className="w-full flex justify-between items-center px-4 sm:px-8 py-4 border-b border-amber-200/50"
+          className="w-full flex justify-between items-center px-4 sm:px-8 py-4 border-b border-blue-200/50"
         >
           {/* Mobile Menu Button */}
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setIsMenuOpen(true)}
-            className="md:hidden text-gray-700 hover:text-amber-700 p-2 rounded-lg hover:bg-amber-50 transition-colors"
+            className="md:hidden text-gray-700 hover:text-blue-700 p-2 rounded-lg hover:bg-blue-50 transition-colors"
           >
             <FiMenu size={24} />
           </motion.button>
@@ -210,7 +210,7 @@ export default function Header() {
               <motion.div
                 whileHover={{ rotate: 360 }}
                 transition={{ duration: 0.6 }}
-                className="bg-gradient-to-br from-amber-600 to-amber-700 text-white w-12 h-12 flex items-center justify-center rounded-2xl font-bold text-xl shadow-lg shadow-amber-600/25"
+                className="bg-gradient-to-br from-blue-600 to-blue-700 text-white w-12 h-12 flex items-center justify-center rounded-2xl font-bold text-xl shadow-lg shadow-blue-600/25"
               >
                 آی
               </motion.div>
@@ -218,7 +218,7 @@ export default function Header() {
                 <span className="text-lg font-bold text-gray-800 font-[var(--font-yekan)] leading-tight">
                   آی‌کسب
                 </span>
-                <span className="text-xs text-amber-600 font-[var(--font-yekan)] font-medium tracking-tight">
+                <span className="text-xs text-blue-600 font-[var(--font-yekan)] font-medium tracking-tight">
                   فروش با دستیار هوش مصنوعی
                 </span>
               </div>
@@ -237,12 +237,12 @@ export default function Header() {
                 whileFocus={{ scale: 1.02 }}
                 type="text"
                 placeholder="چه قهوه‌ای دنبالشی؟ مثلا: اسپرسو، فرنچ پرس..."
-                className="w-full border-2 border-amber-200 rounded-2xl py-3 px-5 pr-12 text-gray-700 focus:outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-500/20 bg-white/80 backdrop-blur-sm shadow-lg font-[var(--font-yekan)]"
+                className="w-full border-2 border-blue-200 rounded-2xl py-3 px-5 pr-12 text-gray-700 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 bg-white/80 backdrop-blur-sm shadow-lg font-[var(--font-yekan)]"
               />
               <motion.button
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 bg-gradient-to-r from-amber-600 to-amber-700 text-white p-2 rounded-full shadow-lg"
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 bg-gradient-to-r from-blue-600 to-blue-700 text-white p-2 rounded-full shadow-lg"
               >
                 <FiSearch size={18} />
               </motion.button>
@@ -255,9 +255,9 @@ export default function Header() {
             <motion.div className="relative hidden sm:block" whileHover={{ scale: 1.05 }}>
               <motion.button
                 ref={langButtonRef}
-                whileHover={{ backgroundColor: "rgba(245, 158, 11, 0.1)" }}
+                whileHover={{ backgroundColor: "rgba(51, 100, 255, 0.1)" }}
                 onClick={() => setIsLangOpen(!isLangOpen)}
-                className="flex items-center gap-2 text-gray-700 hover:text-amber-700 p-2 rounded-xl transition-colors"
+                className="flex items-center gap-2 text-gray-700 hover:text-blue-700 p-2 rounded-xl transition-colors"
               >
                 <FiGlobe size={18} />
                 <span className="font-[var(--font-yekan)]">فارسی</span>
@@ -272,7 +272,7 @@ export default function Header() {
               <motion.button
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
-                className="relative p-2 text-gray-700 hover:text-amber-700 rounded-xl hover:bg-amber-50 transition-colors"
+                className="relative p-2 text-gray-700 hover:text-blue-700 rounded-xl hover:bg-blue-50 transition-colors"
               >
                 <FiHeart size={22} />
                 {favoritesCount > 0 && (
@@ -280,7 +280,7 @@ export default function Header() {
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     key={favoritesCount}
-                    className="absolute -top-1 -right-1 bg-gradient-to-r from-amber-600 to-amber-700 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center"
+                    className="absolute -top-1 -right-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center"
                   >
                     {favoritesCount}
                   </motion.span>
@@ -293,7 +293,7 @@ export default function Header() {
               <motion.button
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
-                className="relative p-2 text-gray-700 hover:text-amber-700 rounded-xl hover:bg-amber-50 transition-colors"
+                className="relative p-2 text-gray-700 hover:text-blue-700 rounded-xl hover:bg-blue-50 transition-colors"
               >
                 <FiShoppingCart size={22} />
                 {totalItems > 0 && (
@@ -301,7 +301,7 @@ export default function Header() {
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     key={totalItems}
-                    className="absolute -top-1 -right-1 bg-gradient-to-r from-amber-600 to-amber-700 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center"
+                    className="absolute -top-1 -right-1 bg-gradient-to-r from-orange-500 to-orange-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center"
                   >
                     {totalItems}
                   </motion.span>
@@ -319,7 +319,7 @@ export default function Header() {
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                    className="flex items-center gap-2 bg-gradient-to-r from-amber-600 to-amber-700 text-white py-2 px-4 rounded-2xl shadow-lg shadow-amber-600/25 hover:shadow-amber-600/40 transition-all"
+                    className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white py-2 px-4 rounded-2xl shadow-lg shadow-blue-600/25 hover:shadow-blue-600/40 transition-all"
                   >
                     <FiUser size={18} />
                     <span className="font-[var(--font-yekan)] hidden sm:inline">
@@ -336,7 +336,7 @@ export default function Header() {
                   <motion.button
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
-                    className="flex items-center gap-2 bg-gradient-to-r from-amber-600 to-amber-700 text-white py-2 px-4 rounded-2xl shadow-lg shadow-amber-600/25 hover:shadow-amber-600/40 transition-all"
+                    className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white py-2 px-4 rounded-2xl shadow-lg shadow-blue-600/25 hover:shadow-blue-600/40 transition-all"
                   >
                     <FiUser size={18} />
                     <span className="font-[var(--font-yekan)] hidden sm:inline">ورود</span>
@@ -352,19 +352,19 @@ export default function Header() {
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.3 }}
-          className="hidden md:flex justify-start items-center px-8 py-3 text-sm font-medium bg-gradient-to-r from-amber-50/50 to-orange-50/50 backdrop-blur-sm border-b border-amber-200/50"
+          className="hidden md:flex justify-start items-center px-8 py-3 text-sm font-medium bg-gradient-to-r from-blue-50/50 to-blue-100/30 backdrop-blur-sm border-b border-blue-200/50"
         >
           <div className="flex items-center gap-8 ml-auto">
             {navItems.map((item: NavItem) => (
               <motion.div key={item.name} whileHover={{ y: -2 }} transition={{ duration: 0.2 }}>
                 <Link
                   href={item.href}
-                  className="text-gray-700 hover:text-amber-700 font-[var(--font-yekan)] relative group py-2 flex items-center gap-2"
+                  className="text-gray-700 hover:text-blue-700 font-[var(--font-yekan)] relative group py-2 flex items-center gap-2"
                 >
                   <item.icon size={16} />
                   {item.name}
                   <motion.div
-                    className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-amber-600 to-amber-700 group-hover:w-full transition-all duration-300"
+                    className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-600 to-blue-700 group-hover:w-full transition-all duration-300"
                     initial={{ width: 0 }}
                     whileHover={{ width: "100%" }}
                   />
@@ -385,18 +385,18 @@ export default function Header() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.9 }}
             style={getDropdownPosition(langButtonRef)}
-            className="fixed bg-white/95 backdrop-blur-lg shadow-2xl rounded-2xl overflow-hidden border border-amber-200 min-w-[120px] z-50"
+            className="fixed bg-white/95 backdrop-blur-lg shadow-2xl rounded-2xl overflow-hidden border border-blue-200 min-w-[120px] z-50"
           >
             <motion.button
-              whileHover={{ backgroundColor: "rgba(245, 158, 11, 0.1)" }}
-              className="block w-full px-4 py-3 text-right hover:text-amber-700 font-[var(--font-yekan)] border-b border-amber-100"
+              whileHover={{ backgroundColor: "rgba(51, 100, 255, 0.1)" }}
+              className="block w-full px-4 py-3 text-right hover:text-blue-700 font-[var(--font-yekan)] border-b border-blue-100"
               onClick={() => setIsLangOpen(false)}
             >
               فارسی
             </motion.button>
             <motion.button
-              whileHover={{ backgroundColor: "rgba(245, 158, 11, 0.1)" }}
-              className="block w-full px-4 py-3 text-right hover:text-amber-700"
+              whileHover={{ backgroundColor: "rgba(51, 100, 255, 0.1)" }}
+              className="block w-full px-4 py-3 text-right hover:text-blue-700"
               onClick={() => setIsLangOpen(false)}
             >
               English
@@ -413,9 +413,9 @@ export default function Header() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.9 }}
             style={getDropdownPosition(userButtonRef, true)}
-            className="fixed bg-white/95 backdrop-blur-lg shadow-2xl rounded-2xl overflow-hidden border border-amber-200 min-w-[200px] z-50"
+            className="fixed bg-white/95 backdrop-blur-lg shadow-2xl rounded-2xl overflow-hidden border border-blue-200 min-w-[200px] z-50"
           >
-            <div className="p-4 border-b border-amber-100">
+            <div className="p-4 border-b border-blue-100">
               <p className="text-gray-800 font-[var(--font-yekan)] font-semibold">
                 {getUserDisplayName()}
               </p>
@@ -426,8 +426,8 @@ export default function Header() {
             
             <Link href="/DashboardPage" onClick={() => setIsUserMenuOpen(false)}>
               <motion.button
-                whileHover={{ backgroundColor: "rgba(245, 158, 11, 0.1)" }}
-                className="block w-full px-4 py-3 text-right hover:text-amber-700 font-[var(--font-yekan)] border-b border-amber-100 flex items-center justify-start gap-3"
+                whileHover={{ backgroundColor: "rgba(51, 100, 255, 0.1)" }}
+                className="block w-full px-4 py-3 text-right hover:text-blue-700 font-[var(--font-yekan)] border-b border-blue-100 flex items-center justify-start gap-3"
               >
                 <FiHome size={16} />
                 پنل کاربری
@@ -436,8 +436,8 @@ export default function Header() {
             
             <Link href="/DashboardPage/OrdersPage" onClick={() => setIsUserMenuOpen(false)}>
               <motion.button
-                whileHover={{ backgroundColor: "rgba(245, 158, 11, 0.1)" }}
-                className="block w-full px-4 py-3 text-right hover:text-amber-700 font-[var(--font-yekan)] border-b border-amber-100 flex items-center justify-start gap-3"
+                whileHover={{ backgroundColor: "rgba(51, 100, 255, 0.1)" }}
+                className="block w-full px-4 py-3 text-right hover:text-blue-700 font-[var(--font-yekan)] border-b border-blue-100 flex items-center justify-start gap-3"
               >
                 <FiPackage size={16} />
                 سفارشات
@@ -446,8 +446,8 @@ export default function Header() {
             
             <Link href="/DashboardPage/profile" onClick={() => setIsUserMenuOpen(false)}>
               <motion.button
-                whileHover={{ backgroundColor: "rgba(245, 158, 11, 0.1)" }}
-                className="block w-full px-4 py-3 text-right hover:text-amber-700 font-[var(--font-yekan)] border-b border-amber-100 flex items-center justify-start gap-3"
+                whileHover={{ backgroundColor: "rgba(51, 100, 255, 0.1)" }}
+                className="block w-full px-4 py-3 text-right hover:text-blue-700 font-[var(--font-yekan)] border-b border-blue-100 flex items-center justify-start gap-3"
               >
                 <FiUser size={16} />
                 اطلاعات شخصی
@@ -456,8 +456,8 @@ export default function Header() {
              
             <Link href="/DashboardPage/favorites" onClick={() => setIsUserMenuOpen(false)}>
               <motion.button
-                whileHover={{ backgroundColor: "rgba(245, 158, 11, 0.1)" }}
-                className="block w-full px-4 py-3 text-right hover:text-amber-700 font-[var(--font-yekan)] border-b border-amber-100 flex items-center justify-start gap-3"
+                whileHover={{ backgroundColor: "rgba(51, 100, 255, 0.1)" }}
+                className="block w-full px-4 py-3 text-right hover:text-blue-700 font-[var(--font-yekan)] border-b border-blue-100 flex items-center justify-start gap-3"
               >
                 <FiHeart size={16} />
                 علاقه‌مندی‌ها ({favoritesCount})
@@ -467,8 +467,8 @@ export default function Header() {
 
             <Link href="/DashboardPage/addresses" onClick={() => setIsUserMenuOpen(false)}>
               <motion.button
-                whileHover={{ backgroundColor: "rgba(245, 158, 11, 0.1)" }}
-                className="block w-full px-4 py-3 text-right hover:text-amber-700 font-[var(--font-yekan)] border-b border-amber-100 flex items-center justify-start gap-3"
+                whileHover={{ backgroundColor: "rgba(51, 100, 255, 0.1)" }}
+                className="block w-full px-4 py-3 text-right hover:text-blue-700 font-[var(--font-yekan)] border-b border-blue-100 flex items-center justify-start gap-3"
               >
                 <FiMapPin size={16} />
                 آدرس‌های من
@@ -477,8 +477,8 @@ export default function Header() {
 
             <Link href="/DashboardPage/BankAccountsPage" onClick={() => setIsUserMenuOpen(false)}>
               <motion.button
-                whileHover={{ backgroundColor: "rgba(245, 158, 11, 0.1)" }}
-                className="block w-full px-4 py-3 text-right hover:text-amber-700 font-[var(--font-yekan)] border-b border-amber-100 flex items-center justify-start gap-3"
+                whileHover={{ backgroundColor: "rgba(51, 100, 255, 0.1)" }}
+                className="block w-full px-4 py-3 text-right hover:text-blue-700 font-[var(--font-yekan)] border-b border-blue-100 flex items-center justify-start gap-3"
               >
                 <FiCreditCard size={16} />
                 حساب‌های بانکی
@@ -520,15 +520,15 @@ export default function Header() {
               className="fixed top-0 left-0 w-80 max-w-[85vw] bg-white shadow-2xl z-[70] flex flex-col md:hidden"
             >
               {/* Header */}
-              <div className="flex justify-between items-center p-6 pb-4 border-b border-amber-200 bg-white">
+              <div className="flex justify-between items-center p-6 pb-4 border-b border-blue-200 bg-white">
                 <Link href="/" onClick={() => setIsMenuOpen(false)}>
                   <div className="flex items-center gap-3">
-                    <div className="bg-gradient-to-br from-amber-600 to-amber-700 text-white w-10 h-10 flex items-center justify-center rounded-xl font-bold">
+                    <div className="bg-gradient-to-br from-blue-600 to-blue-700 text-white w-10 h-10 flex items-center justify-center rounded-xl font-bold">
                       آی
                     </div>
                     <div className="flex flex-col">
                       <span className="text-lg font-bold text-gray-800 font-[var(--font-yekan)]">آی‌کسب</span>
-                      <span className="text-xs text-amber-600 font-[var(--font-yekan)] font-medium">
+                      <span className="text-xs text-blue-600 font-[var(--font-yekan)] font-medium">
                         فروش با دستیار هوش مصنوعی
                       </span>
                     </div>
@@ -538,7 +538,7 @@ export default function Header() {
                   whileHover={{ scale: 1.1, rotate: 90 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={() => setIsMenuOpen(false)}
-                  className="text-gray-600 hover:text-amber-700 p-2 rounded-lg hover:bg-amber-100"
+                  className="text-gray-600 hover:text-blue-700 p-2 rounded-lg hover:bg-blue-100"
                 >
                   <FiX size={24} />
                 </motion.button>
@@ -549,9 +549,9 @@ export default function Header() {
                 <input
                   type="text"
                   placeholder="از من بپرس ..."
-                  className="w-full border-2 border-amber-200 rounded-2xl py-3 px-4 pr-12 text-gray-700 focus:outline-none focus:border-amber-500 bg-white shadow-lg font-[var(--font-yekan)]"
+                  className="w-full border-2 border-blue-200 rounded-2xl py-3 px-4 pr-12 text-gray-700 focus:outline-none focus:border-blue-500 bg-white shadow-lg font-[var(--font-yekan)]"
                 />
-                <FiSearch className="absolute left-10 top-7 text-amber-600" size={20} />
+                <FiSearch className="absolute left-10 top-7 text-blue-600" size={20} />
               </div>
 
               {/* Navigation Links */}
@@ -560,7 +560,7 @@ export default function Header() {
                   <Link
                     key={item.name}
                     href={item.href}
-                    className="flex items-center gap-3 p-4 text-gray-700 hover:text-amber-700 hover:bg-amber-100/80 rounded-xl transition-all font-[var(--font-yekan)]"
+                    className="flex items-center gap-3 p-4 text-gray-700 hover:text-blue-700 hover:bg-blue-100/80 rounded-xl transition-all font-[var(--font-yekan)]"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <item.icon size={18}  />
@@ -568,13 +568,13 @@ export default function Header() {
                   </Link>
                 ))}
 
-                <div className="border-t border-amber-200 my-4"></div>
+                <div className="border-t border-blue-200 my-4"></div>
 
                 {mobileAdditionalItems.map((item: NavItem) => (
                   <Link
                     key={item.name}
                     href={item.href}
-                    className="flex items-center gap-3 p-4 text-gray-700 hover:text-amber-700 hover:bg-amber-100/80 rounded-xl transition-all font-[var(--font-yekan)]"
+                    className="flex items-center gap-3 p-4 text-gray-700 hover:text-blue-700 hover:bg-blue-100/80 rounded-xl transition-all font-[var(--font-yekan)]"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <item.icon size={18} />
@@ -584,12 +584,12 @@ export default function Header() {
               </nav>
 
               {/* Bottom Actions */}
-              <div className="border-t border-amber-200 p-6 space-y-3 bg-white">
+              <div className="border-t border-blue-200 p-6 space-y-3 bg-white">
                 {isAuthenticated ? (
                   // کاربر لاگین کرده در موبایل
                   <>
                     <Link href="/DashboardPage" onClick={() => setIsMenuOpen(false)}>
-                      <motion.button whileHover={{ scale: 1.02 }} className="w-full flex items-center gap-3 p-4 text-gray-700 hover:text-amber-700 hover:bg-amber-100/80 rounded-xl transition-all">
+                      <motion.button whileHover={{ scale: 1.02 }} className="w-full flex items-center gap-3 p-4 text-gray-700 hover:text-blue-700 hover:bg-blue-100/80 rounded-xl transition-all">
                         <FiHome size={20} />
                         <span className="font-[var(--font-yekan)]">
                           پنل کاربری ({getUserDisplayName()})
@@ -597,19 +597,19 @@ export default function Header() {
                       </motion.button>
                     </Link>
                     <Link href="/DashboardPage/OrdersPage" onClick={() => setIsMenuOpen(false)}>
-                      <motion.button whileHover={{ scale: 1.02 }} className="w-full flex items-center gap-3 p-4 text-gray-700 hover:text-amber-700 hover:bg-amber-100/80 rounded-xl transition-all">
+                      <motion.button whileHover={{ scale: 1.02 }} className="w-full flex items-center gap-3 p-4 text-gray-700 hover:text-blue-700 hover:bg-blue-100/80 rounded-xl transition-all">
                         <FiPackage size={20} />
                         <span className="font-[var(--font-yekan)]"> سفارشات</span>
                       </motion.button>
                     </Link>
                     <Link href="/DashboardPage/profile" onClick={() => setIsMenuOpen(false)}>
-                      <motion.button whileHover={{ scale: 1.02 }} className="w-full flex items-center gap-3 p-4 text-gray-700 hover:text-amber-700 hover:bg-amber-100/80 rounded-xl transition-all">
+                      <motion.button whileHover={{ scale: 1.02 }} className="w-full flex items-center gap-3 p-4 text-gray-700 hover:text-blue-700 hover:bg-blue-100/80 rounded-xl transition-all">
                         <FiUser size={20} />
                         <span className="font-[var(--font-yekan)]">اطلاعات شخصی</span>
                       </motion.button>
                     </Link>
                     <Link href="/DashboardPage/favorites" onClick={() => setIsMenuOpen(false)}>
-                      <motion.button whileHover={{ scale: 1.02 }} className="w-full flex items-center gap-3 p-4 text-gray-700 hover:text-amber-700 hover:bg-amber-100/80 rounded-xl transition-all">
+                      <motion.button whileHover={{ scale: 1.02 }} className="w-full flex items-center gap-3 p-4 text-gray-700 hover:text-blue-700 hover:bg-blue-100/80 rounded-xl transition-all">
                         <FiHeart size={20} />
                         <span className="font-[var(--font-yekan)]">
                           علاقه‌مندی‌ها {favoritesCount > 0 && `(${favoritesCount})`}
@@ -617,13 +617,13 @@ export default function Header() {
                       </motion.button>
                     </Link>
                     <Link href="/DashboardPage/addresses" onClick={() => setIsMenuOpen(false)}>
-                      <motion.button whileHover={{ scale: 1.02 }} className="w-full flex items-center gap-3 p-4 text-gray-700 hover:text-amber-700 hover:bg-amber-100/80 rounded-xl transition-all">
+                      <motion.button whileHover={{ scale: 1.02 }} className="w-full flex items-center gap-3 p-4 text-gray-700 hover:text-blue-700 hover:bg-blue-100/80 rounded-xl transition-all">
                         <FiMapPin size={20} />
                         <span className="font-[var(--font-yekan)]">آدرس‌های من</span>
                       </motion.button>
                     </Link>
                     <Link href="/DashboardPage/BankAccountsPage" onClick={() => setIsMenuOpen(false)}>
-                      <motion.button whileHover={{ scale: 1.02 }} className="w-full flex items-center gap-3 p-4 text-gray-700 hover:text-amber-700 hover:bg-amber-100/80 rounded-xl transition-all">
+                      <motion.button whileHover={{ scale: 1.02 }} className="w-full flex items-center gap-3 p-4 text-gray-700 hover:text-blue-700 hover:bg-blue-100/80 rounded-xl transition-all">
                         <FiCreditCard size={20} />
                         <span className="font-[var(--font-yekan)]">حساب‌های بانکی</span>
                       </motion.button>
@@ -644,7 +644,7 @@ export default function Header() {
                   // کاربر لاگین نکرده در موبایل
                   <>
                     <Link href="/LoginPage" onClick={() => setIsMenuOpen(false)}>
-                      <motion.button whileHover={{ scale: 1.02 }} className="w-full flex items-center gap-3 p-4 text-gray-700 hover:text-amber-700 hover:bg-amber-100/80 rounded-xl transition-all">
+                      <motion.button whileHover={{ scale: 1.02 }} className="w-full flex items-center gap-3 p-4 text-gray-700 hover:text-blue-700 hover:bg-blue-100/80 rounded-xl transition-all">
                         <FiUser size={20} />
                         <span className="font-[var(--font-yekan)]">ورود / ثبت‌نام</span>
                       </motion.button>
@@ -653,7 +653,7 @@ export default function Header() {
                 )}
                 
                 <Link href="/CartPage" onClick={() => setIsMenuOpen(false)}>
-                  <motion.button whileHover={{ scale: 1.02 }} className="w-full flex items-center gap-3 p-4 text-gray-700 hover:text-amber-700 hover:bg-amber-100/80 rounded-xl transition-all">
+                  <motion.button whileHover={{ scale: 1.02 }} className="w-full flex items-center gap-3 p-4 text-gray-700 hover:text-blue-700 hover:bg-blue-100/80 rounded-xl transition-all">
                     <FiShoppingCart size={20} />
                     <span className="font-[var(--font-yekan)]">
                       سبد خرید {totalItems > 0 && `(${totalItems})`}
@@ -661,14 +661,14 @@ export default function Header() {
                   </motion.button>
                 </Link>
                 <Link href="/DashboardPage/favorites" onClick={() => setIsMenuOpen(false)}>
-                  <motion.button whileHover={{ scale: 1.02 }} className="w-full flex items-center gap-3 p-4 text-gray-700 hover:text-amber-700 hover:bg-amber-100/80 rounded-xl transition-all">
+                  <motion.button whileHover={{ scale: 1.02 }} className="w-full flex items-center gap-3 p-4 text-gray-700 hover:text-blue-700 hover:bg-blue-100/80 rounded-xl transition-all">
                     <FiHeart size={20} />
                     <span className="font-[var(--font-yekan)]">
                       علاقه‌مندی‌ها {favoritesCount > 0 && `(${favoritesCount})`}
                     </span>
                   </motion.button>
                 </Link>
-                <button onClick={() => setIsLangOpen(!isLangOpen)} className="w-full flex items-center gap-3 p-4 text-gray-700 hover:text-amber-700 hover:bg-amber-100/80 rounded-xl transition-all">
+                <button onClick={() => setIsLangOpen(!isLangOpen)} className="w-full flex items-center gap-3 p-4 text-gray-700 hover:text-blue-700 hover:bg-blue-100/80 rounded-xl transition-all">
                   <FiGlobe size={20} />
                   <span className="font-[var(--font-yekan)]">تغییر زبان</span>
                 </button>

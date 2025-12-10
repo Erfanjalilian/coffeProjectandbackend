@@ -373,11 +373,7 @@ export default function FavoritesPage() {
                                     </button>
                                   </div>
                                   
-                                  <Link href={`/CoffeeCategoryPage/${product._id}`}>
-                                    <button className="bg-amber-600 hover:bg-amber-700 text-white py-2 px-4 rounded-lg font-[var(--font-yekan)] text-sm transition-colors whitespace-nowrap w-full">
-                                      افزودن به سبد خرید
-                                    </button>
-                                  </Link>
+                                
                                 </div>
                               </div>
 

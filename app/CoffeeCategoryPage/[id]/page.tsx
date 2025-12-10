@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { useState, useEffect } from "react";
-import { FiStar, FiShoppingCart, FiMessageCircle, FiArrowLeft, FiHeart, FiShare2, FiTruck, FiShield, FiCoffee } from "react-icons/fi";
+import { FiStar, FiShoppingCart, FiArrowLeft, FiHeart, FiTruck, FiShield, FiCoffee } from "react-icons/fi";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCart } from "@/contaxt/CartContext";
@@ -212,6 +212,10 @@ export default function ProductDetailPage() {
   const [showFavoriteMessage, setShowFavoriteMessage] = useState(false);
   const [favoriteMessage, setFavoriteMessage] = useState('');
 
+  // Cart notification state
+  const [showCartMessage, setShowCartMessage] = useState(false);
+  const [cartMessage, setCartMessage] = useState('');
+
   // Fetch product data
   useEffect(() => {
     const controller = new AbortController();
@@ -329,9 +333,24 @@ export default function ProductDetailPage() {
       setFavoriteMessage('محصول به علاقه‌مندی‌ها اضافه شد');
     }
     
-    // 🔥 No need to manually dispatch event - it's handled in saveFavoritesToStorage
     setShowFavoriteMessage(true);
     setTimeout(() => setShowFavoriteMessage(false), 3000);
+  };
+
+  // Handle add to cart with notification
+  const handleAddToCart = () => {
+    if (!product) return;
+
+    addToCart({
+      id: product._id,
+      name: product.name,
+      price: displayPrice,
+      image: product.image,
+    }, quantity);
+    
+    setCartMessage(`${quantity} عدد "${product.name}" به سبد خرید اضافه شد`);
+    setShowCartMessage(true);
+    setTimeout(() => setShowCartMessage(false), 3000);
   };
 
   const incrementQuantity = () => setQuantity(prev => prev + 1);
@@ -470,20 +489,21 @@ export default function ProductDetailPage() {
     return distribution;
   };
 
+  // Show loading state
   if (loading) return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white pt-24 flex items-center justify-center">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white pt-24 flex items-center justify-center">
       <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
         <p className="mt-4 text-gray-600 font-[var(--font-yekan)]">در حال بارگذاری محصول...</p>
       </div>
     </div>
   );
 
   if (!product) return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white pt-24 flex items-center justify-center">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white pt-24 flex items-center justify-center">
       <div className="text-center">
         <h2 className="text-2xl font-bold text-gray-800 mb-4 font-[var(--font-yekan)]">محصول یافت نشد</h2>
-        <Link href="/CoffeeCategoryPage" className="text-amber-600 hover:text-amber-700 font-[var(--font-yekan)]">
+        <Link href="/CoffeeCategoryPage" className="text-blue-600 hover:text-blue-700 font-[var(--font-yekan)]">
           بازگشت به دسته‌بندی
         </Link>
       </div>
@@ -498,8 +518,8 @@ export default function ProductDetailPage() {
   const ratingDistribution = getRatingDistribution();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white pt-24">
-      {/* Favorite Success Message */}
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white pt-24">
+      {/* Success Messages */}
       <AnimatePresence>
         {showFavoriteMessage && (
           <motion.div
@@ -508,9 +528,23 @@ export default function ProductDetailPage() {
             exit={{ opacity: 0, y: -50 }}
             className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50"
           >
-            <div className="bg-green-500 text-white px-6 py-3 rounded-xl shadow-lg font-[var(--font-yekan)] flex items-center gap-2">
+            <div className="bg-blue-500 text-white px-6 py-3 rounded-xl shadow-lg font-[var(--font-yekan)] flex items-center gap-2">
               <FiHeart className="text-white" />
               <span>{favoriteMessage}</span>
+            </div>
+          </motion.div>
+        )}
+        
+        {showCartMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50"
+          >
+            <div className="bg-orange-500 text-white px-6 py-3 rounded-xl shadow-lg font-[var(--font-yekan)] flex items-center gap-2">
+              <FiShoppingCart className="text-white" />
+              <span>{cartMessage}</span>
             </div>
           </motion.div>
         )}
@@ -523,11 +557,11 @@ export default function ProductDetailPage() {
           animate={{ opacity: 1, y: 0 }}
           className="text-sm text-gray-600 mb-6 font-[var(--font-yekan)]"
         >
-          <Link href="/" className="hover:text-amber-700 transition-colors">خانه</Link>
+          <Link href="/" className="hover:text-blue-700 transition-colors">خانه</Link>
           <span className="mx-2">/</span>
-          <Link href="/CoffeeCategoryPage" className="hover:text-amber-700 transition-colors">دسته‌بندی‌ها</Link>
+          <Link href="/CoffeeCategoryPage" className="hover:text-blue-700 transition-colors">دسته‌بندی‌ها</Link>
           <span className="mx-2">/</span>
-          <span className="text-amber-700 font-semibold">{product.name}</span>
+          <span className="text-blue-700 font-semibold">{product.name}</span>
         </motion.div>
 
         {/* Back Button - Mobile */}
@@ -535,7 +569,7 @@ export default function ProductDetailPage() {
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           onClick={() => window.history.back()}
-          className="lg:hidden flex items-center gap-2 text-amber-700 hover:text-amber-800 mb-6 font-[var(--font-yekan)] transition-colors"
+          className="lg:hidden flex items-center gap-2 text-blue-700 hover:text-blue-800 mb-6 font-[var(--font-yekan)] transition-colors"
         >
           <FiArrowLeft />
           <span>بازگشت</span>
@@ -549,19 +583,19 @@ export default function ProductDetailPage() {
             animate={{ opacity: 1, x: 0 }}
             className="lg:col-span-5"
           >
-            <div className="bg-white rounded-2xl shadow-lg border border-amber-200 p-6 sticky top-32">
+            <div className="bg-white rounded-2xl shadow-lg border border-blue-200 p-6 sticky top-32">
               {/* Main Image */}
-              <div className="relative h-80 w-full rounded-xl overflow-hidden mb-4 bg-gradient-to-br from-amber-100 to-amber-200 flex items-center justify-center">
-                <FiCoffee className="text-amber-400 text-6xl" />
+              <div className="relative h-80 w-full rounded-xl overflow-hidden mb-4 bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
+                <FiCoffee className="text-blue-400 text-6xl" />
                 <div className="absolute top-3 left-3">
                   {product.badge && (
-                    <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+                    <span className="bg-orange-500 text-white text-xs px-2 py-1 rounded-full font-bold">
                       {product.badge}
                     </span>
                   )}
                 </div>
                 {discountPercentage > 0 && (
-                  <div className="absolute top-3 right-3 bg-amber-500 text-white text-sm px-2 py-1 rounded-full font-bold">
+                  <div className="absolute top-3 right-3 bg-orange-500 text-white text-sm px-2 py-1 rounded-full font-bold">
                     {discountPercentage}% تخفیف
                   </div>
                 )}
@@ -573,11 +607,11 @@ export default function ProductDetailPage() {
                   <button
                     key={index}
                     onClick={() => setSelectedImage(index)}
-                    className={`relative h-20 rounded-lg overflow-hidden bg-gradient-to-br from-amber-50 to-amber-100 border-2 flex items-center justify-center ${
-                      selectedImage === index ? 'border-amber-500' : 'border-amber-200'
+                    className={`relative h-20 rounded-lg overflow-hidden bg-gradient-to-br from-blue-50 to-blue-100 border-2 flex items-center justify-center ${
+                      selectedImage === index ? 'border-blue-500' : 'border-blue-200'
                     }`}
                   >
-                    <FiCoffee className="text-amber-300 text-xl" />
+                    <FiCoffee className="text-blue-300 text-xl" />
                   </button>
                 ))}
               </div>
@@ -601,11 +635,11 @@ export default function ProductDetailPage() {
                 <div className="flex flex-wrap items-center gap-4 mb-3">
                   {product.brand && (
                     <span className="text-sm text-gray-600 font-[var(--font-yekan)]">
-                      برند: <span className="font-semibold text-amber-700">{product.brand}</span>
+                      برند: <span className="font-semibold text-blue-700">{product.brand}</span>
                     </span>
                   )}
                   <span className="text-sm text-gray-600 font-[var(--font-yekan)]">
-                    دسته: <span className="font-semibold text-green-600">{product.category?.name || 'قهوه'}</span>
+                    دسته: <span className="font-semibold text-blue-600">{product.category?.name || 'قهوه'}</span>
                   </span>
                 </div>
 
@@ -615,16 +649,16 @@ export default function ProductDetailPage() {
                   <span className="text-gray-600 font-[var(--font-yekan)]">
                     ({comments.length} نظر)
                   </span>
-                  <span className="text-green-600 text-sm font-[var(--font-yekan)] bg-green-50 px-2 py-1 rounded-full">
+                  <span className="text-blue-600 text-sm font-[var(--font-yekan)] bg-blue-50 px-2 py-1 rounded-full">
                     {product.positiveFeature}
                   </span>
                 </div>
               </div>
 
               {/* Price Section */}
-              <div className="bg-white rounded-2xl border border-amber-200 p-6">
+              <div className="bg-white rounded-2xl border border-blue-200 p-6">
                 <div className="flex items-center gap-4 mb-4">
-                  <span className="text-3xl font-bold text-amber-700 font-[var(--font-yekan)]">
+                  <span className="text-3xl font-bold text-blue-700 font-[var(--font-yekan)]">
                     {formatPrice(displayPrice)}
                   </span>
                   {displayOriginalPrice && (
@@ -640,57 +674,39 @@ export default function ProductDetailPage() {
                 <div className="flex flex-wrap gap-4 text-sm text-gray-600 mb-6 font-[var(--font-yekan)]">
                   <span>موجودی: {product.stock} عدد</span>
                   <span>فروخته شده: {product.soldCount} عدد</span>
-                  {/* 🚫 REMOVED: Time remaining section */}
                 </div>
 
                 {/* Quantity Selector */}
                 <div className="flex items-center gap-4 mb-6">
                   <span className="text-gray-700 font-[var(--font-yekan)]">تعداد:</span>
-                  <div className="flex items-center gap-3 bg-white rounded-xl border border-amber-200 p-2">
+                  <div className="flex items-center gap-3 bg-white rounded-xl border border-blue-200 p-2">
                     <button
                       onClick={decrementQuantity}
-                      className="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center hover:bg-amber-200 transition-colors"
+                      className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center hover:bg-blue-200 transition-colors"
                     >
                       -
                     </button>
                     <span className="w-8 text-center font-bold text-gray-800">{quantity}</span>
                     <button
                       onClick={incrementQuantity}
-                      className="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center hover:bg-amber-200 transition-colors"
+                      className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center hover:bg-blue-200 transition-colors"
                     >
                       +
                     </button>
                   </div>
                 </div>
 
-                {/* Action Buttons */}
+                {/* Action Buttons - UPDATED: Removed "Ask Me" and "Share" buttons */}
                 <div className="space-y-3 mb-6">
                   <div className="flex flex-col sm:flex-row gap-3">
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
-                      onClick={() => {
-                        if (product) {
-                          addToCart({
-                            id: product._id,
-                            name: product.name,
-                            price: displayPrice,
-                          }, quantity);
-                        }
-                      }}
-                      className="flex-1 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white py-3 rounded-xl font-semibold shadow-lg font-[var(--font-yekan)] transition-all flex items-center justify-center gap-2"
+                      onClick={handleAddToCart}
+                      className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-3 rounded-xl font-semibold shadow-lg font-[var(--font-yekan)] transition-all flex items-center justify-center gap-2"
                     >
                       <FiShoppingCart size={18} />
                       <span>اضافه به سبد خرید</span>
-                    </motion.button>
-
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white py-3 rounded-xl font-semibold transition-all shadow-lg font-[var(--font-yekan)] flex items-center justify-center gap-2"
-                    >
-                      <FiMessageCircle size={18} />
-                      <span>از من بپرس</span>
                     </motion.button>
                   </div>
 
@@ -702,7 +718,7 @@ export default function ProductDetailPage() {
                       className={`flex-1 border py-3 rounded-xl font-semibold font-[var(--font-yekan)] transition-all flex items-center justify-center gap-2 ${
                         isFavorite
                           ? 'bg-red-50 border-red-300 text-red-600 hover:bg-red-100'
-                          : 'bg-white border-amber-300 text-amber-700 hover:bg-amber-50'
+                          : 'bg-white border-blue-300 text-blue-700 hover:bg-blue-50'
                       }`}
                     >
                       <FiHeart 
@@ -712,14 +728,6 @@ export default function ProductDetailPage() {
                       <span className="sm:block hidden">
                         {isFavorite ? 'حذف از علاقه‌مندی' : 'لیست علاقه‌مندی'}
                       </span>
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="flex-1 bg-white border border-amber-300 text-amber-700 py-3 rounded-xl font-semibold font-[var(--font-yekan)] transition-all flex items-center justify-center gap-2"
-                    >
-                      <FiShare2 size={18} />
-                      <span className="sm:block hidden">اشتراک‌گذاری</span>
                     </motion.button>
                   </div>
                 </div>
@@ -748,10 +756,10 @@ export default function ProductDetailPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-2xl shadow-lg border border-amber-200 overflow-hidden mb-12"
+          className="bg-white rounded-2xl shadow-lg border border-blue-200 overflow-hidden mb-12"
         >
           {/* Tab Headers */}
-          <div className="flex overflow-x-auto border-b border-amber-200">
+          <div className="flex overflow-x-auto border-b border-blue-200">
             {[
               { id: 'description', label: 'توضیحات محصول' },
               { id: 'features', label: 'ویژگی‌ها' },
@@ -763,8 +771,8 @@ export default function ProductDetailPage() {
                 onClick={() => setActiveTab(tab.id as any)}
                 className={`flex-shrink-0 px-6 py-4 font-[var(--font-yekan)] border-b-2 transition-colors ${
                   activeTab === tab.id
-                    ? 'border-amber-500 text-amber-700 font-bold bg-amber-50'
-                    : 'border-transparent text-gray-600 hover:text-amber-700'
+                    ? 'border-blue-500 text-blue-700 font-bold bg-blue-50'
+                    : 'border-transparent text-gray-600 hover:text-blue-700'
                 }`}
               >
                 {tab.label}
@@ -798,7 +806,7 @@ export default function ProductDetailPage() {
               <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {product.features.map((feature, index) => (
                   <li key={index} className="flex items-center gap-2 text-gray-700 font-[var(--font-yekan)]">
-                    <div className="w-2 h-2 bg-amber-400 rounded-full"></div>
+                    <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
                     {feature}
                   </li>
                 ))}
@@ -808,25 +816,25 @@ export default function ProductDetailPage() {
             {activeTab === 'specifications' && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {product.weight && (
-                  <div className="flex justify-between py-2 border-b border-amber-100">
+                  <div className="flex justify-between py-2 border-b border-blue-100">
                     <span className="text-gray-600 font-[var(--font-yekan)]">وزن:</span>
                     <span className="text-gray-800 font-[var(--font-yekan)]">{product.weight} گرم</span>
                   </div>
                 )}
                 {product.ingredients && (
-                  <div className="flex justify-between py-2 border-b border-amber-100">
+                  <div className="flex justify-between py-2 border-b border-blue-100">
                     <span className="text-gray-600 font-[var(--font-yekan)]">مواد تشکیل‌دهنده:</span>
                     <span className="text-gray-800 font-[var(--font-yekan)]">{product.ingredients}</span>
                   </div>
                 )}
                 {product.brand && (
-                  <div className="flex justify-between py-2 border-b border-amber-100">
+                  <div className="flex justify-between py-2 border-b border-blue-100">
                     <span className="text-gray-600 font-[var(--font-yekan)]">برند:</span>
                     <span className="text-gray-800 font-[var(--font-yekan)]">{product.brand}</span>
                   </div>
                 )}
                 {product.type && (
-                  <div className="flex justify-between py-2 border-b border-amber-100">
+                  <div className="flex justify-between py-2 border-b border-blue-100">
                     <span className="text-gray-600 font-[var(--font-yekan)]">نوع:</span>
                     <span className="text-gray-800 font-[var(--font-yekan)]">{product.type}</span>
                   </div>
@@ -839,7 +847,7 @@ export default function ProductDetailPage() {
                 {/* Review Summary */}
                 <div className="flex flex-col md:flex-row gap-8 items-center">
                   <div className="text-center">
-                    <div className="text-4xl font-bold text-amber-600 mb-2">{averageRating.toFixed(1)}</div>
+                    <div className="text-4xl font-bold text-blue-600 mb-2">{averageRating.toFixed(1)}</div>
                     {renderStars(averageRating, 'lg')}
                     <div className="text-gray-600 font-[var(--font-yekan)] mt-1">
                       {comments.length} نظر
@@ -856,7 +864,7 @@ export default function ProductDetailPage() {
                           <span className="text-sm text-gray-600 w-8 font-[var(--font-yekan)]">{stars} ستاره</span>
                           <div className="flex-1 bg-gray-200 rounded-full h-2">
                             <div
-                              className="bg-amber-400 h-2 rounded-full"
+                              className="bg-blue-400 h-2 rounded-full"
                               style={{ width: `${percentage}%` }}
                             ></div>
                           </div>
@@ -905,7 +913,7 @@ export default function ProductDetailPage() {
                 )}
 
                 {/* Add Review Form */}
-                <form onSubmit={handleAddReview} className="bg-amber-50 rounded-xl p-6 border border-amber-200">
+                <form onSubmit={handleAddReview} className="bg-blue-50 rounded-xl p-6 border border-blue-200">
                   <h4 className="font-bold text-gray-800 mb-4 font-[var(--font-yekan)]">افزودن نظر</h4>
                   <div className="space-y-4">
                     <div>
@@ -921,7 +929,7 @@ export default function ProductDetailPage() {
                             <FiStar
                               className={`${
                                 star <= newReview.rating
-                                  ? 'text-amber-400 fill-amber-400'
+                                  ? 'text-blue-400 fill-blue-400'
                                   : 'text-gray-300'
                               }`}
                             />
@@ -935,7 +943,7 @@ export default function ProductDetailPage() {
                         value={newReview.comment}
                         onChange={(e) => setNewReview(prev => ({ ...prev, comment: e.target.value }))}
                         rows={4}
-                        className="w-full px-3 py-2 border border-amber-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 font-[var(--font-yekan)]"
+                        className="w-full px-3 py-2 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-[var(--font-yekan)]"
                         placeholder="نظر خود را در مورد این محصول بنویسید..."
                         required
                       />
@@ -943,7 +951,7 @@ export default function ProductDetailPage() {
                     <button
                       type="submit"
                       disabled={submittingReview}
-                      className="bg-amber-500 hover:bg-amber-600 disabled:bg-amber-300 text-white px-6 py-2 rounded-lg font-[var(--font-yekan)] transition-colors disabled:cursor-not-allowed"
+                      className="bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white px-6 py-2 rounded-lg font-[var(--font-yekan)] transition-colors disabled:cursor-not-allowed"
                     >
                       {submittingReview ? 'در حال ثبت...' : 'ثبت نظر'}
                     </button>
@@ -954,15 +962,15 @@ export default function ProductDetailPage() {
                 <div className="space-y-6">
                   {commentsLoading ? (
                     <div className="text-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600 mx-auto"></div>
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
                       <p className="mt-4 text-gray-600 font-[var(--font-yekan)]">در حال بارگذاری نظرات...</p>
                     </div>
                   ) : comments.length > 0 ? (
                     comments.map((comment) => (
-                      <div key={comment._id} className="border-b border-amber-100 pb-6 last:border-b-0">
+                      <div key={comment._id} className="border-b border-blue-100 pb-6 last:border-b-0">
                         <div className="flex items-center gap-4 mb-3">
-                          <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
-                            <span className="text-amber-600 font-bold font-[var(--font-yekan)]">
+                          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                            <span className="text-blue-600 font-bold font-[var(--font-yekan)]">
                               {comment.user.username?.substring(0, 2) || 'کاربر'}
                             </span>
                           </div>
@@ -1000,12 +1008,12 @@ export default function ProductDetailPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {relatedProducts.map((p) => (
                 <Link key={p._id} href={`/CoffeeCategoryPage/${p._id}`} className="block">
-                  <div className="bg-white rounded-2xl shadow-lg border border-amber-200 p-4 hover:shadow-xl transition-all duration-300 cursor-pointer">
-                    <div className="relative h-48 w-full rounded-xl overflow-hidden mb-3 bg-gradient-to-br from-amber-100 to-amber-200 flex items-center justify-center">
-                      <FiCoffee className="text-amber-400 text-3xl" />
+                  <div className="bg-white rounded-2xl shadow-lg border border-blue-200 p-4 hover:shadow-xl transition-all duration-300 cursor-pointer">
+                    <div className="relative h-48 w-full rounded-xl overflow-hidden mb-3 bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
+                      <FiCoffee className="text-blue-400 text-3xl" />
                       {p.badge && (
                         <div className="absolute top-2 left-2">
-                          <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+                          <span className="bg-orange-500 text-white text-xs px-2 py-1 rounded-full font-bold">
                             {p.badge}
                           </span>
                         </div>
@@ -1021,7 +1029,7 @@ export default function ProductDetailPage() {
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-amber-700 font-bold font-[var(--font-yekan)] text-lg">
+                      <span className="text-blue-700 font-bold font-[var(--font-yekan)] text-lg">
                         {formatPrice(p.priceAfterDiscount || p.price)}
                       </span>
                       {p.originalPrice && p.originalPrice > (p.priceAfterDiscount || p.price) && (
