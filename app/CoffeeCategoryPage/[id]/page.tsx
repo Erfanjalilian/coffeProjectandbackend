@@ -345,7 +345,6 @@ export default function ProductDetailPage() {
       id: product._id,
       name: product.name,
       price: displayPrice,
-      
     }, quantity);
     
     setCartMessage(`${quantity} عدد "${product.name}" به سبد خرید اضافه شد`);
@@ -459,7 +458,7 @@ export default function ProductDetailPage() {
           <FiStar
             key={i}
             className={`${sizes[size]} ${
-              i < Math.floor(rating) ? 'text-amber-400 fill-amber-400' : 'text-gray-300'
+              i < Math.floor(rating) ? 'text-blue-400 fill-blue-400' : 'text-gray-300'
             }`}
           />
         ))}
@@ -584,9 +583,12 @@ export default function ProductDetailPage() {
             className="lg:col-span-5"
           >
             <div className="bg-white rounded-2xl shadow-lg border border-blue-200 p-6 sticky top-32">
-              {/* Main Image */}
+              {/* Main Image - Replaced with Icon */}
               <div className="relative h-80 w-full rounded-xl overflow-hidden mb-4 bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
-                <FiCoffee className="text-blue-400 text-6xl" />
+                <div className="text-center">
+                  <FiCoffee className="text-blue-500 text-8xl mb-4" />
+                  <div className="text-blue-700 font-[var(--font-yekan)] text-lg">تصویر محصول</div>
+                </div>
                 <div className="absolute top-3 left-3">
                   {product.badge && (
                     <span className="bg-orange-500 text-white text-xs px-2 py-1 rounded-full font-bold">
@@ -601,7 +603,7 @@ export default function ProductDetailPage() {
                 )}
               </div>
 
-              {/* Thumbnail Images */}
+              {/* Thumbnail Images - All Icons */}
               <div className="grid grid-cols-4 gap-2">
                 {[1, 2, 3, 4].map((_, index) => (
                   <button
@@ -611,7 +613,7 @@ export default function ProductDetailPage() {
                       selectedImage === index ? 'border-blue-500' : 'border-blue-200'
                     }`}
                   >
-                    <FiCoffee className="text-blue-300 text-xl" />
+                    <FiCoffee className={`text-xl ${selectedImage === index ? 'text-blue-600' : 'text-blue-400'}`} />
                   </button>
                 ))}
               </div>
@@ -1010,7 +1012,10 @@ export default function ProductDetailPage() {
                 <Link key={p._id} href={`/CoffeeCategoryPage/${p._id}`} className="block">
                   <div className="bg-white rounded-2xl shadow-lg border border-blue-200 p-4 hover:shadow-xl transition-all duration-300 cursor-pointer">
                     <div className="relative h-48 w-full rounded-xl overflow-hidden mb-3 bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
-                      <FiCoffee className="text-blue-400 text-3xl" />
+                      <div className="text-center">
+                        <FiCoffee className="text-blue-500 text-5xl mb-3" />
+                        <div className="text-blue-700 font-[var(--font-yekan)] text-sm">تصویر محصول</div>
+                      </div>
                       {p.badge && (
                         <div className="absolute top-2 left-2">
                           <span className="bg-orange-500 text-white text-xs px-2 py-1 rounded-full font-bold">
