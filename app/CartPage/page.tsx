@@ -69,9 +69,9 @@ export default function CartPage(): React.ReactElement {
         const data = await res.json();
         console.log("API Response:", data); // Debug log
         
-        if (mounted && data.success) {
+        if (mounted && data.success && Array.isArray(data.data?.products)) {
           // Transform the API data to match our Product type
-          const transformedProducts = data.data.products.map((product: any) => ({
+            const transformedProducts = data.data.products.map((product: any) => ({
             id: product._id,
             _id: product._id,
             name: product.name,
@@ -107,8 +107,6 @@ export default function CartPage(): React.ReactElement {
           
           console.log("Transformed Products:", transformedProducts); // Debug log
           setProducts(transformedProducts);
-        } else {
-          throw new Error("Invalid API response format");
         }
       } catch (e) {
         console.error("Failed to fetch products from API:", e);
