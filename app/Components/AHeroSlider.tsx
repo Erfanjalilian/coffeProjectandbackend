@@ -150,9 +150,8 @@ export default async function HeroSection() {
                   productsCount: category.productsCount
                 }}
                 colorScheme={colorScheme}
-                subItems={CATEGORY_SUB_ITEMS}
-                index={index}
-              />
+
+                index={index} subItems={[]}              />
             );
           })}
         </div>

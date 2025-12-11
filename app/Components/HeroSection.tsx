@@ -141,18 +141,17 @@ export default async function HeroSection() {
             
             return (
               <InteractiveCategoryCard
-                key={category._id}
-                category={{
-                  id: category._id,
-                  name: category.name,
-                  slug: category.slug,
-                  description: category.description,
-                  productsCount: category.productsCount
-                }}
-                colorScheme={colorScheme}
-                subItems={CATEGORY_SUB_ITEMS}
-                index={index}
-              />
+                    key={category._id}
+                    category={{
+                        id: category._id,
+                        name: category.name,
+                        slug: category.slug,
+                        description: category.description,
+                        productsCount: category.productsCount
+                    }}
+                    colorScheme={colorScheme}
+
+                    index={index} subItems={[]}              />
             );
           })}
         </div>
