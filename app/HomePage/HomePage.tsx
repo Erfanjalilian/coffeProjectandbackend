@@ -1,4 +1,4 @@
-import HeroSlider from "../Components/HeroSlider";
+import HeroSlider from "../Components/AHeroSlider";
 import AboutSection from "../Components/AboutSection"
 import WhyChooseUs from "../Components/WhyChooseUs"
 import FeaturedProducts from "../Components/FeaturedProducts"
