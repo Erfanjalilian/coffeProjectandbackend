@@ -25,14 +25,14 @@ export interface SubItem {
 interface InteractiveCategoryCardProps {
   category: Category;
   colorScheme: ColorScheme;
-  subItems: SubItem[];
+  subItems: SubItem[];  // Make sure this accepts SubItem[]
   index: number;
 }
 
 function InteractiveCategoryCard({
   category,
   colorScheme,
-  subItems,
+  subItems,  // This should now receive the subItems
   index
 }: InteractiveCategoryCardProps) {
   const router = useRouter();
@@ -99,24 +99,23 @@ function InteractiveCategoryCard({
           </div>
         </div>
         
-        {/* Sub-items Grid */}
-        <div className="grid grid-cols-2 gap-3 flex-1">
-          {subItems.map((item, itemIndex) => (
-            <div
-              key={itemIndex}
-              className="bg-white border border-gray-100 rounded-lg p-2 flex flex-col items-center justify-center text-center hover:border-blue-200"
-              onClick={(e) => handleSubItemClick(e, item.name)}
-              onKeyDown={(e) => {
-                e.stopPropagation();
-                handleKeyDown(e, item.name);
-              }}
-              role="button"
-              tabIndex={0}
-              aria-label={`${item.name} در ${category.name}`}
-            >
-              <div className="relative w-full h-16 mb-2 rounded-lg overflow-hidden">
-                {/* Image Container - Full width/height */}
-                <div className="relative w-full h-full">
+        {/* Sub-items Grid - This should now show the items */}
+        {subItems && subItems.length > 0 ? (
+          <div className="grid grid-cols-2 gap-3 flex-1">
+            {subItems.map((item, itemIndex) => (
+              <div
+                key={itemIndex}
+                className="bg-white border border-gray-100 rounded-lg p-2 flex flex-col items-center justify-center text-center hover:border-blue-200"
+                onClick={(e) => handleSubItemClick(e, item.name)}
+                onKeyDown={(e) => {
+                  e.stopPropagation();
+                  handleKeyDown(e, item.name);
+                }}
+                role="button"
+                tabIndex={0}
+                aria-label={`${item.name} در ${category.name}`}
+              >
+                <div className="relative w-full h-16 mb-2 rounded-lg overflow-hidden bg-gray-100">
                   <Image
                     src={item.image}
                     alt={item.name}
@@ -128,13 +127,17 @@ function InteractiveCategoryCard({
                     priority={index === 0 && itemIndex < 2}
                   />
                 </div>
+                <span className="text-xs font-[var(--font-yekan)] text-gray-800 truncate w-full mt-1">
+                  {item.name}
+                </span>
               </div>
-              <span className="text-xs font-[var(--font-yekan)] text-gray-800 truncate w-full mt-1">
-                {item.name}
-              </span>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="flex-1 flex items-center justify-center">
+            <p className="text-gray-500 text-sm">No items available</p>
+          </div>
+        )}
         
         {/* Products Count */}
         {category.productsCount > 0 && (
@@ -149,5 +152,4 @@ function InteractiveCategoryCard({
   );
 }
 
-// Memoize the component to prevent unnecessary re-renders
 export default memo(InteractiveCategoryCard);

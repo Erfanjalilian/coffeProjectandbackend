@@ -1,7 +1,12 @@
 import { cache } from 'react';
-import Image from 'next/image';
 import InteractiveCategoryCard from '@/app/Components/InteractiveCategoryCard';
 import ViewAllButton from '@/app/Components/ViewAllButton';
+
+// Define SubItem type locally
+type SubItem = {
+  name: string;
+  image: string;
+};
 
 interface SeoData {
   metaKeywords: string[];
@@ -51,8 +56,8 @@ const PREDEFINED_COLOR_SCHEMES = [
   { bgColor: "bg-cyan-50", accent: "bg-cyan-500" },
 ] as const;
 
-// Static sub-items
-const CATEGORY_SUB_ITEMS = [
+// Static sub-items - Using absolute paths from public folder
+const CATEGORY_SUB_ITEMS: SubItem[] = [
   { 
     name: "محصول ویژه", 
     image: "/Images/photo-1461023058943-07fcbe16d735.avif" 
@@ -69,7 +74,7 @@ const CATEGORY_SUB_ITEMS = [
     name: "تخفیف دار", 
     image: "/Images/photo-1514432324607-a09d9b4aefdd.avif" 
   }
-] as const;
+];
 
 // Cache the API call
 const getCategories = cache(async (): Promise<Category[]> => {
@@ -141,22 +146,22 @@ export default async function HeroSection() {
             
             return (
               <InteractiveCategoryCard
-                    key={category._id}
-                    category={{
-                        id: category._id,
-                        name: category.name,
-                        slug: category.slug,
-                        description: category.description,
-                        productsCount: category.productsCount
-                    }}
-                    colorScheme={colorScheme}
-
-                    index={index} subItems={[]}              />
+                key={category._id}
+                category={{
+                  id: category._id,
+                  name: category.name,
+                  slug: category.slug,
+                  description: category.description,
+                  productsCount: category.productsCount
+                }}
+                colorScheme={colorScheme}
+                subItems={CATEGORY_SUB_ITEMS}
+                index={index}
+              />
             );
           })}
         </div>
 
-        {/* View All Button - Separate Client Component */}
         <div className="text-center mt-10">
           <ViewAllButton />
         </div>

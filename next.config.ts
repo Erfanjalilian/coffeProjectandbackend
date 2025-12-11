@@ -13,6 +13,7 @@ const nextConfig: NextConfig = {
       "plus.unsplash.com",
       "images.unsplash.com" // ← دامنه‌ی جدید اضافه شد
     ],
+     unoptimized: true, // Try this if images still don't load
   },
 };
 
