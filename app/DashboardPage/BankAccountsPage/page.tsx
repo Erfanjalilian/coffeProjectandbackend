@@ -51,14 +51,13 @@ export default function BankAccountsPage() {
   const { user: currentUser, logout, isLoading, isAuthenticated } = useAuth();
   const router = useRouter();
 
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
   const [bankAccounts, setBankAccounts] = useState<BankAccountWithUser[]>([]);
   const [isAddingAccount, setIsAddingAccount] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingAccounts, setIsLoadingAccounts] = useState(true);
   const [completeUserData, setCompleteUserData] = useState<UserFromAPI | null>(null);
+  const [hasFetchedData, setHasFetchedData] = useState(false); // FIX: Prevent duplicate fetches
 
   const [formData, setFormData] = useState({
     bankName: "",
@@ -79,19 +78,17 @@ export default function BankAccountsPage() {
   const API_BASE_URL = 'https://coffee-shop-backend-k3un.onrender.com/api/v1';
 
   // ------------------ Effects ------------------
-  // Check authentication and redirect
+  // Check authentication and redirect - FIXED: Simplified authentication check
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       router.push("/login");
-    } else if (!isLoading) {
-      setIsCheckingAuth(false);
     }
   }, [isAuthenticated, isLoading, router]);
 
-  // Fetch complete user data
+  // Fetch complete user data - FIXED: Run only once when user is authenticated
   useEffect(() => {
     const fetchCompleteUserData = async () => {
-      if (!currentUser?._id) return;
+      if (!currentUser?._id || hasFetchedData) return;
 
       try {
         const token = localStorage.getItem("token");
@@ -112,15 +109,28 @@ export default function BankAccountsPage() {
       }
     };
 
-    fetchCompleteUserData();
-  }, [currentUser?._id]);
-
-  // Fetch bank accounts
-  useEffect(() => {
-    if (isAuthenticated && !isLoading && currentUser?._id) {
-      fetchBankAccounts();
+    if (isAuthenticated && !isLoading) {
+      fetchCompleteUserData();
     }
-  }, [isAuthenticated, isLoading, currentUser?._id, completeUserData]);
+  }, [currentUser?._id, isAuthenticated, isLoading, hasFetchedData]);
+
+  // Fetch bank accounts - FIXED: Single fetch with proper dependency
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!isAuthenticated || isLoading || hasFetchedData || !currentUser?._id) return;
+
+      setIsLoadingAccounts(true);
+      setHasFetchedData(true); // Mark as fetched to prevent duplicate calls
+
+      try {
+        await fetchBankAccounts();
+      } finally {
+        setIsLoadingAccounts(false);
+      }
+    };
+
+    fetchData();
+  }, [isAuthenticated, isLoading, currentUser?._id, hasFetchedData]);
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -130,7 +140,6 @@ export default function BankAccountsPage() {
   // ------------------ Functions ------------------
   const fetchBankAccounts = async () => {
     if (!currentUser?._id) return;
-    setIsLoadingAccounts(true);
 
     try {
       const token = localStorage.getItem("token");
@@ -178,8 +187,6 @@ export default function BankAccountsPage() {
     } catch (error) {
       console.error("💥 Error fetching bank accounts:", error);
       setBankAccounts([]);
-    } finally {
-      setIsLoadingAccounts(false);
     }
   };
 
@@ -259,6 +266,8 @@ export default function BankAccountsPage() {
       console.log('✅ Save successful:', result);
 
       if (result.success) {
+        // Reset fetch state to allow re-fetch
+        setHasFetchedData(false);
         await fetchBankAccounts();
         setIsAddingAccount(false);
         setFormData({ 
@@ -337,12 +346,16 @@ export default function BankAccountsPage() {
   };
 
   // ------------------ Loading State ------------------
-  if (isLoading || isCheckingAuth || isLoadingAccounts) {
+  if (isLoading || isLoadingAccounts) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-amber-50 to-amber-100 flex items-center justify-center" dir="rtl">
-        <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-amber-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 font-[var(--font-yekan)]">در حال بارگذاری اطلاعات حساب‌ها...</p>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center" dir="rtl">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.8 }} 
+          animate={{ opacity: 1, scale: 1 }} 
+          className="text-center"
+        >
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#3366FF] mx-auto mb-4"></div>
+          <p className="text-[#1E2024] font-[var(--font-yekan)]">در حال بارگذاری اطلاعات حساب‌ها...</p>
         </motion.div>
       </div>
     );
@@ -352,11 +365,16 @@ export default function BankAccountsPage() {
 
   // ------------------ Render ------------------
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-amber-100 pt-44 pb-12" dir="rtl">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white pt-44 pb-12" dir="rtl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Mobile Menu Button */}
+        {/* Mobile Menu Button - Updated with brand colors */}
         <div className="lg:hidden fixed top-24 right-4 z-40">
-          <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => setIsMobileMenuOpen(true)} className="bg-gradient-to-r from-amber-600 to-amber-700 text-white py-3 px-4 rounded-xl shadow-lg flex items-center gap-2 font-[var(--font-yekan)]">
+          <motion.button 
+            whileHover={{ scale: 1.05 }} 
+            whileTap={{ scale: 0.95 }} 
+            onClick={() => setIsMobileMenuOpen(true)} 
+            className="bg-[#3366FF] hover:bg-[#194FFF] text-white py-3 px-4 rounded-xl shadow-md flex items-center gap-2 font-[var(--font-yekan)] transition-colors duration-200"
+          >
             <FiSettings size={18} />
             <span>منوی کاربری</span>
           </motion.button>
@@ -365,22 +383,43 @@ export default function BankAccountsPage() {
         {/* Mobile Menu Overlay */}
         <AnimatePresence>
           {isMobileMenuOpen && (
-            <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: "spring", damping: 30, stiffness: 300 }} className="fixed top-0 right-0 h-full w-80 max-w-full bg-white z-50 lg:hidden shadow-2xl" dir="rtl">
-              <UserProfileSidebarD userName={getUserDisplayName()} userRole={currentUser?.roles?.[0]} onLogout={logout} activePage="bank-accounts" isMobile={true} onNavigate={() => setIsMobileMenuOpen(false)} />
+            <motion.div 
+              initial={{ x: '100%' }} 
+              animate={{ x: 0 }} 
+              exit={{ x: '100%' }} 
+              transition={{ type: "spring", damping: 30, stiffness: 300 }} 
+              className="fixed top-0 right-0 h-full w-80 max-w-full bg-white z-50 lg:hidden shadow-2xl" 
+              dir="rtl"
+            >
+              <UserProfileSidebarD 
+                userName={getUserDisplayName()} 
+                userRole={currentUser?.roles?.[0]} 
+                onLogout={logout} 
+                activePage="bank-accounts" 
+                isMobile={true} 
+                onNavigate={() => setIsMobileMenuOpen(false)} 
+              />
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Header */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+        {/* Header - Updated with brand colors */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }} 
+          animate={{ opacity: 1, y: 0 }} 
+          className="mb-8"
+        >
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-800 mb-2 font-[var(--font-yekan)] text-center lg:text-right">حساب‌های بانکی</h1>
-              <p className="text-gray-600 font-[var(--font-yekan)] text-center lg:text-right">مدیریت حساب‌های بانکی و کارت‌های اعتباری</p>
+              <h1 className="text-3xl font-bold text-[#1E2024] mb-2 font-[var(--font-yekan)] text-center lg:text-right">حساب‌های بانکی</h1>
+              <p className="text-[#333333] font-[var(--font-yekan)] text-center lg:text-right">مدیریت حساب‌های بانکی و کارت‌های اعتباری</p>
             </div>
             <div className="hidden lg:flex items-center gap-3">
               {!isAddingAccount && bankAccounts.length > 0 && (
-                <button onClick={() => setIsAddingAccount(true)} className="bg-amber-600 hover:bg-amber-700 text-white px-6 py-3 rounded-xl font-[var(--font-yekan)] font-semibold transition-colors flex items-center gap-2">
+                <button 
+                  onClick={() => setIsAddingAccount(true)} 
+                  className="bg-[#3366FF] hover:bg-[#194FFF] text-white px-6 py-3 rounded-xl font-[var(--font-yekan)] font-semibold transition-colors flex items-center gap-2"
+                >
                   <FiPlus size={18} /> افزودن حساب جدید
                 </button>
               )}
@@ -391,20 +430,35 @@ export default function BankAccountsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Sidebar */}
           <div className="hidden lg:block lg:col-span-1">
-            <UserProfileSidebarD userName={getUserDisplayName()} userRole={currentUser?.roles?.[0]} onLogout={logout} activePage="bank-accounts" />
+            <UserProfileSidebarD 
+              userName={getUserDisplayName()} 
+              userRole={currentUser?.roles?.[0]} 
+              onLogout={logout} 
+              activePage="bank-accounts" 
+            />
           </div>
 
-          {/* Main Content */}
+          {/* Main Content - Updated with brand colors */}
           <div className="lg:col-span-3">
-            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
-              {/* Form Add Bank Account */}
+            <motion.div 
+              initial={{ opacity: 0, x: -20 }} 
+              animate={{ opacity: 1, x: 0 }} 
+              transition={{ delay: 0.2 }}
+            >
+              {/* Form Add Bank Account - Updated with brand colors */}
               {isAddingAccount && (
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-2xl shadow-lg border border-amber-200 p-6 mb-6">
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }} 
+                  animate={{ opacity: 1, y: 0 }} 
+                  className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 mb-6"
+                >
                   <div className="flex items-center gap-3 mb-6">
-                    <div className="bg-amber-100 p-3 rounded-full"><FiPlus className="text-amber-600 text-xl" /></div>
+                    <div className="bg-blue-100 p-3 rounded-full">
+                      <FiPlus className="text-[#3366FF] text-xl" />
+                    </div>
                     <div>
-                      <h2 className="text-xl font-bold text-gray-800 font-[var(--font-yekan)]">افزودن حساب بانکی جدید</h2>
-                      <p className="text-gray-600 font-[var(--font-yekan)] text-sm mt-1">اطلاعات حساب بانکی یا کارت اعتباری خود را وارد کنید</p>
+                      <h2 className="text-xl font-bold text-[#1E2024] font-[var(--font-yekan)]">افزودن حساب بانکی جدید</h2>
+                      <p className="text-[#333333] font-[var(--font-yekan)] text-sm mt-1">اطلاعات حساب بانکی یا کارت اعتباری خود را وارد کنید</p>
                     </div>
                   </div>
 
@@ -412,8 +466,14 @@ export default function BankAccountsPage() {
                     <div className="space-y-6">
                       {/* Bank Name */}
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2 font-[var(--font-yekan)]">نام بانک *</label>
-                        <select name="bankName" value={formData.bankName} onChange={handleInputChange} required className="w-full px-4 py-3 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 font-[var(--font-yekan)]">
+                        <label className="block text-sm font-medium text-[#1E2024] mb-2 font-[var(--font-yekan)]">نام بانک *</label>
+                        <select 
+                          name="bankName" 
+                          value={formData.bankName} 
+                          onChange={handleInputChange} 
+                          required 
+                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#3366FF] focus:border-transparent transition-all duration-200 font-[var(--font-yekan)]"
+                        >
                           <option value="">انتخاب بانک</option>
                           {banks.map(bank => <option key={bank} value={bank}>{bank}</option>)}
                         </select>
@@ -421,55 +481,79 @@ export default function BankAccountsPage() {
 
                       {/* Account Holder */}
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2 font-[var(--font-yekan)]">نام دارنده حساب *</label>
-                        <input type="text" name="accountHolderName" value={formData.accountHolderName} onChange={handleInputChange} required className="w-full px-4 py-3 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 font-[var(--font-yekan)]" placeholder="نام کامل دارنده حساب" />
-                        {completeUserData?.addresses?.[0]?.name && <p className="text-xs text-amber-600 mt-1">نام پیشنهادی: {completeUserData.addresses[0].name}</p>}
+                        <label className="block text-sm font-medium text-[#1E2024] mb-2 font-[var(--font-yekan)]">نام دارنده حساب *</label>
+                        <input 
+                          type="text" 
+                          name="accountHolderName" 
+                          value={formData.accountHolderName} 
+                          onChange={handleInputChange} 
+                          required 
+                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#3366FF] focus:border-transparent transition-all duration-200 font-[var(--font-yekan)]" 
+                          placeholder="نام کامل دارنده حساب" 
+                        />
+                        {completeUserData?.addresses?.[0]?.name && (
+                          <p className="text-xs text-blue-600 mt-1">نام پیشنهادی: {completeUserData.addresses[0].name}</p>
+                        )}
                       </div>
 
                       {/* Card and Sheba */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2 font-[var(--font-yekan)]">شماره کارت (۱۶ رقمی) *</label>
+                          <label className="block text-sm font-medium text-[#1E2024] mb-2 font-[var(--font-yekan)]">شماره کارت (۱۶ رقمی) *</label>
                           <input 
                             type="text" 
                             name="cardNumber" 
                             value={formData.cardNumber} 
                             onChange={handleCardNumberChange} 
                             required 
-                            className="w-full px-4 py-3 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 font-[var(--font-yekan)] ltr-text-input text-left" 
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#3366FF] focus:border-transparent transition-all duration-200 font-[var(--font-yekan)] ltr-text-input text-left" 
                             placeholder="1234 5678 9012 3456" 
                             maxLength={19}
                             dir="ltr"
                           />
-                          <p className="text-xs text-gray-500 mt-1">لطفاً شماره کارت را بدون فاصله و به درستی وارد کنید</p>
+                          <p className="text-xs text-[#666666] mt-1">لطفاً شماره کارت را بدون فاصله و به درستی وارد کنید</p>
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2 font-[var(--font-yekan)]">شماره شبا *</label>
+                          <label className="block text-sm font-medium text-[#1E2024] mb-2 font-[var(--font-yekan)]">شماره شبا *</label>
                           <input 
                             type="text" 
                             name="shebaNumber" 
                             value={formData.shebaNumber} 
                             onChange={handleShebaChange} 
                             required 
-                            className="w-full px-4 py-3 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 font-[var(--font-yekan)] ltr-text-input text-left" 
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#3366FF] focus:border-transparent transition-all duration-200 font-[var(--font-yekan)] ltr-text-input text-left" 
                             placeholder="IR00 0000 0000 0000 0000 0000 00" 
                             maxLength={32}
                             dir="ltr"
                           />
-                          <p className="text-xs text-gray-500 mt-1">شبا باید با IR شروع شود و ۲۴ رقم داشته باشد</p>
+                          <p className="text-xs text-[#666666] mt-1">شبا باید با IR شروع شود و ۲۴ رقم داشته باشد</p>
                         </div>
                       </div>
 
                       {/* Default */}
                       <div className="flex items-center gap-3">
-                        <input type="checkbox" name="isDefault" checked={formData.isDefault} onChange={handleInputChange} className="w-4 h-4 text-amber-600 border-amber-300 rounded focus:ring-amber-500" />
-                        <label className="text-sm text-gray-700 font-[var(--font-yekan)]">تنظیم به عنوان حساب پیش‌فرض</label>
+                        <input 
+                          type="checkbox" 
+                          name="isDefault" 
+                          checked={formData.isDefault} 
+                          onChange={handleInputChange} 
+                          className="w-4 h-4 text-[#3366FF] border-gray-300 rounded focus:ring-[#3366FF]" 
+                        />
+                        <label className="text-sm text-[#333333] font-[var(--font-yekan)]">تنظیم به عنوان حساب پیش‌فرض</label>
                       </div>
 
-                      {/* Buttons */}
-                      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex gap-3 pt-4">
-                        <button type="submit" disabled={isSaving} className="flex-1 bg-amber-600 hover:bg-amber-700 disabled:bg-amber-400 text-white py-3 rounded-xl font-[var(--font-yekan)] font-semibold transition-colors flex items-center justify-center gap-2">
+                      {/* Buttons - Updated with brand colors */}
+                      <motion.div 
+                        initial={{ opacity: 0, y: 10 }} 
+                        animate={{ opacity: 1, y: 0 }} 
+                        className="flex gap-3 pt-4"
+                      >
+                        <button 
+                          type="submit" 
+                          disabled={isSaving} 
+                          className="flex-1 bg-[#3366FF] hover:bg-[#194FFF] disabled:bg-gray-400 text-white py-3 rounded-xl font-[var(--font-yekan)] font-semibold transition-colors flex items-center justify-center gap-2"
+                        >
                           {isSaving ? (
                             <>
                               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
@@ -481,23 +565,33 @@ export default function BankAccountsPage() {
                             </>
                           )}
                         </button>
-                        <button type="button" onClick={() => setIsAddingAccount(false)} disabled={isSaving} className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-xl font-[var(--font-yekan)] font-semibold transition-colors">انصراف</button>
+                        <button 
+                          type="button" 
+                          onClick={() => setIsAddingAccount(false)} 
+                          disabled={isSaving} 
+                          className="flex-1 bg-gray-100 hover:bg-gray-200 text-[#333333] py-3 rounded-xl font-[var(--font-yekan)] font-semibold transition-colors"
+                        >
+                          انصراف
+                        </button>
                       </motion.div>
                     </div>
                   </form>
                 </motion.div>
               )}
 
-              {/* Bank Accounts List */}
+              {/* Bank Accounts List - Updated with brand colors */}
               {bankAccounts.length === 0 && !isAddingAccount ? (
-                <div className="bg-white rounded-2xl shadow-lg border border-amber-200 p-12 text-center">
+                <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-12 text-center">
                   <div className="max-w-md mx-auto">
-                    <div className="bg-amber-100 p-4 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center">
-                      <FiCreditCard className="text-amber-600 text-2xl" />
+                    <div className="bg-blue-100 p-4 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+                      <FiCreditCard className="text-[#3366FF] text-2xl" />
                     </div>
-                    <h3 className="text-xl font-bold text-gray-800 mb-3 font-[var(--font-yekan)]">هیچ حساب بانکی ثبت نشده است</h3>
-                    <p className="text-gray-600 mb-6 font-[var(--font-yekan)]">برای تسهیل در پرداخت‌ها، اولین حساب بانکی خود را اضافه کنید.</p>
-                    <button onClick={() => setIsAddingAccount(true)} className="bg-amber-600 hover:bg-amber-700 text-white px-8 py-3 rounded-xl font-[var(--font-yekan)] font-semibold transition-colors flex items-center gap-2 mx-auto">
+                    <h3 className="text-xl font-bold text-[#1E2024] mb-3 font-[var(--font-yekan)]">هیچ حساب بانکی ثبت نشده است</h3>
+                    <p className="text-[#333333] mb-6 font-[var(--font-yekan)]">برای تسهیل در پرداخت‌ها، اولین حساب بانکی خود را اضافه کنید.</p>
+                    <button 
+                      onClick={() => setIsAddingAccount(true)} 
+                      className="bg-[#3366FF] hover:bg-[#194FFF] text-white px-8 py-3 rounded-xl font-[var(--font-yekan)] font-semibold transition-colors flex items-center gap-2 mx-auto"
+                    >
                       <FiPlus size={18} /> افزودن حساب بانکی
                     </button>
                   </div>
@@ -506,48 +600,77 @@ export default function BankAccountsPage() {
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {bankAccounts.map((account) => (
-                      <motion.div key={account._id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-2xl shadow-lg border border-amber-200 p-6 hover:shadow-xl transition-all duration-300">
+                      <motion.div 
+                        key={account._id} 
+                        initial={{ opacity: 0, y: 20 }} 
+                        animate={{ opacity: 1, y: 0 }} 
+                        className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-all duration-300"
+                      >
                         <div className="flex items-start justify-between mb-4">
                           <div className="flex items-center gap-3">
-                            <div className={`p-2 rounded-full ${account.isActive ? 'bg-amber-100' : 'bg-gray-100'}`}>
-                              <FiCreditCard className={`text-lg ${account.isActive ? 'text-amber-600' : 'text-gray-400'}`} />
+                            <div className={`p-2 rounded-full ${account.isActive ? 'bg-blue-100' : 'bg-gray-100'}`}>
+                              <FiCreditCard className={`text-lg ${account.isActive ? 'text-[#3366FF]' : 'text-gray-400'}`} />
                             </div>
                             <div>
-                              <h3 className="font-bold text-gray-800 font-[var(--font-yekan)]">{account.bankName}</h3>
+                              <h3 className="font-bold text-[#1E2024] font-[var(--font-yekan)]">{account.bankName}</h3>
                               <span className={`text-xs px-2 py-1 rounded-full font-[var(--font-yekan)] ${account.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
                                 {account.isActive ? 'فعال' : 'غیرفعال'}
                               </span>
                             </div>
                           </div>
                           <div className="flex gap-2">
-                            <button onClick={() => handleSetDefault(account._id)} className="text-amber-600 hover:text-amber-700 p-2 transition-colors" title="تنظیم به عنوان پیش‌فرض"><FiCreditCard size={16} /></button>
-                            <button onClick={() => handleDeleteAccount(account._id)} className="text-red-600 hover:text-red-700 p-2 transition-colors" title="حذف حساب"><FiTrash2 size={16} /></button>
+                            <button 
+                              onClick={() => handleSetDefault(account._id)} 
+                              className="text-[#3366FF] hover:text-[#194FFF] p-2 transition-colors" 
+                              title="تنظیم به عنوان پیش‌فرض"
+                            >
+                              <FiCreditCard size={16} />
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteAccount(account._id)} 
+                              className="text-red-600 hover:text-red-700 p-2 transition-colors" 
+                              title="حذف حساب"
+                            >
+                              <FiTrash2 size={16} />
+                            </button>
                           </div>
                         </div>
 
-                        <div className="space-y-3 text-sm text-gray-600 font-[var(--font-yekan)]">
+                        <div className="space-y-3 text-sm text-[#333333] font-[var(--font-yekan)]">
                           <div>
-                            <span className="font-semibold">دارنده حساب:</span>
+                            <span className="font-semibold text-[#1E2024]">دارنده حساب:</span>
                             <p className="mt-1">{account.accountHolderName}</p>
                           </div>
                           <div>
-                            <span className="font-semibold">شماره کارت:</span>
+                            <span className="font-semibold text-[#1E2024]">شماره کارت:</span>
                             <div className="flex items-center gap-2 mt-1">
                               <p className="font-mono ltr-text" dir="ltr">{formatCardNumber(account.cardNumber)}</p>
-                              <button onClick={() => copyToClipboard(account.cardNumber)} className="text-amber-600 hover:text-amber-700 transition-colors" title="کپی شماره کارت"><FiCopy size={14} /></button>
+                              <button 
+                                onClick={() => copyToClipboard(account.cardNumber)} 
+                                className="text-[#3366FF] hover:text-[#194FFF] transition-colors" 
+                                title="کپی شماره کارت"
+                              >
+                                <FiCopy size={14} />
+                              </button>
                             </div>
                           </div>
                           {account.shebaNumber && (
                             <div>
-                              <span className="font-semibold">شماره شبا:</span>
+                              <span className="font-semibold text-[#1E2024]">شماره شبا:</span>
                               <div className="flex items-center gap-2 mt-1">
                                 <p className="font-mono ltr-text text-xs" dir="ltr">{formatSheba(account.shebaNumber)}</p>
-                                <button onClick={() => copyToClipboard(account.shebaNumber)} className="text-amber-600 hover:text-amber-700 transition-colors" title="کپی شماره شبا"><FiCopy size={14} /></button>
+                                <button 
+                                  onClick={() => copyToClipboard(account.shebaNumber)} 
+                                  className="text-[#3366FF] hover:text-[#194FFF] transition-colors" 
+                                  title="کپی شماره شبا"
+                                >
+                                  <FiCopy size={14} />
+                                </button>
                               </div>
                             </div>
                           )}
                           <div>
-                            <span className="font-semibold">نوع حساب:</span>
+                            <span className="font-semibold text-[#1E2024]">نوع حساب:</span>
                             <p className="mt-1">{account.accountType}</p>
                           </div>
                         </div>
@@ -557,7 +680,10 @@ export default function BankAccountsPage() {
 
                   {!isAddingAccount && (
                     <div className="text-center">
-                      <button onClick={() => setIsAddingAccount(true)} className="bg-amber-100 hover:bg-amber-200 text-amber-700 px-6 py-3 rounded-xl font-[var(--font-yekan)] font-semibold transition-colors flex items-center gap-2 mx-auto">
+                      <button 
+                        onClick={() => setIsAddingAccount(true)} 
+                        className="bg-blue-50 hover:bg-blue-100 text-[#3366FF] px-6 py-3 rounded-xl font-[var(--font-yekan)] font-semibold transition-colors flex items-center gap-2 mx-auto"
+                      >
                         <FiPlus size={18} /> افزودن حساب جدید
                       </button>
                     </div>
@@ -565,17 +691,36 @@ export default function BankAccountsPage() {
                 </div>
               )}
 
-              {/* Info Box */}
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl p-6 border border-amber-200 mt-6">
+              {/* Info Box - Updated with brand colors */}
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }} 
+                animate={{ opacity: 1, y: 0 }} 
+                transition={{ delay: 0.3 }} 
+                className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl p-6 border border-blue-200 mt-6"
+              >
                 <div className="flex items-start gap-4">
-                  <div className="bg-amber-100 p-2 rounded-full mt-1"><FiCreditCard className="text-amber-600 text-lg" /></div>
+                  <div className="bg-blue-100 p-2 rounded-full mt-1">
+                    <FiCreditCard className="text-[#3366FF] text-lg" />
+                  </div>
                   <div>
-                    <h3 className="text-lg font-bold text-gray-800 mb-2 font-[var(--font-yekan)]">نکات مهم حساب‌های بانکی</h3>
-                    <ul className="text-gray-700 space-y-2 font-[var(--font-yekan)] text-sm">
-                      <li className="flex items-start gap-2"><span className="text-amber-600 mt-1">•</span><span>اطلاعات حساب بانکی شما به صورت امن ذخیره می‌شود</span></li>
-                      <li className="flex items-start gap-2"><span className="text-amber-600 mt-1">•</span><span>شماره کارت باید ۱۶ رقمی و معتبر باشد</span></li>
-                      <li className="flex items-start gap-2"><span className="text-amber-600 mt-1">•</span><span>شماره شبا باید با IR شروع شود و ۲۴ رقم داشته باشد</span></li>
-                      <li className="flex items-start gap-2"><span className="text-amber-600 mt-1">•</span><span>حساب پیش‌فرض برای پرداخت‌های سریع‌تر استفاده می‌شود</span></li>
+                    <h3 className="text-lg font-bold text-[#1E2024] mb-2 font-[var(--font-yekan)]">نکات مهم حساب‌های بانکی</h3>
+                    <ul className="text-[#333333] space-y-2 font-[var(--font-yekan)] text-sm">
+                      <li className="flex items-start gap-2">
+                        <span className="text-[#3366FF] mt-1">•</span>
+                        <span>اطلاعات حساب بانکی شما به صورت امن ذخیره می‌شود</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-[#3366FF] mt-1">•</span>
+                        <span>شماره کارت باید ۱۶ رقمی و معتبر باشد</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-[#3366FF] mt-1">•</span>
+                        <span>شماره شبا باید با IR شروع شود و ۲۴ رقم داشته باشد</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-[#3366FF] mt-1">•</span>
+                        <span>حساب پیش‌فرض برای پرداخت‌های سریع‌تر استفاده می‌شود</span>
+                      </li>
                     </ul>
                   </div>
                 </div>

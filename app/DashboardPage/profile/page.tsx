@@ -371,14 +371,14 @@ export default function ProfilePage() {
   // Show loading while checking authentication
   if (isLoading || isCheckingAuth) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-amber-50 to-amber-100 flex items-center justify-center" dir="rtl">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center" dir="rtl">
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           className="text-center"
         >
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-amber-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 font-[var(--font-yekan)]">در حال بارگذاری...</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#3366FF] mx-auto mb-4"></div>
+          <p className="text-[#1E2024] font-[var(--font-yekan)]">در حال بارگذاری...</p>
         </motion.div>
       </div>
     );
@@ -390,15 +390,15 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-amber-100 pt-44 pb-12" dir="rtl">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white pt-44 pb-12" dir="rtl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Mobile Menu Button - Only visible on mobile */}
+        {/* Mobile Menu Button - Updated with brand colors */}
         <div className="lg:hidden fixed top-24 right-4 z-40">
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setIsMobileMenuOpen(true)}
-            className="bg-gradient-to-r from-amber-600 to-amber-700 text-white py-3 px-4 rounded-xl shadow-lg flex items-center gap-2 font-[var(--font-yekan)]"
+            className="bg-[#3366FF] hover:bg-[#194FFF] text-white py-3 px-4 rounded-xl shadow-md flex items-center gap-2 font-[var(--font-yekan)] transition-colors duration-200"
           >
             <FiSettings size={18} />
             <span>منوی کاربری</span>
@@ -428,7 +428,7 @@ export default function ProfilePage() {
           )}
         </AnimatePresence>
 
-        {/* Header Section */}
+        {/* Header Section - Updated with brand colors */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -436,10 +436,10 @@ export default function ProfilePage() {
         >
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-800 mb-2 font-[var(--font-yekan)] text-center lg:text-right">
+              <h1 className="text-3xl font-bold text-[#1E2024] mb-2 font-[var(--font-yekan)] text-center lg:text-right">
                 اطلاعات شخصی
               </h1>
-              <p className="text-gray-600 font-[var(--font-yekan)] text-center lg:text-right">
+              <p className="text-[#333333] font-[var(--font-yekan)] text-center lg:text-right">
                 مدیریت و به‌روزرسانی اطلاعات حساب کاربری
               </p>
             </div>
@@ -457,23 +457,14 @@ export default function ProfilePage() {
             />
           </div>
 
-          {/* Main Content - Right Side (3/4 width) */}
+          {/* Main Content - Right Side (3/4 width) - Updated with brand colors */}
           <div className="lg:col-span-3">
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2 }}
             >
-              {/* Debug Info - Only show in development */}
-              {process.env.NODE_ENV === 'development' && (
-                <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-                  <p className="text-blue-700 text-sm font-[var(--font-yekan)]">
-                    <strong>Debug Mode:</strong> Open browser console to see detailed API logs
-                  </p>
-                </div>
-              )}
-
-              {/* Error Message */}
+              {/* Error Message - Updated with brand colors */}
               {error && (
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
@@ -484,41 +475,41 @@ export default function ProfilePage() {
                 </motion.div>
               )}
 
-              {/* Success Message */}
+              {/* Success Message - Updated with brand colors */}
               {successMessage && (
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mb-6 bg-emerald-50 border border-emerald-200 rounded-xl p-4"
+                  className="mb-6 bg-green-50 border border-green-200 rounded-xl p-4"
                 >
-                  <p className="text-emerald-700 text-sm font-[var(--font-yekan)] text-center">{successMessage}</p>
+                  <p className="text-green-700 text-sm font-[var(--font-yekan)] text-center">{successMessage}</p>
                 </motion.div>
               )}
 
-              {/* Update Not Supported Message */}
+              {/* Update Not Supported Message - Updated with brand colors */}
               {!isUpdateSupported && (
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mb-6 bg-amber-50 border border-amber-200 rounded-xl p-4"
+                  className="mb-6 bg-yellow-50 border border-yellow-200 rounded-xl p-4"
                 >
-                  <p className="text-amber-700 text-sm font-[var(--font-yekan)] text-center">
+                  <p className="text-yellow-700 text-sm font-[var(--font-yekan)] text-center">
                     قابلیت بروزرسانی پروفایل در حال حاضر در دسترس نیست. لطفاً با پشتیبانی تماس بگیرید.
                   </p>
                 </motion.div>
               )}
 
-              {/* Profile Information Card */}
-              <div className="bg-white rounded-2xl shadow-lg border border-amber-200 p-6 mb-6">
+              {/* Profile Information Card - Updated with brand colors */}
+              <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 mb-6">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="bg-amber-100 p-3 rounded-full">
-                    <FiUser className="text-amber-600 text-xl" />
+                  <div className="bg-blue-100 p-3 rounded-full">
+                    <FiUser className="text-[#3366FF] text-xl" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold text-gray-800 font-[var(--font-yekan)]">
+                    <h2 className="text-xl font-bold text-[#1E2024] font-[var(--font-yekan)]">
                       اطلاعات حساب کاربری
                     </h2>
-                    <p className="text-gray-600 font-[var(--font-yekan)] text-sm mt-1">
+                    <p className="text-[#333333] font-[var(--font-yekan)] text-sm mt-1">
                       اطلاعات شخصی و هویتی شما در این بخش قابل مدیریت است
                     </p>
                   </div>
@@ -528,7 +519,7 @@ export default function ProfilePage() {
                   <div className="space-y-6">
                     {/* Username Field */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2 font-[var(--font-yekan)]">
+                      <label className="block text-sm font-medium text-[#1E2024] mb-2 font-[var(--font-yekan)]">
                         نام کاربری
                       </label>
                       <input
@@ -537,11 +528,11 @@ export default function ProfilePage() {
                         value={formData.username}
                         onChange={handleInputChange}
                         disabled={!isUpdateSupported || isSaving}
-                        className="w-full px-4 py-3 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 font-[var(--font-yekan)] bg-white disabled:bg-gray-50 disabled:text-gray-500"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#3366FF] focus:border-transparent transition-all duration-200 font-[var(--font-yekan)] bg-white disabled:bg-gray-50 disabled:text-gray-500"
                         placeholder="نام کاربری خود را وارد کنید"
                       />
                       {!formData.username && (
-                        <p className="text-amber-600 text-xs mt-2 font-[var(--font-yekan)]">
+                        <p className="text-blue-600 text-xs mt-2 font-[var(--font-yekan)]">
                           نام کاربری شما هنوز ثبت نشده است
                         </p>
                       )}
@@ -549,7 +540,7 @@ export default function ProfilePage() {
 
                     {/* Phone Number Field */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2 font-[var(--font-yekan)]">
+                      <label className="block text-sm font-medium text-[#1E2024] mb-2 font-[var(--font-yekan)]">
                         شماره موبایل
                       </label>
                       <input
@@ -558,27 +549,27 @@ export default function ProfilePage() {
                         value={formData.phone}
                         onChange={handleInputChange}
                         disabled={true}
-                        className="w-full px-4 py-3 border border-amber-200 rounded-xl bg-gray-50 text-gray-500 font-[var(--font-yekan)]"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-50 text-[#666666] font-[var(--font-yekan)]"
                         placeholder="09xxxxxxxxx"
                       />
-                      <p className="text-gray-500 text-xs mt-2 font-[var(--font-yekan)]">
+                      <p className="text-[#666666] text-xs mt-2 font-[var(--font-yekan)]">
                         شماره موبایل قابل تغییر نیست
                       </p>
                     </div>
 
-                    {/* Membership Date */}
-                    <div className="bg-amber-50 rounded-xl p-4 border border-amber-200">
+                    {/* Membership Date - Updated with brand colors */}
+                    <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
                       <div className="flex items-center justify-between">
-                        <span className="text-gray-700 font-[var(--font-yekan)] text-sm">
+                        <span className="text-[#333333] font-[var(--font-yekan)] text-sm">
                           تاریخ عضویت:
                         </span>
-                        <span className="text-gray-800 font-[var(--font-yekan)] font-semibold">
+                        <span className="text-[#1E2024] font-[var(--font-yekan)] font-semibold">
                           {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('fa-IR') : '---'}
                         </span>
                       </div>
                     </div>
 
-                    {/* Action Buttons */}
+                    {/* Action Buttons - Updated with brand colors */}
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -587,7 +578,7 @@ export default function ProfilePage() {
                       <button
                         type="submit"
                         disabled={isSaving || !isFormModified || !isUpdateSupported}
-                        className="flex-1 bg-amber-600 hover:bg-amber-700 disabled:bg-amber-400 disabled:cursor-not-allowed text-white py-3 rounded-xl font-[var(--font-yekan)] font-semibold transition-colors flex items-center justify-center gap-2"
+                        className="flex-1 bg-[#3366FF] hover:bg-[#194FFF] disabled:bg-gray-400 disabled:cursor-not-allowed text-white py-3 rounded-xl font-[var(--font-yekan)] font-semibold transition-colors flex items-center justify-center gap-2"
                       >
                         {isSaving ? (
                           <>
@@ -609,7 +600,7 @@ export default function ProfilePage() {
                           type="button"
                           onClick={handleReset}
                           disabled={isSaving}
-                          className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-xl font-[var(--font-yekan)] font-semibold transition-colors"
+                          className="flex-1 bg-gray-100 hover:bg-gray-200 text-[#333333] py-3 rounded-xl font-[var(--font-yekan)] font-semibold transition-colors"
                         >
                           بازنشانی
                         </button>
@@ -619,38 +610,38 @@ export default function ProfilePage() {
                 </form>
               </div>
 
-              {/* Information Box */}
+              {/* Information Box - Updated with brand colors */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl p-6 border border-amber-200"
+                className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl p-6 border border-blue-200"
               >
                 <div className="flex items-start gap-4">
-                  <div className="bg-amber-100 p-2 rounded-full mt-1">
-                    <FiCheck className="text-amber-600 text-lg" />
+                  <div className="bg-blue-100 p-2 rounded-full mt-1">
+                    <FiCheck className="text-[#3366FF] text-lg" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-gray-800 mb-2 font-[var(--font-yekan)]">
+                    <h3 className="text-lg font-bold text-[#1E2024] mb-2 font-[var(--font-yekan)]">
                       نکات مهم
                     </h3>
-                    <ul className="text-gray-700 space-y-2 font-[var(--font-yekan)] text-sm">
+                    <ul className="text-[#333333] space-y-2 font-[var(--font-yekan)] text-sm">
                       <li className="flex items-start gap-2">
-                        <span className="text-amber-600 mt-1">•</span>
+                        <span className="text-[#3366FF] mt-1">•</span>
                         <span>می‌توانید نام کاربری خود را ویرایش کرده و سپس دکمه ذخیره را بزنید</span>
                       </li>
                       <li className="flex items-start gap-2">
-                        <span className="text-amber-600 mt-1">•</span>
+                        <span className="text-[#3366FF] mt-1">•</span>
                         <span>نام کاربری باید منحصر به فرد باشد</span>
                       </li>
                       <li className="flex items-start gap-2">
-                        <span className="text-amber-600 mt-1">•</span>
+                        <span className="text-[#3366FF] mt-1">•</span>
                         <span>شماره موبایل برای ورود به حساب و بازیابی رمز عبور استفاده می‌شود</span>
                       </li>
                       {!isUpdateSupported && (
                         <li className="flex items-start gap-2">
-                          <span className="text-amber-600 mt-1">•</span>
-                          <span className="text-amber-700">بروزرسانی پروفایل موقتاً غیرفعال است. لطفاً با پشتیبانی تماس بگیرید.</span>
+                          <span className="text-[#3366FF] mt-1">•</span>
+                          <span className="text-[#FFA500]">بروزرسانی پروفایل موقتاً غیرفعال است. لطفاً با پشتیبانی تماس بگیرید.</span>
                         </li>
                       )}
                     </ul>

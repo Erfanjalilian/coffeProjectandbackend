@@ -309,14 +309,14 @@ export default function AddressesPage() {
   // Show loading while checking authentication or loading addresses
   if (isLoading || isCheckingAuth || isLoadingAddresses) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-amber-50 to-amber-100 flex items-center justify-center" dir="rtl">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center" dir="rtl">
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           className="text-center"
         >
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-amber-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 font-[var(--font-yekan)]">در حال بارگذاری...</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#3366FF] mx-auto mb-4"></div>
+          <p className="text-[#1E2024] font-[var(--font-yekan)]">در حال بارگذاری...</p>
         </motion.div>
       </div>
     );
@@ -328,15 +328,15 @@ export default function AddressesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-amber-100 pt-44 pb-12" dir="rtl">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white pt-44 pb-12" dir="rtl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Mobile Menu Button - Only visible on mobile */}
+        {/* Mobile Menu Button - Updated with brand colors */}
         <div className="lg:hidden fixed top-24 right-4 z-40">
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setIsMobileMenuOpen(true)}
-            className="bg-gradient-to-r from-amber-600 to-amber-700 text-white py-3 px-4 rounded-xl shadow-lg flex items-center gap-2 font-[var(--font-yekan)]"
+            className="bg-[#3366FF] hover:bg-[#194FFF] text-white py-3 px-4 rounded-xl shadow-md flex items-center gap-2 font-[var(--font-yekan)] transition-colors duration-200"
           >
             <FiSettings size={18} />
             <span>منوی کاربری</span>
@@ -366,7 +366,7 @@ export default function AddressesPage() {
           )}
         </AnimatePresence>
 
-        {/* Header Section */}
+        {/* Header Section - Updated with brand colors */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -374,10 +374,10 @@ export default function AddressesPage() {
         >
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-800 mb-2 font-[var(--font-yekan)] text-center lg:text-right">
+              <h1 className="text-3xl font-bold text-[#1E2024] mb-2 font-[var(--font-yekan)] text-center lg:text-right">
                 آدرس‌های من
               </h1>
-              <p className="text-gray-600 font-[var(--font-yekan)] text-center lg:text-right">
+              <p className="text-[#333333] font-[var(--font-yekan)] text-center lg:text-right">
                 مدیریت آدرس‌های تحویل سفارشات
               </p>
             </div>
@@ -385,7 +385,7 @@ export default function AddressesPage() {
               {!isAddingAddress && addresses.length > 0 && (
                 <button
                   onClick={() => setIsAddingAddress(true)}
-                  className="bg-amber-600 hover:bg-amber-700 text-white px-6 py-3 rounded-xl font-[var(--font-yekan)] font-semibold transition-colors flex items-center gap-2"
+                  className="bg-[#3366FF] hover:bg-[#194FFF] text-white px-6 py-3 rounded-xl font-[var(--font-yekan)] font-semibold transition-colors flex items-center gap-2"
                 >
                   <FiPlus size={18} />
                   افزودن آدرس جدید
@@ -406,29 +406,29 @@ export default function AddressesPage() {
             />
           </div>
 
-          {/* Main Content - Right Side (3/4 width) */}
+          {/* Main Content - Right Side (3/4 width) - Updated with brand colors */}
           <div className="lg:col-span-3">
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2 }}
             >
-              {/* Add/Edit New Address Card */}
+              {/* Add/Edit New Address Card - Updated with brand colors */}
               {isAddingAddress && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-white rounded-2xl shadow-lg border border-amber-200 p-6 mb-6"
+                  className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 mb-6"
                 >
                   <div className="flex items-center gap-3 mb-6">
-                    <div className="bg-amber-100 p-3 rounded-full">
-                      <FiPlus className="text-amber-600 text-xl" />
+                    <div className="bg-blue-100 p-3 rounded-full">
+                      <FiPlus className="text-[#3366FF] text-xl" />
                     </div>
                     <div>
-                      <h2 className="text-xl font-bold text-gray-800 font-[var(--font-yekan)]">
+                      <h2 className="text-xl font-bold text-[#1E2024] font-[var(--font-yekan)]">
                         {isEditingAddress ? 'ویرایش آدرس' : 'افزودن آدرس جدید'}
                       </h2>
-                      <p className="text-gray-600 font-[var(--font-yekan)] text-sm mt-1">
+                      <p className="text-[#333333] font-[var(--font-yekan)] text-sm mt-1">
                         {isEditingAddress ? 'اطلاعات آدرس را ویرایش کنید' : 'آدرس جدید خود را برای تحویل سفارشات وارد کنید'}
                       </p>
                     </div>
@@ -438,7 +438,7 @@ export default function AddressesPage() {
                     <div className="space-y-6">
                       {/* Name Field (Receiver Name) */}
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2 font-[var(--font-yekan)]">
+                        <label className="block text-sm font-medium text-[#1E2024] mb-2 font-[var(--font-yekan)]">
                           نام تحویل‌گیرنده *
                         </label>
                         <input
@@ -447,7 +447,7 @@ export default function AddressesPage() {
                           value={formData.name}
                           onChange={handleInputChange}
                           required
-                          className="w-full px-4 py-3 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 font-[var(--font-yekan)]"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#3366FF] focus:border-transparent transition-all duration-200 font-[var(--font-yekan)]"
                           placeholder="نام شخصی که سفارش را دریافت می‌کند"
                         />
                       </div>
@@ -455,7 +455,7 @@ export default function AddressesPage() {
                       {/* Province and City Row */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2 font-[var(--font-yekan)]">
+                          <label className="block text-sm font-medium text-[#1E2024] mb-2 font-[var(--font-yekan)]">
                             استان *
                           </label>
                           <select
@@ -463,7 +463,7 @@ export default function AddressesPage() {
                             value={formData.province}
                             onChange={handleInputChange}
                             required
-                            className="w-full px-4 py-3 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 font-[var(--font-yekan)]"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#3366FF] focus:border-transparent transition-all duration-200 font-[var(--font-yekan)]"
                           >
                             <option value="">انتخاب استان</option>
                             {provinces.map(province => (
@@ -475,7 +475,7 @@ export default function AddressesPage() {
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2 font-[var(--font-yekan)]">
+                          <label className="block text-sm font-medium text-[#1E2024] mb-2 font-[var(--font-yekan)]">
                             شهر *
                           </label>
                           <select
@@ -484,7 +484,7 @@ export default function AddressesPage() {
                             onChange={handleInputChange}
                             required
                             disabled={!formData.province}
-                            className="w-full px-4 py-3 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 font-[var(--font-yekan)] disabled:bg-gray-50"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#3366FF] focus:border-transparent transition-all duration-200 font-[var(--font-yekan)] disabled:bg-gray-50"
                           >
                             <option value="">انتخاب شهر</option>
                             {formData.province && cities[formData.province as keyof typeof cities]?.map(city => (
@@ -498,7 +498,7 @@ export default function AddressesPage() {
 
                       {/* Street Address */}
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2 font-[var(--font-yekan)]">
+                        <label className="block text-sm font-medium text-[#1E2024] mb-2 font-[var(--font-yekan)]">
                           آدرس کامل *
                         </label>
                         <input
@@ -507,14 +507,14 @@ export default function AddressesPage() {
                           value={formData.street}
                           onChange={handleInputChange}
                           required
-                          className="w-full px-4 py-3 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 font-[var(--font-yekan)]"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#3366FF] focus:border-transparent transition-all duration-200 font-[var(--font-yekan)]"
                           placeholder="خیابان، کوچه، پلاک، واحد"
                         />
                       </div>
 
                       {/* Postal Code */}
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2 font-[var(--font-yekan)]">
+                        <label className="block text-sm font-medium text-[#1E2024] mb-2 font-[var(--font-yekan)]">
                           کد پستی *
                         </label>
                         <input
@@ -523,13 +523,13 @@ export default function AddressesPage() {
                           value={formData.postalCode}
                           onChange={handleInputChange}
                           required
-                          className="w-full px-4 py-3 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 font-[var(--font-yekan)]"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#3366FF] focus:border-transparent transition-all duration-200 font-[var(--font-yekan)]"
                           placeholder="۱۰ رقمی"
                           maxLength={10}
                         />
                       </div>
 
-                      {/* Action Buttons */}
+                      {/* Action Buttons - Updated with brand colors */}
                       <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -538,7 +538,7 @@ export default function AddressesPage() {
                         <button
                           type="submit"
                           disabled={isSaving}
-                          className="flex-1 bg-amber-600 hover:bg-amber-700 disabled:bg-amber-400 text-white py-3 rounded-xl font-[var(--font-yekan)] font-semibold transition-colors flex items-center justify-center gap-2"
+                          className="flex-1 bg-[#3366FF] hover:bg-[#194FFF] disabled:bg-gray-400 text-white py-3 rounded-xl font-[var(--font-yekan)] font-semibold transition-colors flex items-center justify-center gap-2"
                         >
                           {isSaving ? (
                             <>
@@ -556,7 +556,7 @@ export default function AddressesPage() {
                           type="button"
                           onClick={handleCancel}
                           disabled={isSaving}
-                          className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-xl font-[var(--font-yekan)] font-semibold transition-colors"
+                          className="flex-1 bg-gray-100 hover:bg-gray-200 text-[#333333] py-3 rounded-xl font-[var(--font-yekan)] font-semibold transition-colors"
                         >
                           انصراف
                         </button>
@@ -566,22 +566,22 @@ export default function AddressesPage() {
                 </motion.div>
               )}
 
-              {/* Empty State or Addresses List */}
+              {/* Empty State or Addresses List - Updated with brand colors */}
               {addresses.length === 0 && !isAddingAddress ? (
-                <div className="bg-white rounded-2xl shadow-lg border border-amber-200 p-12 text-center">
+                <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-12 text-center">
                   <div className="max-w-md mx-auto">
-                    <div className="bg-amber-100 p-4 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center">
-                      <FiMapPin className="text-amber-600 text-2xl" />
+                    <div className="bg-blue-100 p-4 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+                      <FiMapPin className="text-[#3366FF] text-2xl" />
                     </div>
-                    <h3 className="text-xl font-bold text-gray-800 mb-3 font-[var(--font-yekan)]">
+                    <h3 className="text-xl font-bold text-[#1E2024] mb-3 font-[var(--font-yekan)]">
                       هیچ آدرسی ثبت نشده است
                     </h3>
-                    <p className="text-gray-600 mb-6 font-[var(--font-yekan)]">
+                    <p className="text-[#333333] mb-6 font-[var(--font-yekan)]">
                       برای دریافت سفارشات خود در اسرع وقت، اولین آدرس خود را اضافه کنید.
                     </p>
                     <button
                       onClick={() => setIsAddingAddress(true)}
-                      className="bg-amber-600 hover:bg-amber-700 text-white px-8 py-3 rounded-xl font-[var(--font-yekan)] font-semibold transition-colors flex items-center gap-2 mx-auto"
+                      className="bg-[#3366FF] hover:bg-[#194FFF] text-white px-8 py-3 rounded-xl font-[var(--font-yekan)] font-semibold transition-colors flex items-center gap-2 mx-auto"
                     >
                       <FiPlus size={18} />
                       افزودن آدرس جدید
@@ -590,22 +590,22 @@ export default function AddressesPage() {
                 </div>
               ) : addresses.length > 0 && (
                 <div className="space-y-6">
-                  {/* Addresses List */}
+                  {/* Addresses List - Updated with brand colors */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {addresses.map((address) => (
                       <motion.div
                         key={address._id}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="bg-white rounded-2xl shadow-lg border border-amber-200 p-6 hover:shadow-xl transition-all duration-300"
+                        className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-all duration-300"
                       >
                         <div className="flex items-start justify-between mb-4">
                           <div className="flex items-center gap-3">
-                            <div className="bg-amber-100 p-2 rounded-full">
-                              <FiHome className="text-amber-600 text-lg" />
+                            <div className="bg-blue-100 p-2 rounded-full">
+                              <FiHome className="text-[#3366FF] text-lg" />
                             </div>
                             <div>
-                              <h3 className="font-bold text-gray-800 font-[var(--font-yekan)]">
+                              <h3 className="font-bold text-[#1E2024] font-[var(--font-yekan)]">
                                 {address.name || 'آدرس بدون نام'}
                               </h3>
                             </div>
@@ -613,7 +613,7 @@ export default function AddressesPage() {
                           <div className="flex gap-2">
                             <button
                               onClick={() => handleEditAddress(address)}
-                              className="text-amber-600 hover:text-amber-700 p-2 transition-colors"
+                              className="text-[#3366FF] hover:text-[#194FFF] p-2 transition-colors"
                               title="ویرایش آدرس"
                             >
                               <FiEdit size={16} />
@@ -628,21 +628,21 @@ export default function AddressesPage() {
                           </div>
                         </div>
 
-                        <div className="space-y-2 text-sm text-gray-600 font-[var(--font-yekan)]">
+                        <div className="space-y-2 text-sm text-[#333333] font-[var(--font-yekan)]">
                           <p className="flex items-center gap-2">
-                            <span className="font-semibold">نام تحویل‌گیرنده:</span>
+                            <span className="font-semibold text-[#1E2024]">نام تحویل‌گیرنده:</span>
                             {address.name}
                           </p>
                           <p className="flex items-center gap-2">
-                            <span className="font-semibold">آدرس:</span>
+                            <span className="font-semibold text-[#1E2024]">آدرس:</span>
                             {address.street}
                           </p>
                           <p className="flex items-center gap-2">
-                            <span className="font-semibold">شهر:</span>
+                            <span className="font-semibold text-[#1E2024]">شهر:</span>
                             {address.city}، {address.province}
                           </p>
                           <p className="flex items-center gap-2">
-                            <span className="font-semibold">کد پستی:</span>
+                            <span className="font-semibold text-[#1E2024]">کد پستی:</span>
                             {address.postalCode}
                           </p>
                         </div>
@@ -650,12 +650,12 @@ export default function AddressesPage() {
                     ))}
                   </div>
 
-                  {/* Add More Address Button */}
+                  {/* Add More Address Button - Updated with brand colors */}
                   {!isAddingAddress && (
                     <div className="text-center">
                       <button
                         onClick={() => setIsAddingAddress(true)}
-                        className="bg-amber-100 hover:bg-amber-200 text-amber-700 px-6 py-3 rounded-xl font-[var(--font-yekan)] font-semibold transition-colors flex items-center gap-2 mx-auto"
+                        className="bg-blue-50 hover:bg-blue-100 text-[#3366FF] px-6 py-3 rounded-xl font-[var(--font-yekan)] font-semibold transition-colors flex items-center gap-2 mx-auto"
                       >
                         <FiPlus size={18} />
                         افزودن آدرس جدید
@@ -665,36 +665,36 @@ export default function AddressesPage() {
                 </div>
               )}
 
-              {/* Information Box */}
+              {/* Information Box - Updated with brand colors */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl p-6 border border-amber-200 mt-6"
+                className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl p-6 border border-blue-200 mt-6"
               >
                 <div className="flex items-start gap-4">
-                  <div className="bg-amber-100 p-2 rounded-full mt-1">
-                    <FiMapPin className="text-amber-600 text-lg" />
+                  <div className="bg-blue-100 p-2 rounded-full mt-1">
+                    <FiMapPin className="text-[#3366FF] text-lg" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-gray-800 mb-2 font-[var(--font-yekan)]">
+                    <h3 className="text-lg font-bold text-[#1E2024] mb-2 font-[var(--font-yekan)]">
                       نکات مهم آدرس‌دهی
                     </h3>
-                    <ul className="text-gray-700 space-y-2 font-[var(--font-yekan)] text-sm">
+                    <ul className="text-[#333333] space-y-2 font-[var(--font-yekan)] text-sm">
                       <li className="flex items-start gap-2">
-                        <span className="text-amber-600 mt-1">•</span>
+                        <span className="text-[#3366FF] mt-1">•</span>
                         <span>آدرس باید به صورت کامل و دقیق وارد شود</span>
                       </li>
                       <li className="flex items-start gap-2">
-                        <span className="text-amber-600 mt-1">•</span>
+                        <span className="text-[#3366FF] mt-1">•</span>
                         <span>کد پستی باید ۱۰ رقمی و معتبر باشد</span>
                       </li>
                       <li className="flex items-start gap-2">
-                        <span className="text-amber-600 mt-1">•</span>
+                        <span className="text-[#3366FF] mt-1">•</span>
                         <span>نام تحویل‌گیرنده باید مشخص باشد</span>
                       </li>
                       <li className="flex items-start gap-2">
-                        <span className="text-amber-600 mt-1">•</span>
+                        <span className="text-[#3366FF] mt-1">•</span>
                         <span>اطمینان حاصل کنید که آدرس قابل دسترسی است</span>
                       </li>
                     </ul>
