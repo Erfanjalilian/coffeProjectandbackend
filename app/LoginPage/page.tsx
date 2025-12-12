@@ -329,7 +329,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-amber-100 pt-44 pb-12">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white pt-44 pb-12">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <motion.div
@@ -345,15 +345,15 @@ export default function LoginPage() {
               <motion.div
                 whileHover={{ rotate: 360 }}
                 transition={{ duration: 0.6 }}
-                className="bg-gradient-to-br from-amber-600 to-amber-700 text-white w-14 h-14 flex items-center justify-center rounded-2xl font-bold text-2xl shadow-lg shadow-amber-600/25"
+                className="bg-[#3366FF] text-white w-14 h-14 flex items-center justify-center rounded-2xl font-bold text-2xl shadow-lg shadow-blue-600/25"
               >
                 <FiCoffee size={24} />
               </motion.div>
               <div className="flex flex-col text-right">
-                <span className="text-2xl font-bold text-gray-800 font-[var(--font-yekan)] leading-tight">
+                <span className="text-2xl font-bold text-[#1E2024] font-[var(--font-yekan)] leading-tight">
                   آی‌کسب
                 </span>
-                <span className="text-sm text-amber-600 font-[var(--font-yekan)] font-medium">
+                <span className="text-sm text-[#3366FF] font-[var(--font-yekan)] font-medium">
                   فروش با دستیار هوش مصنوعی
                 </span>
               </div>
@@ -368,14 +368,14 @@ export default function LoginPage() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="bg-white rounded-2xl shadow-2xl shadow-amber-200/50 border border-amber-200 overflow-hidden"
+              className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden"
             >
-              {/* Card Header */}
-              <div className="bg-gradient-to-r from-amber-600 to-amber-700 px-6 py-6">
+              {/* Card Header - Using exact blue #3366FF */}
+              <div className="bg-[#3366FF] px-6 py-6">
                 <h1 className="text-2xl font-bold text-white text-center font-[var(--font-yekan)]">
                   ورود | ثبت‌نام
                 </h1>
-                <p className="text-amber-100 text-center mt-2 font-[var(--font-yekan)] text-sm">
+                <p className="text-blue-100 text-center mt-2 font-[var(--font-yekan)] text-sm">
                   با وارد کردن شماره موبایل، حساب شما ساخته یا وارد می‌شوید
                 </p>
               </div>
@@ -396,21 +396,21 @@ export default function LoginPage() {
                   <motion.div
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="mb-4 bg-emerald-50 border border-emerald-200 rounded-xl p-4"
+                    className="mb-4 bg-green-50 border border-green-200 rounded-xl p-4"
                   >
-                    <p className="text-emerald-700 text-sm font-[var(--font-yekan)] text-center">{infoMessage}</p>
+                    <p className="text-green-700 text-sm font-[var(--font-yekan)] text-center">{infoMessage}</p>
                   </motion.div>
                 )}
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                   {/* Phone Number Field */}
                   <div>
-                    <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2 font-[var(--font-yekan)]">
+                    <label htmlFor="phone" className="block text-sm font-medium text-[#1E2024] mb-2 font-[var(--font-yekan)]">
                       شماره موبایل
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                        <FiSmartphone className="h-5 w-5 text-amber-600" />
+                        <FiSmartphone className="h-5 w-5 text-[#3366FF]" />
                       </div>
                       <input
                         type="tel"
@@ -421,13 +421,13 @@ export default function LoginPage() {
                         required
                         disabled={otpSent}
                         placeholder="09*********"
-                        className="w-full pr-10 pl-4 py-3 border-2 border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 bg-amber-50/50 transition-all duration-200 font-[var(--font-yekan)] placeholder-gray-400 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        className="w-full pr-10 pl-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#3366FF] focus:border-[#3366FF] bg-white transition-all duration-200 font-[var(--font-yekan)] placeholder-gray-400 disabled:bg-gray-100 disabled:cursor-not-allowed"
                         dir="ltr"
                       />
                     </div>
                   </div>
 
-                  {/* Send OTP Button */}
+                  {/* Send OTP Button - Using exact blue #3366FF */}
                   {!otpSent && (
                     <motion.button
                       type="button"
@@ -435,7 +435,7 @@ export default function LoginPage() {
                       disabled={isLoading}
                       whileHover={{ scale: isLoading ? 1 : 1.02 }}
                       whileTap={{ scale: isLoading ? 1 : 0.98 }}
-                      className="w-full bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white py-4 rounded-xl font-semibold shadow-lg shadow-amber-600/25 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-[var(--font-yekan)]"
+                      className="w-full bg-[#3366FF] hover:bg-[#194FFF] text-white py-4 rounded-xl font-semibold shadow-md disabled:opacity-50 disabled:cursor-not-allowed font-[var(--font-yekan)] transition-colors duration-200"
                     >
                       {isLoading ? (
                         <div className="flex items-center justify-center gap-2">
@@ -456,12 +456,12 @@ export default function LoginPage() {
                       className="space-y-4"
                     >
                       <div>
-                        <label htmlFor="otp" className="block text-sm font-medium text-gray-700 mb-2 font-[var(--font-yekan)]">
+                        <label htmlFor="otp" className="block text-sm font-medium text-[#1E2024] mb-2 font-[var(--font-yekan)]">
                           کد تأیید
                         </label>
                         <div className="relative">
                           <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                            <FiClock className="h-5 w-5 text-amber-600" />
+                            <FiClock className="h-5 w-5 text-[#3366FF]" />
                           </div>
                           <input
                             type="text"
@@ -472,7 +472,7 @@ export default function LoginPage() {
                             required
                             maxLength={6}
                             placeholder="کد ۶ رقمی ارسال شده"
-                            className="w-full pr-10 pl-4 py-3 border-2 border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 bg-amber-50/50 transition-all duration-200 font-[var(--font-yekan)] placeholder-gray-400 text-center tracking-widest"
+                            className="w-full pr-10 pl-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#3366FF] focus:border-[#3366FF] bg-white transition-all duration-200 font-[var(--font-yekan)] placeholder-gray-400 text-center tracking-widest"
                             dir="ltr"
                           />
                         </div>
@@ -490,7 +490,7 @@ export default function LoginPage() {
                           className={`text-sm font-[var(--font-yekan)] transition-colors ${
                             countdown > 0
                               ? "text-gray-400 cursor-not-allowed"
-                              : "text-amber-600 hover:text-amber-700"
+                              : "text-[#3366FF] hover:text-[#194FFF]"
                           }`}
                         >
                           {countdown > 0 ? (
@@ -501,13 +501,13 @@ export default function LoginPage() {
                         </button>
                       </div>
 
-                      {/* Submit Button */}
+                      {/* Submit Button - Using orange #FFA500 for CTA */}
                       <motion.button
                         type="submit"
                         disabled={isLoading}
                         whileHover={{ scale: isLoading ? 1 : 1.02 }}
                         whileTap={{ scale: isLoading ? 1 : 0.98 }}
-                        className="w-full bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white py-4 rounded-xl font-semibold shadow-lg shadow-amber-600/25 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-[var(--font-yekan)]"
+                        className="w-full bg-[#FFA500] hover:bg-orange-600 text-white py-4 rounded-xl font-semibold shadow-md disabled:opacity-50 disabled:cursor-not-allowed font-[var(--font-yekan)] transition-colors duration-200"
                       >
                         {isLoading ? (
                           <div className="flex items-center justify-center gap-2">
@@ -522,20 +522,20 @@ export default function LoginPage() {
                   )}
                 </form>
 
-                {/* AI Assistant Message */}
+                {/* AI Assistant Message - Using purple #A7ABFA for accent */}
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.5 }}
-                  className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-4 border border-amber-200 mt-6"
+                  className="bg-gradient-to-r from-[#A7ABFA]/10 to-blue-50 rounded-xl p-4 border border-[#A7ABFA]/20 mt-6"
                 >
                   <div className="flex items-start gap-3">
-                    <div className="bg-gradient-to-r from-amber-600 to-amber-700 text-white p-2 rounded-full">
+                    <div className="bg-[#3366FF] text-white p-2 rounded-full">
                       <FiMessageCircle size={18} />
                     </div>
                     <div className="flex-1">
-                      <p className="text-gray-700 font-[var(--font-yekan)] text-sm leading-relaxed">
-                        <span className="font-semibold text-amber-700">دستیار هوش مصنوعی:</span>
+                      <p className="text-[#1E2024] font-[var(--font-yekan)] text-sm leading-relaxed">
+                        <span className="font-semibold text-[#3366FF]">دستیار هوش مصنوعی:</span>
                         <br />
                         فقط با وارد کردن شماره موبایل، حساب شما به طور خودکار ساخته می‌شود و می‌توانید از تمام امکانات آی‌کسب استفاده کنید!
                       </p>
@@ -547,7 +547,7 @@ export default function LoginPage() {
                 <div className="mt-6 text-center">
                   <p className="text-gray-500 font-[var(--font-yekan)] text-xs">
                     با ورود یا ثبت‌نام، با{" "}
-                    <Link href="/terms" className="text-amber-600 hover:text-amber-700 underline">
+                    <Link href="/terms" className="text-[#3366FF] hover:text-[#194FFF] underline">
                       شرایط و قوانین
                     </Link>{" "}
                     آی‌کسب موافقت می‌کنید
