@@ -163,14 +163,14 @@ export default function DashboardPage() {
   // Show loading while checking authentication
   if (isLoading || isCheckingAuth) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-amber-50 to-amber-100 flex items-center justify-center" dir="rtl">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center" dir="rtl">
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           className="text-center"
         >
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-amber-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 font-[var(--font-yekan)]">در حال بارگذاری...</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#3366FF] mx-auto mb-4"></div>
+          <p className="text-[#1E2024] font-[var(--font-yekan)]">در حال بارگذاری...</p>
         </motion.div>
       </div>
     );
@@ -203,7 +203,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-amber-100 pt-44 pb-12" dir="rtl">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white pt-44 pb-12" dir="rtl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Mobile Menu Button - Only visible on mobile - Different from header menu */}
         <div className="lg:hidden fixed top-24 right-4 z-40">
@@ -211,7 +211,7 @@ export default function DashboardPage() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setIsMobileMenuOpen(true)}
-            className="bg-gradient-to-r from-amber-600 to-amber-700 text-white py-3 px-4 rounded-xl shadow-lg flex items-center gap-2 font-[var(--font-yekan)]"
+            className="bg-[#3366FF] hover:bg-[#194FFF] text-white py-3 px-4 rounded-xl shadow-md flex items-center gap-2 font-[var(--font-yekan)] transition-colors duration-200"
           >
             <FiSettings size={18} />
             <span>منوی کاربری</span>
@@ -241,16 +241,16 @@ export default function DashboardPage() {
           )}
         </AnimatePresence>
 
-        {/* Header Section - Amazon Style */}
+        {/* Header Section - Updated with brand colors */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <h1 className="text-3xl font-bold text-gray-800 mb-2 font-[var(--font-yekan)] text-center lg:text-right">
+          <h1 className="text-3xl font-bold text-[#1E2024] mb-2 font-[var(--font-yekan)] text-center lg:text-right">
             حساب کاربری
           </h1>
-          <p className="text-gray-600 font-[var(--font-yekan)] text-center lg:text-right">
+          <p className="text-[#333333] font-[var(--font-yekan)] text-center lg:text-right">
             مدیریت اطلاعات شخصی و تنظیمات حساب شما
           </p>
         </motion.div>
@@ -266,7 +266,7 @@ export default function DashboardPage() {
             />
           </div>
 
-          {/* Main Content - Right Side (3/4 width) - Amazon Style */}
+          {/* Main Content - Right Side (3/4 width) - Updated with brand colors */}
           <div className="lg:col-span-3">
             <motion.div
               initial={{ opacity: 0, x: -20 }}
@@ -274,26 +274,26 @@ export default function DashboardPage() {
               transition={{ delay: 0.2 }}
               className="space-y-6"
             >
-              {/* Welcome Card - Amazon Style Header */}
-              <div className="bg-white rounded-2xl shadow-lg border border-amber-200 p-6">
+              {/* Welcome Card - Updated with brand colors */}
+              <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-bold text-gray-800 font-[var(--font-yekan)]">
+                  <h2 className="text-xl font-bold text-[#1E2024] font-[var(--font-yekan)]">
                     خوش آمدید، {getUserWelcomeName()}!
                   </h2>
-                  <div className="bg-amber-100 p-2 rounded-full">
-                    <FiCoffee className="text-amber-600 text-xl" />
+                  <div className="bg-blue-100 p-2 rounded-full">
+                    <FiCoffee className="text-[#3366FF] text-xl" />
                   </div>
                 </div>
                 
-                {/* AI Assistant Message */}
-                <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-4 border border-amber-200">
+                {/* AI Assistant Message - Updated with brand colors */}
+                <div className="bg-gradient-to-r from-[#A7ABFA]/10 to-blue-50 rounded-xl p-4 border border-[#A7ABFA]/20">
                   <div className="flex items-start gap-3">
-                    <div className="bg-gradient-to-r from-amber-600 to-amber-700 text-white p-2 rounded-full">
+                    <div className="bg-[#3366FF] text-white p-2 rounded-full">
                       <FiMessageCircle size={18} />
                     </div>
                     <div className="flex-1">
-                      <p className="text-gray-700 font-[var(--font-yekan)] text-sm leading-relaxed">
-                        <span className="font-semibold text-amber-700">دستیار هوش مصنوعی:</span>
+                      <p className="text-[#1E2024] font-[var(--font-yekan)] text-sm leading-relaxed">
+                        <span className="font-semibold text-[#3366FF]">دستیار هوش مصنوعی:</span>
                         <br />
                         به پنل کاربری خود خوش آمدید! من اینجام تا به شما در کشف بهترین قهوه‌ها و مدیریت حساب‌تون کمک کنم. 
                         از طریق منوی کناری می‌تونید به تمام بخش‌های حساب کاربری دسترسی داشته باشید.
@@ -303,43 +303,43 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {/* Account Overview - Single Personal Information Card */}
+              {/* Account Overview - Single Personal Information Card - Updated with brand colors */}
               <div className="grid grid-cols-1 gap-6">
                 {/* Personal Information Card */}
                 <motion.div
                   whileHover={{ y: -4 }}
-                  className="bg-white rounded-2xl shadow-lg border border-amber-200 p-6 hover:shadow-xl transition-all duration-300"
+                  className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-all duration-300"
                 >
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="bg-amber-100 p-2 rounded-full">
-                      <FiUser className="text-amber-600 text-lg" />
+                    <div className="bg-blue-100 p-2 rounded-full">
+                      <FiUser className="text-[#3366FF] text-lg" />
                     </div>
-                    <h3 className="text-lg font-bold text-gray-800 font-[var(--font-yekan)]">
+                    <h3 className="text-lg font-bold text-[#1E2024] font-[var(--font-yekan)]">
                       اطلاعات شخصی
                     </h3>
                   </div>
                   <div className="space-y-3">
-                    <div className="flex justify-between items-center py-2 border-b border-amber-100">
-                      <span className="text-gray-600 font-[var(--font-yekan)] text-sm">نام کامل:</span>
-                      <span className="text-gray-800 font-[var(--font-yekan)] font-semibold">
+                    <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                      <span className="text-[#333333] font-[var(--font-yekan)] text-sm">نام کامل:</span>
+                      <span className="text-[#1E2024] font-[var(--font-yekan)] font-semibold">
                         {getUserDisplayName()}
                       </span>
                     </div>
-                    <div className="flex justify-between items-center py-2 border-b border-amber-100">
-                      <span className="text-gray-600 font-[var(--font-yekan)] text-sm">نام کاربری:</span>
-                      <span className="text-gray-800 font-[var(--font-yekan)] font-semibold">
+                    <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                      <span className="text-[#333333] font-[var(--font-yekan)] text-sm">نام کاربری:</span>
+                      <span className="text-[#1E2024] font-[var(--font-yekan)] font-semibold">
                         {user?.username || "نام کاربری وارد نشده"}
                       </span>
                     </div>
                     <div className="flex justify-between items-center py-2">
-                      <span className="text-gray-600 font-[var(--font-yekan)] text-sm">عضویت از:</span>
-                      <span className="text-gray-800 font-[var(--font-yekan)] text-sm">
+                      <span className="text-[#333333] font-[var(--font-yekan)] text-sm">عضویت از:</span>
+                      <span className="text-[#1E2024] font-[var(--font-yekan)] text-sm">
                         {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('fa-IR') : '---'}
                       </span>
                     </div>
                   </div>
                   <Link href="/DashboardPage/profile">
-                    <button className="w-full mt-4 bg-amber-100 hover:bg-amber-200 text-amber-700 py-2 rounded-xl font-[var(--font-yekan)] font-semibold transition-colors flex items-center justify-center gap-2">
+                    <button className="w-full mt-4 bg-blue-50 hover:bg-blue-100 text-[#3366FF] py-2 rounded-xl font-[var(--font-yekan)] font-semibold transition-colors flex items-center justify-center gap-2">
                       <FiEdit size={16} />
                       ویرایش اطلاعات
                     </button>
@@ -347,18 +347,18 @@ export default function DashboardPage() {
                 </motion.div>
               </div>
 
-              {/* Features Grid - Amazon Style */}
+              {/* Features Grid - Updated with brand colors */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Favorites Card - UPDATED: Now shows actual favorite products */}
+                {/* Favorites Card - Updated with brand colors */}
                 <motion.div
                   whileHover={{ y: -4 }}
-                  className="bg-white rounded-2xl shadow-lg border border-amber-200 p-6 hover:shadow-xl transition-all duration-300"
+                  className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-all duration-300"
                 >
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="bg-amber-100 p-2 rounded-full">
-                      <FiHeart className="text-amber-600 text-lg" />
+                    <div className="bg-blue-100 p-2 rounded-full">
+                      <FiHeart className="text-[#3366FF] text-lg" />
                     </div>
-                    <h3 className="text-lg font-bold text-gray-800 font-[var(--font-yekan)]">
+                    <h3 className="text-lg font-bold text-[#1E2024] font-[var(--font-yekan)]">
                       علاقه‌مندی‌ها {favorites.length > 0 && `(${favorites.length})`}
                     </h3>
                   </div>
@@ -366,20 +366,20 @@ export default function DashboardPage() {
                   {favorites.length > 0 ? (
                     <div className="space-y-3 max-h-40 overflow-y-auto">
                       {favorites.slice(0, 2).map((product) => (
-                        <div key={product._id} className="bg-amber-50 rounded-lg p-3 border border-amber-200">
+                        <div key={product._id} className="bg-blue-50 rounded-lg p-3 border border-blue-100">
                           <div className="flex items-start gap-3">
-                            <div className="bg-gradient-to-br from-amber-100 to-amber-200 rounded-lg w-12 h-12 flex items-center justify-center flex-shrink-0">
-                              <FiCoffee className="text-amber-500" size={20} />
+                            <div className="bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg w-12 h-12 flex items-center justify-center flex-shrink-0">
+                              <FiCoffee className="text-[#3366FF]" size={20} />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-gray-800 font-[var(--font-yekan)] text-sm font-semibold mb-1 truncate">
+                              <p className="text-[#1E2024] font-[var(--font-yekan)] text-sm font-semibold mb-1 truncate">
                                 {product.name}
                               </p>
-                              <p className="text-amber-700 font-[var(--font-yekan)] text-xs font-bold">
+                              <p className="text-[#FFA500] font-[var(--font-yekan)] text-xs font-bold">
                                 {formatPrice(product.priceAfterDiscount)}
                               </p>
                               {product.brand && (
-                                <p className="text-gray-600 font-[var(--font-yekan)] text-xs mt-1">
+                                <p className="text-[#333333] font-[var(--font-yekan)] text-xs mt-1">
                                   برند: {product.brand}
                                 </p>
                               )}
@@ -388,7 +388,7 @@ export default function DashboardPage() {
                         </div>
                       ))}
                       {favorites.length > 2 && (
-                        <p className="text-gray-500 font-[var(--font-yekan)] text-xs text-center">
+                        <p className="text-[#666666] font-[var(--font-yekan)] text-xs text-center">
                           و {favorites.length - 2} محصول دیگر در علاقه‌مندی‌ها
                         </p>
                       )}
@@ -396,52 +396,52 @@ export default function DashboardPage() {
                   ) : (
                     <div className="text-center py-8">
                       <FiHeart className="text-gray-300 text-4xl mx-auto mb-3" />
-                      <p className="text-gray-500 font-[var(--font-yekan)] text-sm">
+                      <p className="text-[#666666] font-[var(--font-yekan)] text-sm">
                         هیچ محصولی در لیست علاقه‌مندی‌های شما نیست
                       </p>
                     </div>
                   )}
                   
                   <Link href="/DashboardPage/favorites">
-                    <button className="w-full mt-4 bg-amber-100 hover:bg-amber-200 text-amber-700 py-2 rounded-xl font-[var(--font-yekan)] font-semibold transition-colors">
+                    <button className="w-full mt-4 bg-blue-50 hover:bg-blue-100 text-[#3366FF] py-2 rounded-xl font-[var(--font-yekan)] font-semibold transition-colors">
                       {favorites.length > 0 ? 'مشاهده همه علاقه‌مندی‌ها' : 'افزودن به علاقه‌مندی‌ها'} →
                     </button>
                   </Link>
                 </motion.div>
 
-                {/* Addresses Card */}
+                {/* Addresses Card - Updated with brand colors */}
                 <motion.div
                   whileHover={{ y: -4 }}
-                  className="bg-white rounded-2xl shadow-lg border border-amber-200 p-6 hover:shadow-xl transition-all duration-300"
+                  className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-all duration-300"
                 >
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="bg-amber-100 p-2 rounded-full">
-                      <FiMapPin className="text-amber-600 text-lg" />
+                    <div className="bg-blue-100 p-2 rounded-full">
+                      <FiMapPin className="text-[#3366FF] text-lg" />
                     </div>
-                    <h3 className="text-lg font-bold text-gray-800 font-[var(--font-yekan)]">
+                    <h3 className="text-lg font-bold text-[#1E2024] font-[var(--font-yekan)]">
                       آدرس‌های من {addresses.length > 0 && `(${addresses.length})`}
                     </h3>
                   </div>
                   
                   {isLoadingData ? (
                     <div className="text-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600 mx-auto mb-3"></div>
-                      <p className="text-gray-500 font-[var(--font-yekan)] text-sm">در حال بارگذاری...</p>
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#3366FF] mx-auto mb-3"></div>
+                      <p className="text-[#666666] font-[var(--font-yekan)] text-sm">در حال بارگذاری...</p>
                     </div>
                   ) : addresses.length > 0 ? (
                     <div className="space-y-3 max-h-40 overflow-y-auto">
                       {addresses.slice(0, 2).map((address) => (
-                        <div key={address._id} className="bg-amber-50 rounded-lg p-3 border border-amber-200">
-                          <p className="text-gray-800 font-[var(--font-yekan)] text-sm font-semibold mb-1">
+                        <div key={address._id} className="bg-blue-50 rounded-lg p-3 border border-blue-100">
+                          <p className="text-[#1E2024] font-[var(--font-yekan)] text-sm font-semibold mb-1">
                             {address.name}
                           </p>
-                          <p className="text-gray-600 font-[var(--font-yekan)] text-xs">
+                          <p className="text-[#333333] font-[var(--font-yekan)] text-xs">
                             {address.province}، {address.city}
                           </p>
                         </div>
                       ))}
                       {addresses.length > 2 && (
-                        <p className="text-gray-500 font-[var(--font-yekan)] text-xs text-center">
+                        <p className="text-[#666666] font-[var(--font-yekan)] text-xs text-center">
                           و {addresses.length - 2} آدرس دیگر
                         </p>
                       )}
@@ -449,55 +449,55 @@ export default function DashboardPage() {
                   ) : (
                     <div className="text-center py-8">
                       <FiMapPin className="text-gray-300 text-4xl mx-auto mb-3" />
-                      <p className="text-gray-500 font-[var(--font-yekan)] text-sm">
+                      <p className="text-[#666666] font-[var(--font-yekan)] text-sm">
                         هیچ آدرسی ثبت نشده است
                       </p>
                     </div>
                   )}
                   
                   <Link href="/DashboardPage/addresses">
-                    <button className="w-full mt-4 bg-amber-100 hover:bg-amber-200 text-amber-700 py-2 rounded-xl font-[var(--font-yekan)] font-semibold transition-colors">
+                    <button className="w-full mt-4 bg-blue-50 hover:bg-blue-100 text-[#3366FF] py-2 rounded-xl font-[var(--font-yekan)] font-semibold transition-colors">
                       {addresses.length > 0 ? 'مدیریت آدرس‌ها' : 'افزودن آدرس جدید'} →
                     </button>
                   </Link>
                 </motion.div>
 
-                {/* Bank Accounts Card */}
+                {/* Bank Accounts Card - Updated with brand colors */}
                 <motion.div
                   whileHover={{ y: -4 }}
-                  className="bg-white rounded-2xl shadow-lg border border-amber-200 p-6 hover:shadow-xl transition-all duration-300"
+                  className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-all duration-300"
                 >
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="bg-amber-100 p-2 rounded-full">
-                      <FiCreditCard className="text-amber-600 text-lg" />
+                    <div className="bg-blue-100 p-2 rounded-full">
+                      <FiCreditCard className="text-[#3366FF] text-lg" />
                     </div>
-                    <h3 className="text-lg font-bold text-gray-800 font-[var(--font-yekan)]">
+                    <h3 className="text-lg font-bold text-[#1E2024] font-[var(--font-yekan)]">
                       حساب‌های بانکی {bankAccounts.length > 0 && `(${bankAccounts.length})`}
                     </h3>
                   </div>
                   
                   {isLoadingData ? (
                     <div className="text-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600 mx-auto mb-3"></div>
-                      <p className="text-gray-500 font-[var(--font-yekan)] text-sm">در حال بارگذاری...</p>
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#3366FF] mx-auto mb-3"></div>
+                      <p className="text-[#666666] font-[var(--font-yekan)] text-sm">در حال بارگذاری...</p>
                     </div>
                   ) : bankAccounts.length > 0 ? (
                     <div className="space-y-3 max-h-40 overflow-y-auto">
                       {bankAccounts.slice(0, 2).map((account) => (
-                        <div key={account._id} className="bg-amber-50 rounded-lg p-3 border border-amber-200">
-                          <p className="text-gray-800 font-[var(--font-yekan)] text-sm font-semibold mb-1">
+                        <div key={account._id} className="bg-blue-50 rounded-lg p-3 border border-blue-100">
+                          <p className="text-[#1E2024] font-[var(--font-yekan)] text-sm font-semibold mb-1">
                             {account.bankName}
                           </p>
-                          <p className="text-gray-600 font-[var(--font-yekan)] text-xs">
+                          <p className="text-[#333333] font-[var(--font-yekan)] text-xs">
                             {formatCardNumber(account.cardNumber)}
                           </p>
-                          <p className="text-gray-500 font-[var(--font-yekan)] text-xs mt-1">
+                          <p className="text-[#666666] font-[var(--font-yekan)] text-xs mt-1">
                             {account.accountType}
                           </p>
                         </div>
                       ))}
                       {bankAccounts.length > 2 && (
-                        <p className="text-gray-500 font-[var(--font-yekan)] text-xs text-center">
+                        <p className="text-[#666666] font-[var(--font-yekan)] text-xs text-center">
                           و {bankAccounts.length - 2} حساب دیگر
                         </p>
                       )}
@@ -505,26 +505,26 @@ export default function DashboardPage() {
                   ) : (
                     <div className="text-center py-8">
                       <FiCreditCard className="text-gray-300 text-4xl mx-auto mb-3" />
-                      <p className="text-gray-500 font-[var(--font-yekan)] text-sm">
+                      <p className="text-[#666666] font-[var(--font-yekan)] text-sm">
                         هیچ حساب بانکی ثبت نشده است
                       </p>
                     </div>
                   )}
                   
                   <Link href="/DashboardPage/BankAccountsPage">
-                    <button className="w-full mt-4 bg-amber-100 hover:bg-amber-200 text-amber-700 py-2 rounded-xl font-[var(--font-yekan)] font-semibold transition-colors">
+                    <button className="w-full mt-4 bg-blue-50 hover:bg-blue-100 text-[#3366FF] py-2 rounded-xl font-[var(--font-yekan)] font-semibold transition-colors">
                       {bankAccounts.length > 0 ? 'مدیریت حساب‌ها' : 'افزودن حساب بانکی'} →
                     </button>
                   </Link>
                 </motion.div>
               </div>
 
-              {/* AI Recommendation Section */}
+              {/* AI Recommendation Section - Updated with brand colors */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
-                className="bg-gradient-to-r from-amber-600 to-amber-700 rounded-2xl p-6 text-white"
+                className="bg-gradient-to-r from-[#3366FF] to-blue-700 rounded-2xl p-6 text-white"
               >
                 <div className="flex items-center gap-4">
                   <div className="bg-white/20 p-3 rounded-full">
@@ -534,11 +534,11 @@ export default function DashboardPage() {
                     <h3 className="text-xl font-bold font-[var(--font-yekan)] mb-2">
                       پیشنهاد هوش مصنوعی برای شما
                     </h3>
-                    <p className="text-amber-100 font-[var(--font-yekan)] text-sm">
+                    <p className="text-blue-100 font-[var(--font-yekan)] text-sm">
                       بر اساس سلیقه شما، قهوه‌های اسپشیالتی جدیدی رو پیشنهاد می‌کنم که ممکنه دوست داشته باشید!
                     </p>
                     <Link href="/products?recommended=true">
-                      <button className="mt-3 bg-white text-amber-700 hover:bg-amber-50 py-2 px-6 rounded-xl font-[var(--font-yekan)] font-semibold transition-colors">
+                      <button className="mt-3 bg-white text-[#3366FF] hover:bg-blue-50 py-2 px-6 rounded-xl font-[var(--font-yekan)] font-semibold transition-colors">
                         مشاهده پیشنهادات
                       </button>
                     </Link>

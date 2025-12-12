@@ -175,14 +175,14 @@ export default function OrdersPage() {
   // Show loading while checking authentication
   if (isLoading || isCheckingAuth) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-amber-50 to-amber-100 flex items-center justify-center" dir="rtl">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center" dir="rtl">
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           className="text-center"
         >
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-amber-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 font-[var(--font-yekan)]">در حال بارگذاری...</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#3366FF] mx-auto mb-4"></div>
+          <p className="text-[#1E2024] font-[var(--font-yekan)]">در حال بارگذاری...</p>
         </motion.div>
       </div>
     );
@@ -194,15 +194,15 @@ export default function OrdersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-amber-100 pt-44 pb-12" dir="rtl">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white pt-44 pb-12" dir="rtl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Mobile Menu Button */}
+        {/* Mobile Menu Button - Updated with brand colors */}
         <div className="lg:hidden fixed top-24 right-4 z-40">
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setIsMobileMenuOpen(true)}
-            className="bg-gradient-to-r from-amber-600 to-amber-700 text-white py-3 px-4 rounded-xl shadow-lg flex items-center gap-2 font-[var(--font-yekan)]"
+            className="bg-[#3366FF] hover:bg-[#194FFF] text-white py-3 px-4 rounded-xl shadow-md flex items-center gap-2 font-[var(--font-yekan)] transition-colors duration-200"
           >
             <FiSettings size={18} />
             <span>منوی کاربری</span>
@@ -232,16 +232,16 @@ export default function OrdersPage() {
           )}
         </AnimatePresence>
 
-        {/* Header Section */}
+        {/* Header Section - Updated with brand colors */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <h1 className="text-3xl font-bold text-gray-800 mb-2 font-[var(--font-yekan)] text-center lg:text-right">
+          <h1 className="text-3xl font-bold text-[#1E2024] mb-2 font-[var(--font-yekan)] text-center lg:text-right">
             سفارش‌های من
           </h1>
-          <p className="text-gray-600 font-[var(--font-yekan)] text-center lg:text-right">
+          <p className="text-[#333333] font-[var(--font-yekan)] text-center lg:text-right">
             مدیریت و پیگیری سفارش‌های شما
           </p>
         </motion.div>
@@ -257,7 +257,7 @@ export default function OrdersPage() {
             />
           </div>
 
-          {/* Main Content */}
+          {/* Main Content - Updated with brand colors */}
           <div className="lg:col-span-3">
             <motion.div
               initial={{ opacity: 0, x: -20 }}
@@ -265,71 +265,71 @@ export default function OrdersPage() {
               transition={{ delay: 0.2 }}
               className="space-y-6"
             >
-              {/* Stats Overview */}
+              {/* Stats Overview - Updated with brand colors */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-white rounded-xl p-4 shadow-lg border border-amber-200 text-center">
-                  <div className="bg-amber-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-2">
-                    <FiPackage className="text-amber-600 text-xl" />
+                <div className="bg-white rounded-xl p-4 shadow-lg border border-gray-200 text-center">
+                  <div className="bg-blue-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <FiPackage className="text-[#3366FF] text-xl" />
                   </div>
-                  <p className="text-gray-600 font-[var(--font-yekan)] text-sm">کل سفارشات</p>
-                  <p className="text-2xl font-bold text-gray-800 font-[var(--font-yekan)]">{orders.length}</p>
+                  <p className="text-[#333333] font-[var(--font-yekan)] text-sm">کل سفارشات</p>
+                  <p className="text-2xl font-bold text-[#1E2024] font-[var(--font-yekan)]">{orders.length}</p>
                 </div>
                 
-                <div className="bg-white rounded-xl p-4 shadow-lg border border-amber-200 text-center">
+                <div className="bg-white rounded-xl p-4 shadow-lg border border-gray-200 text-center">
                   <div className="bg-blue-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-2">
-                    <FiClock className="text-blue-600 text-xl" />
+                    <FiClock className="text-[#3366FF] text-xl" />
                   </div>
-                  <p className="text-gray-600 font-[var(--font-yekan)] text-sm">در حال پردازش</p>
-                  <p className="text-2xl font-bold text-gray-800 font-[var(--font-yekan)]">
+                  <p className="text-[#333333] font-[var(--font-yekan)] text-sm">در حال پردازش</p>
+                  <p className="text-2xl font-bold text-[#1E2024] font-[var(--font-yekan)]">
                     {orders.filter(order => order.status === 'PROCESSING').length}
                   </p>
                 </div>
                 
-                <div className="bg-white rounded-xl p-4 shadow-lg border border-amber-200 text-center">
-                  <div className="bg-purple-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-2">
-                    <FiShipping className="text-purple-600 text-xl" />
+                <div className="bg-white rounded-xl p-4 shadow-lg border border-gray-200 text-center">
+                  <div className="bg-blue-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <FiShipping className="text-[#3366FF] text-xl" />
                   </div>
-                  <p className="text-gray-600 font-[var(--font-yekan)] text-sm">ارسال شده</p>
-                  <p className="text-2xl font-bold text-gray-800 font-[var(--font-yekan)]">
+                  <p className="text-[#333333] font-[var(--font-yekan)] text-sm">ارسال شده</p>
+                  <p className="text-2xl font-bold text-[#1E2024] font-[var(--font-yekan)]">
                     {orders.filter(order => order.status === 'SHIPPED').length}
                   </p>
                 </div>
                 
-                <div className="bg-white rounded-xl p-4 shadow-lg border border-amber-200 text-center">
-                  <div className="bg-green-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-2">
-                    <FiCheckCircle className="text-green-600 text-xl" />
+                <div className="bg-white rounded-xl p-4 shadow-lg border border-gray-200 text-center">
+                  <div className="bg-blue-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <FiCheckCircle className="text-[#3366FF] text-xl" />
                   </div>
-                  <p className="text-gray-600 font-[var(--font-yekan)] text-sm">تحویل شده</p>
-                  <p className="text-2xl font-bold text-gray-800 font-[var(--font-yekan)]">
+                  <p className="text-[#333333] font-[var(--font-yekan)] text-sm">تحویل شده</p>
+                  <p className="text-2xl font-bold text-[#1E2024] font-[var(--font-yekan)]">
                     {orders.filter(order => order.status === 'DELIVERED').length}
                   </p>
                 </div>
               </div>
 
-              {/* Orders List */}
-              <div className="bg-white rounded-2xl shadow-lg border border-amber-200 overflow-hidden">
-                <div className="p-6 border-b border-amber-200">
-                  <h2 className="text-xl font-bold text-gray-800 font-[var(--font-yekan)] flex items-center gap-2">
-                    <FiPackage className="text-amber-600" />
+              {/* Orders List - Updated with brand colors */}
+              <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+                <div className="p-6 border-b border-gray-200">
+                  <h2 className="text-xl font-bold text-[#1E2024] font-[var(--font-yekan)] flex items-center gap-2">
+                    <FiPackage className="text-[#3366FF]" />
                     لیست سفارش‌ها
                   </h2>
-                  <p className="text-gray-500 text-sm mt-1 font-[var(--font-yekan)]">
+                  <p className="text-[#666666] text-sm mt-1 font-[var(--font-yekan)]">
                     نمایش سفارش‌های کاربر: {getUserWelcomeName()}
                   </p>
                 </div>
 
                 {isLoadingOrders ? (
                   <div className="p-8 text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto mb-4"></div>
-                    <p className="text-gray-600 font-[var(--font-yekan)]">در حال بارگذاری سفارش‌ها...</p>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3366FF] mx-auto mb-4"></div>
+                    <p className="text-[#333333] font-[var(--font-yekan)]">در حال بارگذاری سفارش‌ها...</p>
                   </div>
                 ) : error ? (
                   <div className="p-8 text-center">
                     <FiPackage className="text-gray-300 text-4xl mx-auto mb-3" />
-                    <p className="text-gray-600 font-[var(--font-yekan)] mb-4">{error}</p>
+                    <p className="text-[#333333] font-[var(--font-yekan)] mb-4">{error}</p>
                     <button
                       onClick={fetchOrders}
-                      className="bg-amber-600 hover:bg-amber-700 text-white py-2 px-6 rounded-xl font-[var(--font-yekan)] transition-colors"
+                      className="bg-[#3366FF] hover:bg-[#194FFF] text-white py-2 px-6 rounded-xl font-[var(--font-yekan)] transition-colors"
                     >
                       تلاش مجدد
                     </button>
@@ -337,18 +337,18 @@ export default function OrdersPage() {
                 ) : orders.length === 0 ? (
                   <div className="p-8 text-center">
                     <FiPackage className="text-gray-300 text-4xl mx-auto mb-3" />
-                    <p className="text-gray-600 font-[var(--font-yekan)] mb-2">شما هنوز هیچ سفارشی ثبت نکرده‌اید</p>
-                    <p className="text-gray-500 text-sm mb-4 font-[var(--font-yekan)]">
+                    <p className="text-[#333333] font-[var(--font-yekan)] mb-2">شما هنوز هیچ سفارشی ثبت نکرده‌اید</p>
+                    <p className="text-[#666666] text-sm mb-4 font-[var(--font-yekan)]">
                       اولین سفارش خود را ثبت کنید و از محصولات ما لذت ببرید
                     </p>
                     <Link href="/CoffeeCategoryPage">
-                      <button className="bg-amber-600 hover:bg-amber-700 text-white py-2 px-6 rounded-xl font-[var(--font-yekan)] transition-colors">
+                      <button className="bg-[#3366FF] hover:bg-[#194FFF] text-white py-2 px-6 rounded-xl font-[var(--font-yekan)] transition-colors">
                         مشاهده محصولات و ثبت سفارش
                       </button>
                     </Link>
                   </div>
                 ) : (
-                  <div className="divide-y divide-amber-100">
+                  <div className="divide-y divide-gray-100">
                     {orders.map((order) => {
                       const statusInfo = getStatusInfo(order.status);
                       const StatusIcon = statusInfo.icon;
@@ -359,7 +359,7 @@ export default function OrdersPage() {
                           key={order._id}
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
-                          className="p-6 hover:bg-amber-50 transition-colors"
+                          className="p-6 hover:bg-blue-50 transition-colors"
                         >
                           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                             {/* Order Info */}
@@ -369,7 +369,7 @@ export default function OrdersPage() {
                                   <StatusIcon size={14} />
                                   {statusInfo.text}
                                 </span>
-                                <span className="text-gray-500 text-sm font-[var(--font-yekan)]">
+                                <span className="text-[#666666] text-sm font-[var(--font-yekan)]">
                                   کد سفارش: {order.authority}
                                 </span>
                               </div>
@@ -377,14 +377,14 @@ export default function OrdersPage() {
                               <div className="space-y-2">
                                 {order.items.map((item) => (
                                   <div key={item._id} className="flex items-center gap-3">
-                                    <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
-                                      <FiCoffee className="text-amber-600" />
+                                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                                      <FiCoffee className="text-[#3366FF]" />
                                     </div>
                                     <div className="flex-1">
-                                      <p className="text-gray-800 font-[var(--font-yekan)] font-semibold">
+                                      <p className="text-[#1E2024] font-[var(--font-yekan)] font-semibold">
                                         {item.product.name}
                                       </p>
-                                      <p className="text-gray-600 font-[var(--font-yekan)] text-sm">
+                                      <p className="text-[#333333] font-[var(--font-yekan)] text-sm">
                                         {item.quantity} عدد × {formatPrice(item.priceAtTimeOfAdding)}
                                       </p>
                                     </div>
@@ -392,7 +392,7 @@ export default function OrdersPage() {
                                 ))}
                               </div>
                               
-                              <div className="mt-3 flex items-center gap-4 text-sm text-gray-600 font-[var(--font-yekan)]">
+                              <div className="mt-3 flex items-center gap-4 text-sm text-[#333333] font-[var(--font-yekan)]">
                                 <div className="flex items-center gap-1">
                                   <FiHome size={14} />
                                   <span>{order.shippingAddress.address}</span>
@@ -403,19 +403,19 @@ export default function OrdersPage() {
                             {/* Order Actions */}
                             <div className="flex flex-col items-end gap-3">
                               <div className="text-left">
-                                <p className="text-lg font-bold text-gray-800 font-[var(--font-yekan)]">
+                                <p className="text-lg font-bold text-[#1E2024] font-[var(--font-yekan)]">
                                   {formatPrice(totalPrice)}
                                 </p>
-                                <p className="text-gray-500 text-sm font-[var(--font-yekan)]">
+                                <p className="text-[#666666] text-sm font-[var(--font-yekan)]">
                                   {order.items.reduce((sum, item) => sum + item.quantity, 0)} کالا
                                 </p>
                               </div>
                               
                               <div className="flex gap-2">
-                                <button className="bg-amber-100 hover:bg-amber-200 text-amber-700 py-2 px-4 rounded-lg font-[var(--font-yekan)] text-sm transition-colors">
+                                <button className="bg-blue-50 hover:bg-blue-100 text-[#3366FF] py-2 px-4 rounded-lg font-[var(--font-yekan)] text-sm transition-colors">
                                   پیگیری سفارش
                                 </button>
-                                <button className="bg-white hover:bg-gray-100 text-gray-700 border border-gray-300 py-2 px-4 rounded-lg font-[var(--font-yekan)] text-sm transition-colors">
+                                <button className="bg-white hover:bg-gray-50 text-[#333333] border border-gray-300 py-2 px-4 rounded-lg font-[var(--font-yekan)] text-sm transition-colors">
                                   جزئیات
                                 </button>
                               </div>
@@ -428,25 +428,25 @@ export default function OrdersPage() {
                 )}
               </div>
 
-              {/* Quick Actions */}
+              {/* Quick Actions - Updated with brand colors */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <motion.div
                   whileHover={{ y: -4 }}
-                  className="bg-white rounded-2xl shadow-lg border border-amber-200 p-6 hover:shadow-xl transition-all duration-300"
+                  className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-all duration-300"
                 >
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="bg-amber-100 p-2 rounded-full">
-                      <FiCoffee className="text-amber-600 text-lg" />
+                    <div className="bg-blue-100 p-2 rounded-full">
+                      <FiCoffee className="text-[#3366FF] text-lg" />
                     </div>
-                    <h3 className="text-lg font-bold text-gray-800 font-[var(--font-yekan)]">
+                    <h3 className="text-lg font-bold text-[#1E2024] font-[var(--font-yekan)]">
                       ادامه خرید
                     </h3>
                   </div>
-                  <p className="text-gray-600 font-[var(--font-yekan)] text-sm mb-4">
+                  <p className="text-[#333333] font-[var(--font-yekan)] text-sm mb-4">
                     از محصولات جدید و ویژه ما دیدن کنید
                   </p>
                   <Link href="/ValuablePurchasesPage">
-                    <button className="w-full bg-amber-600 hover:bg-amber-700 text-white py-2 rounded-xl font-[var(--font-yekan)] font-semibold transition-colors">
+                    <button className="w-full bg-[#3366FF] hover:bg-[#194FFF] text-white py-2 rounded-xl font-[var(--font-yekan)] font-semibold transition-colors">
                       مشاهده محصولات
                     </button>
                   </Link>
@@ -454,21 +454,21 @@ export default function OrdersPage() {
 
                 <motion.div
                   whileHover={{ y: -4 }}
-                  className="bg-white rounded-2xl shadow-lg border border-amber-200 p-6 hover:shadow-xl transition-all duration-300"
+                  className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-all duration-300"
                 >
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="bg-amber-100 p-2 rounded-full">
-                      <FiMessageCircle className="text-amber-600 text-lg" />
+                    <div className="bg-blue-100 p-2 rounded-full">
+                      <FiMessageCircle className="text-[#3366FF] text-lg" />
                     </div>
-                    <h3 className="text-lg font-bold text-gray-800 font-[var(--font-yekan)]">
+                    <h3 className="text-lg font-bold text-[#1E2024] font-[var(--font-yekan)]">
                       پشتیبانی
                     </h3>
                   </div>
-                  <p className="text-gray-600 font-[var(--font-yekan)] text-sm mb-4">
+                  <p className="text-[#333333] font-[var(--font-yekan)] text-sm mb-4">
                     در صورت وجود مشکل در سفارش با ما تماس بگیرید
                   </p>
                   <Link href="/support">
-                    <button className="w-full bg-amber-100 hover:bg-amber-200 text-amber-700 py-2 rounded-xl font-[var(--font-yekan)] font-semibold transition-colors">
+                    <button className="w-full bg-blue-50 hover:bg-blue-100 text-[#3366FF] py-2 rounded-xl font-[var(--font-yekan)] font-semibold transition-colors">
                       تماس با پشتیبانی
                     </button>
                   </Link>
