@@ -3,7 +3,7 @@
 import { useAuth } from "@/contaxt/AuthContext";
 import UserProfileSidebarD from "@/app/Components/userProfileSidebarD";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiCoffee, FiUser, FiHeart, FiMapPin, FiCreditCard, FiMessageCircle, FiEdit, FiShield, FiTruck, FiMenu, FiX, FiSettings, FiPackage, FiClock, FiCheckCircle, FiTruck as FiShipping, FiHome, FiTrash2, FiShoppingCart, FiStar } from "react-icons/fi";
+import { FiCoffee, FiUser, FiHeart, FiMapPin, FiCreditCard, FiMessageCircle, FiEdit, FiShield, FiTruck, FiMenu, FiX, FiSettings, FiPackage, FiClock, FiCheckCircle, FiTruck as FiShipping, FiHome, FiTrash2, FiShoppingCart, FiStar, FiLogIn } from "react-icons/fi";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -59,16 +59,37 @@ export default function FavoritesPage() {
   const [isLoadingFavorites, setIsLoadingFavorites] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [removeMessage, setRemoveMessage] = useState<string>('');
+  // 🔥 NEW: State for login prompt message
+  const [loginPrompt, setLoginPrompt] = useState<string>('');
+  const [redirectTimer, setRedirectTimer] = useState<NodeJS.Timeout | null>(null);
 
   // Check authentication on component mount
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      router.push("/login");
+      // 🔥 Show login prompt message
+      setLoginPrompt('برای مشاهده این صفحه ابتدا باید وارد حساب کاربری خود شوید.');
+      
+      // 🔥 Set redirect timer (3 seconds)
+      const timer = setTimeout(() => {
+        router.push("/LoginPage");
+      }, 3000);
+      
+      setRedirectTimer(timer);
+      setIsCheckingAuth(false);
     } else if (!isLoading && isAuthenticated) {
       setIsCheckingAuth(false);
       loadFavorites();
     }
   }, [isAuthenticated, isLoading, router]);
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (redirectTimer) {
+        clearTimeout(redirectTimer);
+      }
+    };
+  }, [redirectTimer]);
 
   // Load favorites from localStorage
   const loadFavorites = () => {
@@ -129,6 +150,14 @@ export default function FavoritesPage() {
     return user?.phone || "کاربر";
   };
 
+  // 🔥 NEW: Manual redirect to login
+  const handleManualRedirect = () => {
+    if (redirectTimer) {
+      clearTimeout(redirectTimer);
+    }
+    router.push("/LoginPage");
+  };
+
   // Show loading while checking authentication
   if (isLoading || isCheckingAuth) {
     return (
@@ -145,11 +174,101 @@ export default function FavoritesPage() {
     );
   }
 
-  // If not authenticated, don't render anything (will redirect in useEffect)
+  // 🔥 MODIFIED: Show login prompt message if not authenticated
   if (!isAuthenticated) {
-    return null;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white pt-44 pb-12 flex items-center justify-center" dir="rtl">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="text-center"
+          >
+            {/* 🔥 Login Prompt Card - Using same design system */}
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8 md:p-12 max-w-md mx-auto">
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.2, type: "spring" }}
+                className="mb-6"
+              >
+                <div className="w-20 h-20 mx-auto bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center mb-4">
+                  <FiLogIn className="text-[#3366FF] text-3xl" />
+                </div>
+              </motion.div>
+              
+              <h2 className="text-2xl font-bold text-[#1E2024] mb-4 font-[var(--font-yekan)]">
+                نیاز به ورود به حساب
+              </h2>
+              
+              <div className="mb-6">
+                <div className="text-4xl mb-2">🔒</div>
+                <p className="text-[#333333] text-lg font-[var(--font-yekan)] mb-2">
+                  {loginPrompt}
+                </p>
+                <p className="text-[#666666] text-sm font-[var(--font-yekan)]">
+                  در حال انتقال به صفحه ورود...
+                </p>
+              </div>
+              
+              {/* 🔥 Progress Bar - Using brand colors */}
+              <div className="mb-8">
+                <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <motion.div
+                    initial={{ width: "0%" }}
+                    animate={{ width: "100%" }}
+                    transition={{ duration: 3, ease: "linear" }}
+                    className="h-full bg-gradient-to-r from-[#3366FF] to-[#194FFF]"
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <button
+                  onClick={handleManualRedirect}
+                  className="w-full bg-[#3366FF] hover:bg-[#194FFF] text-white py-3 px-6 rounded-xl font-[var(--font-yekan)] font-semibold transition-colors duration-200 shadow-md hover:shadow-lg"
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <FiLogIn className="text-white" />
+                    <span>رفتن به صفحه ورود</span>
+                  </div>
+                </button>
+                
+                <Link href="/">
+                  <button className="w-full bg-gray-100 hover:bg-gray-200 text-[#333333] py-3 px-6 rounded-xl font-[var(--font-yekan)] font-medium transition-colors duration-200">
+                    بازگشت به صفحه اصلی
+                  </button>
+                </Link>
+              </div>
+              
+              {/* 🔥 Footer Note */}
+              <div className="mt-8 pt-6 border-t border-gray-100">
+                <p className="text-[#666666] text-xs font-[var(--font-yekan)]">
+                  اگر حساب کاربری ندارید، می‌توانید از صفحه ورود یک حساب جدید ایجاد کنید.
+                </p>
+              </div>
+            </div>
+            
+            {/* 🔥 Decorative Elements - Matching favorites page style */}
+            <div className="mt-8 flex justify-center gap-4 opacity-50">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl flex items-center justify-center">
+                <FiHeart className="text-[#3366FF] text-lg" />
+              </div>
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl flex items-center justify-center">
+                <FiCoffee className="text-[#3366FF] text-lg" />
+              </div>
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl flex items-center justify-center">
+                <FiStar className="text-[#3366FF] text-lg" />
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    );
   }
 
+  // 🔥 REST OF YOUR ORIGINAL CODE (unchanged) continues from here...
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white pt-44 pb-12" dir="rtl">
       {/* Remove Success Message - Updated with brand colors */}
