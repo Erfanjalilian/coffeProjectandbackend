@@ -118,7 +118,7 @@ export default async function HeroSection() {
   
   if (categories.length === 0) {
     return (
-      <section className="w-full py-12 px-4 md:px-8 lg:px-16 mt-34 bg-gradient-to-b from-blue-50 to-white">
+      <section className="w-full py-12 px-4 md:px-8 lg:px-16 bg-gradient-to-b from-blue-50 to-white">
         <div className="max-w-6xl mx-auto text-center">
           <div className="text-gray-800 text-lg font-[var(--font-yekan)] mb-4">
             هیچ دسته‌بندی فعالی یافت نشد
@@ -129,7 +129,7 @@ export default async function HeroSection() {
   }
 
   return (
-    <section className="w-full py-12 px-4 md:px-8 lg:px-16 mt-34 bg-gradient-to-b from-blue-50 to-white">
+    <section className="w-full py-12 px-4 md:px-8 lg:px-16 bg-gradient-to-b from-blue-50 to-white">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-8">
           <h2 className="text-2xl font-bold text-gray-800 font-[var(--font-yekan)] mb-2">

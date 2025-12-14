@@ -5,7 +5,7 @@ import Link from "next/link";
 
 export default function PromoBanner() {
   return (
-    <section className="relative w-full h-[60vh] my-20 overflow-hidden shadow-lg">
+    <section className="relative w-full h-[50vh] mt-20 overflow-hidden shadow-lg">
       {/* پس‌زمینه */}
       <div className="absolute inset-0">
         <Image
