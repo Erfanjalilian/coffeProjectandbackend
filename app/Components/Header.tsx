@@ -92,10 +92,15 @@ export default function Header() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Update favorites count from localStorage
+  // Update favorites count from localStorage - ONLY when user is authenticated
   const updateFavoritesCount = () => {
-    const favorites = getFavoritesFromStorage();
-    setFavoritesCount(favorites.length);
+    if (isAuthenticated) {
+      const favorites = getFavoritesFromStorage();
+      setFavoritesCount(favorites.length);
+    } else {
+      // When user is not logged in, reset favorites count to 0
+      setFavoritesCount(0);
+    }
   };
 
   // Listen for storage changes (when favorites are added/removed in other tabs)
@@ -122,7 +127,7 @@ export default function Header() {
     };
   }, []);
 
-  // Also update favorites count when authentication state changes
+  // Update favorites count when authentication state changes
   useEffect(() => {
     updateFavoritesCount();
   }, [isAuthenticated]);
@@ -267,7 +272,7 @@ export default function Header() {
               </motion.button>
             </motion.div>
 
-            {/* Wishlist */}
+            {/* Wishlist - Show count only when authenticated */}
             <Link href="/DashboardPage/favorites">
               <motion.button
                 whileHover={{ scale: 1.1 }}
@@ -275,7 +280,8 @@ export default function Header() {
                 className="relative p-2 text-gray-700 hover:text-blue-700 rounded-xl hover:bg-blue-50 transition-colors"
               >
                 <FiHeart size={22} />
-                {favoritesCount > 0 && (
+                {/* Only show favorites count when user is authenticated */}
+                {isAuthenticated && favoritesCount > 0 && (
                   <motion.span 
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
@@ -664,7 +670,8 @@ export default function Header() {
                   <motion.button whileHover={{ scale: 1.02 }} className="w-full flex items-center gap-3 p-4 text-gray-700 hover:text-blue-700 hover:bg-blue-100/80 rounded-xl transition-all">
                     <FiHeart size={20} />
                     <span className="font-[var(--font-yekan)]">
-                      علاقه‌مندی‌ها {favoritesCount > 0 && `(${favoritesCount})`}
+                      علاقه‌مندی‌ها {/* Only show count when authenticated */}
+                      {isAuthenticated && favoritesCount > 0 && `(${favoritesCount})`}
                     </span>
                   </motion.button>
                 </Link>
