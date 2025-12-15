@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { FiStar, FiCoffee, FiMessageCircle } from "react-icons/fi";
+import { FiStar, FiCoffee, FiMessageCircle, FiFilter, FiChevronDown, FiX } from "react-icons/fi";
 import React from "react";
 
 // Types remain the same as before
@@ -114,6 +113,8 @@ function useFilteredProducts(allProducts: Product[]) {
     priceRange: [0, 1000000]
   });
   const [quickFilter, setQuickFilter] = useState<'all' | 'recommended'>('all');
+  const [customMinPrice, setCustomMinPrice] = useState("0");
+  const [customMaxPrice, setCustomMaxPrice] = useState("1000000");
 
   // Generate filters from products
   useEffect(() => {
@@ -141,6 +142,9 @@ function useFilteredProducts(allProducts: Product[]) {
       ratings: availableRatings.length > 0 ? availableRatings : [4, 3, 2, 1]
     });
 
+    setCustomMinPrice(minPrice.toString());
+    setCustomMaxPrice(maxPrice.toString());
+    
     setActiveFilters(prev => ({
       ...prev,
       priceRange: [minPrice, maxPrice]
@@ -186,7 +190,33 @@ function useFilteredProducts(allProducts: Product[]) {
     return filtered;
   }, [allProducts, activeFilters, quickFilter]);
 
-  return { filters, activeFilters, setActiveFilters, quickFilter, setQuickFilter, filteredProducts };
+  const handleCustomPriceChange = useCallback((min: string, max: string) => {
+    const minNum = parseInt(min) || 0;
+    const maxNum = parseInt(max) || 1000000;
+    const validatedMin = Math.min(minNum, maxNum);
+    const validatedMax = Math.max(minNum, maxNum);
+    
+    setCustomMinPrice(validatedMin.toString());
+    setCustomMaxPrice(validatedMax.toString());
+    
+    setActiveFilters(prev => ({
+      ...prev,
+      selectedPriceRange: "custom",
+      priceRange: [validatedMin, validatedMax]
+    }));
+  }, []);
+
+  return { 
+    filters, 
+    activeFilters, 
+    setActiveFilters, 
+    quickFilter, 
+    setQuickFilter, 
+    filteredProducts,
+    customMinPrice,
+    customMaxPrice,
+    handleCustomPriceChange
+  };
 }
 
 // Helper functions
@@ -273,9 +303,38 @@ function FilterSkeleton() {
   );
 }
 
+// Mobile Filter Section Component
+function MobileFilterSection({ 
+  title, 
+  children,
+  isExpanded,
+  onToggle 
+}: { 
+  title: string; 
+  children: React.ReactNode;
+  isExpanded: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <div className="border-b border-blue-200 last:border-b-0">
+      <button
+        onClick={onToggle}
+        className="w-full py-4 flex items-center justify-between text-right font-[var(--font-yekan)]"
+      >
+        <span className="font-semibold text-gray-700">{title}</span>
+        <FiChevronDown className={`text-blue-600 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+      </button>
+      {isExpanded && (
+        <div className="pb-4">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Product Card Component
 const ProductCard = React.memo(({ product }: { product: Product }) => {
-  const router = useRouter();
   const statusStyle = product.status === "فروش ویژه" 
     ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white"
     : product.status === "جدید"
@@ -372,7 +431,10 @@ const FilterSidebar = React.memo(({
   setActiveFilters,
   quickFilter,
   setQuickFilter,
-  categories
+  categories,
+  customMinPrice,
+  customMaxPrice,
+  handleCustomPriceChange
 }: { 
   filters: Filters;
   activeFilters: ActiveFilters;
@@ -380,6 +442,9 @@ const FilterSidebar = React.memo(({
   quickFilter: 'all' | 'recommended';
   setQuickFilter: (filter: 'all' | 'recommended') => void;
   categories: Category[];
+  customMinPrice: string;
+  customMaxPrice: string;
+  handleCustomPriceChange: (min: string, max: string) => void;
 }) => {
   const handleBrandFilter = useCallback((brand: string) => {
     setActiveFilters(prev => ({
@@ -462,6 +527,42 @@ const FilterSidebar = React.memo(({
         </div>
       </div>
 
+      {/* Price Range */}
+      <div className="mb-6">
+        <h4 className="font-semibold text-gray-700 mb-3 font-[var(--font-yekan)]">محدوده قیمت</h4>
+        <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm text-gray-700 font-[var(--font-yekan)]">قیمت دلخواه</span>
+            <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full font-[var(--font-yekan)]">
+              {formatPrice(activeFilters.priceRange[0])} - {formatPrice(activeFilters.priceRange[1])}
+            </span>
+          </div>
+          
+          <div className="flex gap-2 mb-3">
+            <div className="flex-1">
+              <label className="block text-xs text-gray-500 mb-1 font-[var(--font-yekan)]">حداقل</label>
+              <input
+                type="text"
+                value={customMinPrice}
+                onChange={(e) => handleCustomPriceChange(e.target.value, customMaxPrice)}
+                placeholder="۰"
+                className="w-full px-3 py-2 text-sm border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-[var(--font-yekan)] text-left"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="block text-xs text-gray-500 mb-1 font-[var(--font-yekan)]">حداکثر</label>
+              <input
+                type="text"
+                value={customMaxPrice}
+                onChange={(e) => handleCustomPriceChange(customMinPrice, e.target.value)}
+                placeholder="۱۰۰۰۰۰۰"
+                className="w-full px-3 py-2 text-sm border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-[var(--font-yekan)] text-left"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Brands */}
       <div className="mb-6">
         <h4 className="font-semibold text-gray-700 mb-3 font-[var(--font-yekan)]">برندها</h4>
@@ -522,13 +623,18 @@ export default function CoffeeCategoryPage() {
     setActiveFilters, 
     quickFilter, 
     setQuickFilter, 
-    filteredProducts 
+    filteredProducts,
+    customMinPrice,
+    customMaxPrice,
+    handleCustomPriceChange
   } = useFilteredProducts(allProducts);
   
   const [selectedCategoryFromStorage, setSelectedCategoryFromStorage] = useState<string | null>(null);
   const [categories, setCategories] = useState<Category[]>([
     { id: "all", name: "همه دسته‌بندی‌ها", count: 0, active: true }
   ]);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [expandedMobileFilter, setExpandedMobileFilter] = useState<string | null>(null);
 
   // Initialize categories from products
   useEffect(() => {
@@ -621,11 +727,28 @@ export default function CoffeeCategoryPage() {
               quickFilter={quickFilter}
               setQuickFilter={setQuickFilter}
               categories={categories}
+              customMinPrice={customMinPrice}
+              customMaxPrice={customMaxPrice}
+              handleCustomPriceChange={handleCustomPriceChange}
             />
           </div>
 
           {/* Main Content */}
           <div className="flex-1">
+            {/* Mobile Filter Button */}
+            <div className="lg:hidden mb-4">
+              <button
+                onClick={() => setShowMobileFilters(true)}
+                className="w-full bg-white border-2 border-blue-300 rounded-2xl p-4 flex items-center justify-between shadow-lg font-[var(--font-yekan)]"
+              >
+                <div className="flex items-center gap-2">
+                  <FiFilter className="text-blue-600" />
+                  <span className="font-semibold text-gray-800">فیلترها و مرتب‌سازی</span>
+                </div>
+                <FiChevronDown className="text-blue-600" />
+              </button>
+            </div>
+
             {/* Header */}
             <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl border border-blue-200 p-6 mb-6">
               <div className="flex flex-col md:flex-row items-center justify-between gap-4">
@@ -675,6 +798,212 @@ export default function CoffeeCategoryPage() {
           </div>
         </div>
       </div>
+
+      {/* Mobile Filters Modal */}
+      {showMobileFilters && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 lg:hidden">
+          <div className="fixed top-0 right-0 bottom-0 left-0 bg-white flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between p-5 border-b border-blue-200 bg-blue-50">
+              <h2 className="text-xl font-bold text-blue-800 font-[var(--font-yekan)]">فیلترها</h2>
+              <button
+                onClick={() => setShowMobileFilters(false)}
+                className="p-3 text-gray-600 hover:text-blue-700 rounded-full hover:bg-blue-100"
+              >
+                <FiX size={24} />
+              </button>
+            </div>
+
+            {/* Filters Content */}
+            <div className="flex-1 overflow-y-auto px-5 py-4">
+              <div className="bg-white rounded-2xl border border-blue-200 p-5">
+                {/* Quick Filter */}
+                <MobileFilterSection 
+                  title="فیلتر سریع" 
+                  isExpanded={expandedMobileFilter === 'quick'}
+                  onToggle={() => setExpandedMobileFilter(expandedMobileFilter === 'quick' ? null : 'quick')}
+                >
+                  <div className="space-y-3 mt-3">
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input 
+                        type="checkbox"
+                        checked={quickFilter === 'recommended'}
+                        onChange={() => setQuickFilter(quickFilter === 'recommended' ? 'all' : 'recommended')}
+                        className="w-5 h-5 rounded border-blue-300 text-blue-600 focus:ring-blue-500" 
+                      />
+                      <span className="text-sm text-gray-600 font-[var(--font-yekan)]">
+                        توصیه شده‌ها
+                      </span>
+                    </label>
+                  </div>
+                </MobileFilterSection>
+
+                {/* Categories */}
+                <MobileFilterSection 
+                  title="دسته‌بندی‌ها" 
+                  isExpanded={expandedMobileFilter === 'categories'}
+                  onToggle={() => setExpandedMobileFilter(expandedMobileFilter === 'categories' ? null : 'categories')}
+                >
+                  <div className="space-y-3 mt-3">
+                    {categories.map((category) => (
+                      <label key={category.id} className="flex items-center justify-between cursor-pointer">
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="checkbox"
+                            checked={activeFilters.selectedCategories.includes(category.name)}
+                            onChange={() => {
+                              let updatedCategories: string[];
+                              
+                              if (category.name === "همه دسته‌بندی‌ها") {
+                                updatedCategories = activeFilters.selectedCategories.includes("همه دسته‌بندی‌ها") 
+                                  ? [] 
+                                  : ["همه دسته‌بندی‌ها"];
+                              } else {
+                                const isSelected = activeFilters.selectedCategories.includes(category.name);
+                                updatedCategories = isSelected
+                                  ? activeFilters.selectedCategories.filter(c => c !== category.name && c !== "همه دسته‌بندی‌ها")
+                                  : [...activeFilters.selectedCategories.filter(c => c !== "همه دسته‌بندی‌ها"), category.name];
+                              }
+                              
+                              setActiveFilters(prev => ({
+                                ...prev,
+                                selectedCategories: updatedCategories
+                              }));
+                            }}
+                            className="w-5 h-5 rounded border-blue-300 text-blue-600 focus:ring-blue-500"
+                          />
+                          <span className="text-sm text-gray-600 font-[var(--font-yekan)]">
+                            {category.name}
+                          </span>
+                        </div>
+                        <span className="text-xs bg-blue-100 text-blue-700 px-2.5 py-1.5 rounded-full">
+                          {category.count}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </MobileFilterSection>
+
+                {/* Price Range */}
+                <MobileFilterSection 
+                  title="محدوده قیمت" 
+                  isExpanded={expandedMobileFilter === 'price'}
+                  onToggle={() => setExpandedMobileFilter(expandedMobileFilter === 'price' ? null : 'price')}
+                >
+                  <div className="space-y-4 mt-3">
+                    <div className="bg-blue-50 rounded-xl p-5 border border-blue-200">
+                      <div className="flex gap-3 mb-4">
+                        <div className="flex-1">
+                          <label className="block text-xs text-gray-500 mb-2 font-[var(--font-yekan)]">حداقل قیمت</label>
+                          <input
+                            type="text"
+                            value={customMinPrice}
+                            onChange={(e) => handleCustomPriceChange(e.target.value, customMaxPrice)}
+                            placeholder="۰"
+                            className="w-full px-4 py-3 text-sm border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-[var(--font-yekan)] text-left"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <label className="block text-xs text-gray-500 mb-2 font-[var(--font-yekan)]">حداکثر قیمت</label>
+                          <input
+                            type="text"
+                            value={customMaxPrice}
+                            onChange={(e) => handleCustomPriceChange(customMinPrice, e.target.value)}
+                            placeholder="۱۰۰۰۰۰۰"
+                            className="w-full px-4 py-3 text-sm border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-[var(--font-yekan)] text-left"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </MobileFilterSection>
+
+                {/* Brands */}
+                <MobileFilterSection 
+                  title="برندها" 
+                  isExpanded={expandedMobileFilter === 'brands'}
+                  onToggle={() => setExpandedMobileFilter(expandedMobileFilter === 'brands' ? null : 'brands')}
+                >
+                  <div className="space-y-3 mt-3">
+                    {filters.brands.map((brand) => (
+                      <label key={brand} className="flex items-center gap-3 cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          checked={activeFilters.selectedBrands.includes(brand)}
+                          onChange={() => {
+                            const isSelected = activeFilters.selectedBrands.includes(brand);
+                            const updatedBrands = isSelected
+                              ? activeFilters.selectedBrands.filter(b => b !== brand)
+                              : [...activeFilters.selectedBrands, brand];
+                            
+                            setActiveFilters(prev => ({
+                              ...prev,
+                              selectedBrands: updatedBrands
+                            }));
+                          }}
+                          className="w-5 h-5 rounded border-blue-300 text-blue-600 focus:ring-blue-500" 
+                        />
+                        <span className="text-sm text-gray-600 font-[var(--font-yekan)]">
+                          {brand}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </MobileFilterSection>
+
+                {/* Ratings */}
+                <MobileFilterSection 
+                  title="امتیاز" 
+                  isExpanded={expandedMobileFilter === 'ratings'}
+                  onToggle={() => setExpandedMobileFilter(expandedMobileFilter === 'ratings' ? null : 'ratings')}
+                >
+                  <div className="space-y-3 mt-3">
+                    {filters.ratings.map((rating) => (
+                      <label key={rating} className="flex items-center gap-3 cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          checked={activeFilters.selectedRatings.includes(rating)}
+                          onChange={() => {
+                            const isSelected = activeFilters.selectedRatings.includes(rating);
+                            const updatedRatings = isSelected
+                              ? activeFilters.selectedRatings.filter(r => r !== rating)
+                              : [...activeFilters.selectedRatings, rating];
+                            
+                            setActiveFilters(prev => ({
+                              ...prev,
+                              selectedRatings: updatedRatings
+                            }));
+                          }}
+                          className="w-5 h-5 rounded border-blue-300 text-blue-600 focus:ring-blue-500" 
+                        />
+                        <div className="flex items-center gap-2">
+                          {[...Array(5)].map((_, i) => (
+                            <FiStar
+                              key={i}
+                              className={`w-4 h-4 ${i < rating ? 'text-blue-400 fill-blue-400' : 'text-gray-300'}`}
+                            />
+                          ))}
+                          <span className="text-xs text-gray-500 mr-1">و بالاتر</span>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </MobileFilterSection>
+              </div>
+            </div>
+
+            {/* Apply Button */}
+            <div className="p-5 border-t border-blue-200 bg-white">
+              <button
+                onClick={() => setShowMobileFilters(false)}
+                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 rounded-2xl font-semibold shadow-lg font-[var(--font-yekan)]"
+              >
+                اعمال فیلترها
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
