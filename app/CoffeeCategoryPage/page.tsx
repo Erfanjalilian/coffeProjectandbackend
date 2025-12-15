@@ -333,6 +333,34 @@ function MobileFilterSection({
   );
 }
 
+// Consultation Box Component - Hidden on mobile
+function ConsultationBox() {
+  return (
+    <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl border border-blue-200 p-6 mb-6 hidden md:block">
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="bg-blue-600 rounded-full p-3">
+            <FiMessageCircle className="text-white text-xl" />
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-blue-800 mb-1 font-[var(--font-yekan)]">
+              نیاز به مشاوره دارید؟
+            </h3>
+            <p className="text-blue-700 font-[var(--font-yekan)] text-sm">
+              برای دریافت راهنمایی تخصصی در انتخاب محصول، روی دکمه "از من بپرس" کلیک کنید
+            </p>
+          </div>
+        </div>
+        
+        <button className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-6 py-3 rounded-xl font-semibold transition-all shadow-lg font-[var(--font-yekan)]">
+          <FiMessageCircle size={18} />
+          <span>از من بپرس</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // Product Card Component
 const ProductCard = React.memo(({ product }: { product: Product }) => {
   const statusStyle = product.status === "فروش ویژه" 
@@ -749,29 +777,8 @@ export default function CoffeeCategoryPage() {
               </button>
             </div>
 
-            {/* Header */}
-            <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl border border-blue-200 p-6 mb-6">
-              <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="bg-blue-600 rounded-full p-3">
-                    <FiMessageCircle className="text-white text-xl" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-blue-800 mb-1 font-[var(--font-yekan)]">
-                      نیاز به مشاوره دارید؟
-                    </h3>
-                    <p className="text-blue-700 font-[var(--font-yekan)] text-sm">
-                      برای دریافت راهنمایی تخصصی در انتخاب محصول، روی دکمه "از من بپرس" کلیک کنید
-                    </p>
-                  </div>
-                </div>
-                
-                <button className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-6 py-3 rounded-xl font-semibold transition-all shadow-lg font-[var(--font-yekan)]">
-                  <FiMessageCircle size={18} />
-                  <span>از من بپرس</span>
-                </button>
-              </div>
-            </div>
+            {/* Consultation Box - Hidden on mobile */}
+            <ConsultationBox />
 
             {/* Results Count */}
             <div className="mb-6">
