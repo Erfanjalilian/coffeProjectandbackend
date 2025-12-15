@@ -1,10 +1,12 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect} from "react";
-import { FiFilter, FiStar, FiChevronDown, FiX, FiMessageCircle, FiCoffee } from "react-icons/fi";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { FiStar, FiCoffee, FiMessageCircle } from "react-icons/fi";
+import React from "react";
 
+// Types remain the same as before
 interface Product {
   id: string;
   name: string;
@@ -21,7 +23,7 @@ interface Product {
   positiveFeature: string;
   status: string;
   brand?: string;
-  recommended?: boolean; // ✅ ADDED: Recommended field
+  recommended?: boolean;
 }
 
 interface Category {
@@ -53,76 +55,56 @@ interface ActiveFilters {
   priceRange: [number, number];
 }
 
-interface CategoriesApiResponse {
-  status: number;
-  success: boolean;
-  data: {
-    categories: Array<{
-      _id: string;
-      name: string;
-      description: string;
-      images: string;
-      color: string;
-      isActive: boolean;
-      showOnHomepage: boolean;
-      productsCount: number;
-    }>;
-    pagination: {
-      page: number;
-      limit: number;
-      total: number;
-      pages: number;
-    };
-  };
-}
-
-interface ProductsApiResponse {
-  status: number;
-  success: boolean;
-  data: {
-    products: Array<{
-      type: string;
-      _id: string;
-      name: string;
-      description: string;
-      positiveFeature: string;
-      category: any;
-      badge: string;
-      images: string[];
-      image: string;
-      status: string;
-      price: number;
-      originalPrice: number;
-      discount: number;
-      rating: number;
-      reviews: number;
-      isPrime: boolean;
-      isPremium: boolean;
-      features: string[];
-      priceAfterDiscount: number;
-      brand?: string;
-      recommended?: boolean; // ✅ ADDED: Recommended field
-      userReviews: Array<{
-        rating: number;
-      }>;
-    }>;
-    pagination: {
-      page: number;
-      limit: number;
-      total: number;
-      pages: number;
-    };
-  };
-}
-
-export default function CoffeeCategoryPage() {
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [sortBy, setSortBy] = useState('popular');
-  const [showMobileFilters, setShowMobileFilters] = useState(false);
-  const [expandedFilter, setExpandedFilter] = useState<string | null>(null);
-  const [coffeeProducts, setCoffeeProducts] = useState<Product[]>([]);
+// Custom hook for data fetching
+function useProducts() {
   const [allProducts, setAllProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        const response = await fetch('https://coffee-shop-backend-k3un.onrender.com/api/v1/product');
+        if (!response.ok) throw new Error('Failed to fetch');
+        const result = await response.json();
+        
+        if (result.success) {
+          const productsData = result.data.products.map((product: any) => ({
+            id: product._id,
+            name: product.name,
+            price: product.priceAfterDiscount || product.price,
+            originalPrice: product.originalPrice,
+            image: product.image,
+            category: product.category?.name || 'بدون دسته‌بندی',
+            badge: product.badge,
+            rating: product.rating || 0,
+            reviews: product.reviews || 0,
+            isPrime: product.isPrime,
+            discount: product.discount,
+            type: product.type || 'regular',
+            positiveFeature: product.positiveFeature,
+            status: getStatusFromBadge(product.badge),
+            brand: product.brand,
+            recommended: product.recommended || false
+          }));
+          
+          setAllProducts(productsData);
+        }
+      } catch (error) {
+        console.error('Error fetching products:', error);
+        setAllProducts([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    fetchProducts();
+  }, []);
+
+  return { allProducts, loading };
+}
+
+// Custom hook for filters
+function useFilteredProducts(allProducts: Product[]) {
   const [filters, setFilters] = useState<Filters>({ brands: [], priceRanges: [], ratings: [] });
   const [activeFilters, setActiveFilters] = useState<ActiveFilters>({
     selectedBrands: [],
@@ -131,537 +113,484 @@ export default function CoffeeCategoryPage() {
     selectedCategories: [],
     priceRange: [0, 1000000]
   });
-  const [customMinPrice, setCustomMinPrice] = useState<string>("");
-  const [customMaxPrice, setCustomMaxPrice] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(true);
-  const [categoriesLoading, setCategoriesLoading] = useState<boolean>(true);
+  const [quickFilter, setQuickFilter] = useState<'all' | 'recommended'>('all');
 
-  // NEW STATE: For Recommended filter only
-  const [quickFilter, setQuickFilter] = useState<'all' | 'recommended' | 'discounted'>('all');
-
-  // NEW: State for selected category from localStorage
-  const [selectedCategoryFromStorage, setSelectedCategoryFromStorage] = useState<string | null>(null);
-
-  // Fetch categories and products from API
+  // Generate filters from products
   useEffect(() => {
-    async function loadData() {
-      try {
-        setCategoriesLoading(true);
-        setLoading(true);
-        
-        // Get selected category from localStorage
-        const savedCategory = localStorage.getItem('selectedCategory');
-        setSelectedCategoryFromStorage(savedCategory);
-        
-        // Fetch categories and products in parallel
-        const [categoriesResponse, productsResponse] = await Promise.all([
-          fetch('https://coffee-shop-backend-k3un.onrender.com/api/v1/category'),
-          fetch('https://coffee-shop-backend-k3un.onrender.com/api/v1/product')
-        ]);
-        
-        if (!categoriesResponse.ok || !productsResponse.ok) {
-          throw new Error(`HTTP error! status: ${categoriesResponse.status}, ${productsResponse.status}`);
-        }
-        
-        const categoriesResult: CategoriesApiResponse = await categoriesResponse.json();
-        const productsResult: ProductsApiResponse = await productsResponse.json();
-        
-        if (!categoriesResult.success || !productsResult.success) {
-          throw new Error('Failed to fetch data from backend');
-        }
-
-        const allProductsData = productsResult.data.products.map((product) => ({
-          id: product._id,
-          name: product.name,
-          price: product.priceAfterDiscount || product.price,
-          originalPrice: product.originalPrice,
-          image: product.image,
-          category: product.category?.name || 'بدون دسته‌بندی',
-          badge: product.badge,
-          rating: product.rating || 0,
-          reviews: product.reviews || 0,
-          isPrime: product.isPrime,
-          discount: product.discount,
-          type: product.type || 'regular', // ✅ UPDATED: Use actual type from API
-          positiveFeature: product.positiveFeature,
-          status: getStatusFromBadge(product.badge),
-          brand: product.brand,
-          recommended: product.recommended || false // ✅ ADDED: Map recommended field
-        }));
-
-        setAllProducts(allProductsData);
-        
-        // Calculate product counts for each category
-        const categoryProductCounts = new Map();
-        allProductsData.forEach(product => {
-          const categoryName = product.category;
-          categoryProductCounts.set(categoryName, (categoryProductCounts.get(categoryName) || 0) + 1);
-        });
-
-        // Map categories with actual product counts
-        const mappedCategories = categoriesResult.data.categories
-          .filter(cat => cat.isActive)
-          .map((category, index) => ({
-            id: category._id,
-            name: category.name,
-            count: categoryProductCounts.get(category.name) || 0,
-            active: false
-          }));
-
-        // Add "All Categories" option with total count
-        const allCategoriesOption = {
-          id: "all",
-          name: "همه دسته‌بندی‌ها",
-          count: allProductsData.length,
-          active: true
-        };
-
-        const allCategories = [allCategoriesOption, ...mappedCategories];
-        setCategories(allCategories);
-        
-        // Generate dynamic filters from products data
-        generateDynamicFilters(allProductsData);
-
-        // NEW: If there's a saved category, apply the filter automatically
-        if (savedCategory) {
-          // Find the category in our categories list
-          const targetCategory = allCategories.find(cat => cat.name === savedCategory);
-          
-          if (targetCategory && targetCategory.name !== "همه دسته‌بندی‌ها") {
-            // Automatically select the category from localStorage
-            setActiveFilters(prev => ({
-              ...prev,
-              selectedCategories: [targetCategory.name]
-            }));
-
-            // Update categories UI state
-            setCategories(prev => prev.map(cat => ({
-              ...cat,
-              active: cat.name === targetCategory.name
-            })));
-
-            // Apply the filter immediately
-            const filteredProducts = allProductsData.filter(product => 
-              product.category === targetCategory.name
-            );
-            setCoffeeProducts(filteredProducts);
-            
-            // Clear the saved category from localStorage after using it
-            localStorage.removeItem('selectedCategory');
-          } else {
-            // If no valid category found, show all products
-            setCoffeeProducts(allProductsData);
-          }
-        } else {
-          // If no saved category, show all products
-          setCoffeeProducts(allProductsData);
-        }
-
-      } catch (error) {
-        console.error('Error loading data:', error);
-        // Fallback to static data
-        setCategories([
-          { id: "1", name: "همه دسته‌بندی‌ها", count: 0, active: true },
-          { id: "2", name: "قهوه اسپرسو", count: 0, active: false },
-          { id: "3", name: "قهوه ترک", count: 0, active: false },
-          { id: "4", name: "دانه قهوه", count: 0, active: false }
-        ]);
-        setAllProducts([]);
-        setCoffeeProducts([]);
-      } finally {
-        setCategoriesLoading(false);
-        setLoading(false);
-      }
-    }
+    if (allProducts.length === 0) return;
     
-    loadData();
-  }, []);
-
-  // Apply filters whenever activeFilters or quickFilter change
-  useEffect(() => {
-    applyFilters();
-  }, [activeFilters, allProducts, quickFilter]);
-
-  // Generate dynamic filters based on actual product data
-  const generateDynamicFilters = (products: Product[]) => {
-    if (products.length === 0) {
-      setFilters({
-        brands: ["برندهای موجود"],
-        priceRanges: [
-          { id: 1, label: "زیر ۱۰۰ هزار تومان", value: "0-100000", min: 0, max: 100000 },
-          { id: 2, label: "۱۰۰ تا ۳۰۰ هزار تومان", value: "100000-300000", min: 100000, max: 300000 },
-          { id: 3, label: "۳۰۰ تا ۵۰۰ هزار تومان", value: "300000-500000", min: 300000, max: 500000 },
-          { id: 4, label: "۵۰۰ هزار تا ۱ میلیون", value: "500000-1000000", min: 500000, max: 1000000 },
-          { id: 5, label: "بالای ۱ میلیون", value: "1000000-5000000", min: 1000000, max: 5000000 }
-        ],
-        ratings: [4, 3, 2, 1]
-      });
-      return;
-    }
-
-    const uniqueBrands = Array.from(new Set(products
+    const uniqueBrands = Array.from(new Set(allProducts
       .map(product => product.brand)
       .filter(brand => brand && brand.trim() !== "")
-    ));
+    )) as string[];
 
-    const prices = products.map(p => p.price).filter(price => price > 0);
+    const prices = allProducts.map(p => p.price).filter(price => price > 0);
     const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
     const maxPrice = prices.length > 0 ? Math.max(...prices) : 1000000;
     
     const dynamicPriceRanges = generatePriceRanges(minPrice, maxPrice);
 
-    const availableRatings = Array.from(new Set(products
+    const availableRatings = Array.from(new Set(allProducts
       .map(product => Math.floor(product.rating))
       .filter(rating => rating > 0)
     )).sort((a, b) => b - a);
 
-    const dynamicRatings = availableRatings.length > 0 ? availableRatings : [4, 3, 2, 1];
-
     setFilters({
-      brands: uniqueBrands.length > 0 ? uniqueBrands as string[] : ["برندهای موجود"],
+      brands: uniqueBrands.length > 0 ? uniqueBrands : ["برندهای موجود"],
       priceRanges: dynamicPriceRanges,
-      ratings: dynamicRatings
+      ratings: availableRatings.length > 0 ? availableRatings : [4, 3, 2, 1]
     });
 
-    // Initialize custom price inputs with actual data
-    setCustomMinPrice(minPrice.toString());
-    setCustomMaxPrice(maxPrice.toString());
     setActiveFilters(prev => ({
       ...prev,
       priceRange: [minPrice, maxPrice]
     }));
-  };
+  }, [allProducts]);
 
-  // Apply all active filters including quick filters
-  const applyFilters = () => {
-    let filteredProducts = [...allProducts];
+  // Apply filters with useMemo for performance
+  const filteredProducts = useMemo(() => {
+    let filtered = [...allProducts];
 
-    // Filter by brands
+    // Brand filter
     if (activeFilters.selectedBrands.length > 0) {
-      filteredProducts = filteredProducts.filter(product => 
+      filtered = filtered.filter(product => 
         product.brand && activeFilters.selectedBrands.includes(product.brand)
       );
     }
 
-    // Filter by price range
-    filteredProducts = filteredProducts.filter(product => 
+    // Price filter
+    filtered = filtered.filter(product => 
       product.price >= activeFilters.priceRange[0] && product.price <= activeFilters.priceRange[1]
     );
 
-    // Filter by ratings
+    // Rating filter
     if (activeFilters.selectedRatings.length > 0) {
-      filteredProducts = filteredProducts.filter(product => 
+      filtered = filtered.filter(product => 
         activeFilters.selectedRatings.some(rating => Math.floor(product.rating) >= rating)
       );
     }
 
-    // Filter by categories (excluding "All Categories")
+    // Category filter
     if (activeFilters.selectedCategories.length > 0 && 
         !activeFilters.selectedCategories.includes("همه دسته‌بندی‌ها")) {
-      filteredProducts = filteredProducts.filter(product => 
+      filtered = filtered.filter(product => 
         activeFilters.selectedCategories.includes(product.category)
       );
     }
 
-    // ✅ UPDATED: Apply quick filters (Recommended only) with correct logic
+    // Quick filter (recommended)
     if (quickFilter === 'recommended') {
-      // ✅ FIXED: Filter products that have recommended: true
-      filteredProducts = filteredProducts.filter(product => 
-        product.recommended === true
-      );
+      filtered = filtered.filter(product => product.recommended === true);
     }
 
-    setCoffeeProducts(filteredProducts);
+    return filtered;
+  }, [allProducts, activeFilters, quickFilter]);
+
+  return { filters, activeFilters, setActiveFilters, quickFilter, setQuickFilter, filteredProducts };
+}
+
+// Helper functions
+function getStatusFromBadge(badge: string): string {
+  switch (badge) {
+    case "پرفروش": return "پر فروش";
+    case "جدید": return "جدید";
+    case "ویژه": return "فروش ویژه";
+    default: return "جدید";
+  }
+}
+
+function generatePriceRanges(minPrice: number, maxPrice: number): PriceRange[] {
+  if (minPrice === maxPrice || maxPrice - minPrice < 10000) {
+    return [{
+      id: 1,
+      label: `${formatPrice(minPrice)}`,
+      value: `${minPrice}-${maxPrice}`,
+      min: minPrice,
+      max: maxPrice
+    }];
+  }
+
+  const ranges: PriceRange[] = [];
+  const rangeCount = Math.min(5, Math.ceil((maxPrice - minPrice) / 100000) || 1);
+  const step = Math.ceil((maxPrice - minPrice) / rangeCount);
+  
+  for (let i = 0; i < rangeCount; i++) {
+    const rangeMin = minPrice + (i * step);
+    const rangeMax = i === rangeCount - 1 ? maxPrice : minPrice + ((i + 1) * step);
+    
+    ranges.push({
+      id: i + 1,
+      label: `${formatPrice(rangeMin)} - ${formatPrice(rangeMax)}`,
+      value: `${rangeMin}-${rangeMax}`,
+      min: rangeMin,
+      max: rangeMax
+    });
+  }
+  
+  return ranges;
+}
+
+function formatPrice(price: number): string {
+  return new Intl.NumberFormat('fa-IR').format(price) + " تومان";
+}
+
+// Skeleton Components
+function ProductSkeleton() {
+  return (
+    <div className="bg-white rounded-2xl shadow-lg border border-blue-100 overflow-hidden animate-pulse">
+      <div className="h-56 bg-gradient-to-br from-blue-100 to-blue-200" />
+      <div className="p-4 space-y-3">
+        <div className="h-4 bg-blue-100 rounded w-3/4" />
+        <div className="h-3 bg-blue-100 rounded w-1/2" />
+        <div className="h-6 bg-blue-100 rounded w-1/3" />
+        <div className="h-10 bg-blue-100 rounded" />
+      </div>
+    </div>
+  );
+}
+
+function FilterSkeleton() {
+  return (
+    <div className="bg-white rounded-2xl shadow-lg border border-blue-200 p-6 sticky top-32">
+      <div className="h-6 bg-blue-100 rounded w-1/3 mb-6" />
+      {[...Array(4)].map((_, i) => (
+        <div key={i} className="mb-4">
+          <div className="h-4 bg-blue-100 rounded w-1/2 mb-3" />
+          <div className="space-y-2">
+            {[...Array(3)].map((_, j) => (
+              <div key={j} className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-blue-100 rounded" />
+                  <div className="h-3 bg-blue-100 rounded w-24" />
+                </div>
+                <div className="w-8 h-6 bg-blue-100 rounded-full" />
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Product Card Component
+const ProductCard = React.memo(({ product }: { product: Product }) => {
+  const router = useRouter();
+  const statusStyle = product.status === "فروش ویژه" 
+    ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white"
+    : product.status === "جدید"
+    ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white"
+    : "bg-gradient-to-r from-blue-600 to-blue-700 text-white";
+
+  const handleBuyClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    window.open(`/CoffeeCategoryPage/${product.id}`, '_blank');
   };
 
-  // Handle brand filter change
-  const handleBrandFilter = (brand: string) => {
-    setActiveFilters(prev => {
-      const isSelected = prev.selectedBrands.includes(brand);
-      const updatedBrands = isSelected
+  return (
+    <Link href={`/CoffeeCategoryPage/${product.id}`} target="_blank" className="block">
+      <div className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-blue-100 overflow-hidden group cursor-pointer h-full flex flex-col">
+        <div className="relative h-56">
+          <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
+            <FiCoffee className="text-blue-400 text-4xl" />
+          </div>
+          
+          {product.discount > 0 && (
+            <div className="absolute top-2 left-2 bg-orange-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+              {product.discount}% تخفیف
+            </div>
+          )}
+          
+          <div className="absolute top-2 right-2">
+            <span className={`text-xs px-2 py-1 rounded-full font-medium font-[var(--font-yekan)] shadow-md ${statusStyle}`}>
+              {product.status}
+            </span>
+          </div>
+        </div>
+
+        <div className="p-4 flex-1 flex flex-col">
+          <div className="flex-1">
+            <h3 className="font-bold text-gray-800 mb-2 text-sm leading-relaxed font-[var(--font-yekan)] line-clamp-2">
+              {product.name}
+            </h3>
+            
+            <div className="flex items-center gap-2 mb-2">
+              <div className="flex items-center gap-1">
+                {[...Array(5)].map((_, i) => (
+                  <FiStar
+                    key={i}
+                    className={`w-3 h-3 ${i < Math.floor(product.rating) ? 'text-blue-400 fill-blue-400' : 'text-gray-300'}`}
+                  />
+                ))}
+              </div>
+              <span className="text-xs text-gray-500 font-[var(--font-yekan)]">
+                ({product.reviews})
+              </span>
+            </div>
+
+            <div className="mb-3">
+              <span className="text-xs text-blue-600 font-medium font-[var(--font-yekan)] line-clamp-1">
+                {product.positiveFeature}
+              </span>
+            </div>
+          </div>
+
+          <div className="space-y-3 mt-auto">
+            <div className="space-y-1">
+              {product.originalPrice && product.originalPrice > product.price && (
+                <span className="text-xs text-gray-500 line-through font-[var(--font-yekan)] block">
+                  {new Intl.NumberFormat('fa-IR').format(product.originalPrice)} تومان
+                </span>
+              )}
+              <span className={`font-bold text-blue-700 font-[var(--font-yekan)] block ${
+                product.originalPrice && product.originalPrice > product.price ? 'text-base' : 'text-lg'
+              }`}>
+                {new Intl.NumberFormat('fa-IR').format(product.price)} تومان
+              </span>
+            </div>
+
+            <button
+              onClick={handleBuyClick}
+              className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-2 py-3 rounded-xl font-semibold transition-all shadow-lg font-[var(--font-yekan)] text-sm w-full"
+            >
+              خرید
+            </button>
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+});
+
+ProductCard.displayName = 'ProductCard';
+
+// Filter Sidebar Component
+const FilterSidebar = React.memo(({ 
+  filters, 
+  activeFilters, 
+  setActiveFilters,
+  quickFilter,
+  setQuickFilter,
+  categories
+}: { 
+  filters: Filters;
+  activeFilters: ActiveFilters;
+  setActiveFilters: React.Dispatch<React.SetStateAction<ActiveFilters>>;
+  quickFilter: 'all' | 'recommended';
+  setQuickFilter: (filter: 'all' | 'recommended') => void;
+  categories: Category[];
+}) => {
+  const handleBrandFilter = useCallback((brand: string) => {
+    setActiveFilters(prev => ({
+      ...prev,
+      selectedBrands: prev.selectedBrands.includes(brand)
         ? prev.selectedBrands.filter(b => b !== brand)
-        : [...prev.selectedBrands, brand];
-      
-      return {
-        ...prev,
-        selectedBrands: updatedBrands
-      };
-    });
-  };
+        : [...prev.selectedBrands, brand]
+    }));
+  }, [setActiveFilters]);
 
-  // Handle rating filter change
-  const handleRatingFilter = (rating: number) => {
-    setActiveFilters(prev => {
-      const isSelected = prev.selectedRatings.includes(rating);
-      const updatedRatings = isSelected
+  const handleRatingFilter = useCallback((rating: number) => {
+    setActiveFilters(prev => ({
+      ...prev,
+      selectedRatings: prev.selectedRatings.includes(rating)
         ? prev.selectedRatings.filter(r => r !== rating)
-        : [...prev.selectedRatings, rating];
-      
-      return {
-        ...prev,
-        selectedRatings: updatedRatings
-      };
-    });
-  };
+        : [...prev.selectedRatings, rating]
+    }));
+  }, [setActiveFilters]);
 
-  // Handle category filter change
-  const handleCategoryFilter = (categoryId: string, categoryName: string) => {
+  const handleCategoryFilter = useCallback((categoryName: string) => {
     setActiveFilters(prev => {
       let updatedCategories: string[];
       
       if (categoryName === "همه دسته‌بندی‌ها") {
-        // If "All Categories" is selected, clear other category selections
         updatedCategories = prev.selectedCategories.includes("همه دسته‌بندی‌ها") 
           ? [] 
           : ["همه دسته‌بندی‌ها"];
       } else {
-        // For specific categories
         const isSelected = prev.selectedCategories.includes(categoryName);
         updatedCategories = isSelected
           ? prev.selectedCategories.filter(c => c !== categoryName && c !== "همه دسته‌بندی‌ها")
           : [...prev.selectedCategories.filter(c => c !== "همه دسته‌بندی‌ها"), categoryName];
       }
       
-      return {
-        ...prev,
-        selectedCategories: updatedCategories
-      };
+      return { ...prev, selectedCategories: updatedCategories };
     });
+  }, [setActiveFilters]);
 
-    // Update the categories UI state
-    setCategories(prev => prev.map(cat => ({
-      ...cat,
-      active: cat.id === categoryId ? !cat.active : cat.active
-    })));
-  };
+  return (
+    <div className="bg-white rounded-2xl shadow-lg border border-blue-200 p-6 sticky top-32">
+      <h3 className="font-bold text-gray-800 font-[var(--font-yekan)] mb-6">فیلترها</h3>
 
-  // Handle custom price range
-  const handleCustomPriceApply = () => {
-    const min = parseInt(customMinPrice) || 0;
-    const max = parseInt(customMaxPrice) || 1000000;
-    
-    // Validate and ensure min is not greater than max
-    const validatedMin = Math.min(min, max);
-    const validatedMax = Math.max(min, max);
-    
-    setActiveFilters(prev => ({
-      ...prev,
-      selectedPriceRange: "custom",
-      priceRange: [validatedMin, validatedMax]
-    }));
-    
-    // Update the input fields with validated values
-    setCustomMinPrice(validatedMin.toString());
-    setCustomMaxPrice(validatedMax.toString());
-  };
-
-  // Handle individual custom price input changes
-  const handleCustomMinPriceChange = (value: string) => {
-    const numericValue = value.replace(/[^0-9]/g, '');
-    setCustomMinPrice(numericValue);
-    
-    // Update price range in real-time if both values are valid
-    const min = parseInt(numericValue) || 0;
-    const max = parseInt(customMaxPrice) || 1000000;
-    
-    const validatedMin = Math.min(min, max);
-    const validatedMax = Math.max(min, max);
-    
-    setActiveFilters(prev => ({
-      ...prev,
-      selectedPriceRange: "custom",
-      priceRange: [validatedMin, validatedMax]
-    }));
-  };
-
-  const handleCustomMaxPriceChange = (value: string) => {
-    const numericValue = value.replace(/[^0-9]/g, '');
-    setCustomMaxPrice(numericValue);
-    
-    // Update price range in real-time if both values are valid
-    const min = parseInt(customMinPrice) || 0;
-    const max = parseInt(numericValue) || 1000000;
-    
-    const validatedMin = Math.min(min, max);
-    const validatedMax = Math.max(min, max);
-    
-    setActiveFilters(prev => ({
-      ...prev,
-      selectedPriceRange: "custom",
-      priceRange: [validatedMin, validatedMax]
-    }));
-  };
-
-  // Clear all filters
-  const clearAllFilters = () => {
-    // Get the actual min and max prices from all products
-    const prices = allProducts.map(p => p.price).filter(price => price > 0);
-    const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
-    const maxPrice = prices.length > 0 ? Math.max(...prices) : 1000000;
-    
-    setActiveFilters({
-      selectedBrands: [],
-      selectedPriceRange: "",
-      selectedRatings: [],
-      selectedCategories: [],
-      priceRange: [minPrice, maxPrice]
-    });
-    
-    setCustomMinPrice(minPrice.toString());
-    setCustomMaxPrice(maxPrice.toString());
-    
-    // Reset quick filter
-    setQuickFilter('all');
-    
-    // Reset categories UI - only "All Categories" active
-    setCategories(prev => prev.map(cat => ({
-      ...cat,
-      active: cat.id === "all"
-    })));
-  };
-
-  // Generate price ranges based on actual price data
-  const generatePriceRanges = (minPrice: number, maxPrice: number): PriceRange[] => {
-    if (minPrice === maxPrice || maxPrice - minPrice < 10000) {
-      return [
-        {
-          id: 1,
-          label: `${formatPrice(minPrice)}`,
-          value: `${minPrice}-${maxPrice}`,
-          min: minPrice,
-          max: maxPrice
-        }
-      ];
-    }
-
-    const ranges: PriceRange[] = [];
-    const rangeCount = Math.min(5, Math.ceil((maxPrice - minPrice) / 100000) || 1);
-    const step = Math.ceil((maxPrice - minPrice) / rangeCount);
-    
-    for (let i = 0; i < rangeCount; i++) {
-      const rangeMin = minPrice + (i * step);
-      const rangeMax = i === rangeCount - 1 ? maxPrice : minPrice + ((i + 1) * step);
-      
-      ranges.push({
-        id: i + 1,
-        label: `${formatPrice(rangeMin)} - ${formatPrice(rangeMax)}`,
-        value: `${rangeMin}-${rangeMax}`,
-        min: rangeMin,
-        max: rangeMax
-      });
-    }
-    
-    return ranges;
-  };
-
-  // Helper function to convert badge to status
-  const getStatusFromBadge = (badge: string): string => {
-    switch (badge) {
-      case "پرفروش":
-        return "پر فروش";
-      case "جدید":
-        return "جدید";
-      case "ویژه":
-        return "فروش ویژه";
-      default:
-        return "جدید";
-    }
-  };
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('fa-IR').format(price) + " تومان";
-  };
-
-  const formatProductPrice = (price: number) => {
-    return new Intl.NumberFormat('fa-IR').format(price) + " تومان";
-  };
-
-  const getStatusBadgeStyle = (status: string) => {
-    switch (status) {
-      case "فروش ویژه":
-        return "bg-gradient-to-r from-orange-500 to-orange-600 text-white";
-      case "جدید":
-        return "bg-gradient-to-r from-blue-500 to-blue-600 text-white";
-      case "پر فروش":
-        return "bg-gradient-to-r from-blue-600 to-blue-700 text-white";
-      default:
-        return "bg-gradient-to-r from-blue-600 to-blue-700 text-white";
-    }
-  };
-
-  // Filter Section Component
-  const FilterSection = ({ title, children, filterKey }: { title: string; children: React.ReactNode; filterKey: string }) => (
-    <div className="border-b border-blue-200 last:border-b-0">
-      <button
-        onClick={() => setExpandedFilter(expandedFilter === filterKey ? null : filterKey)}
-        className="w-full py-4 flex items-center justify-between text-right font-[var(--font-yekan)]"
-      >
-        <span className="font-semibold text-gray-700">{title}</span>
-        <motion.div
-          animate={{ rotate: expandedFilter === filterKey ? 180 : 0 }}
-          transition={{ duration: 0.3 }}
+      {/* Quick Filter */}
+      <div className="mb-6">
+        <h4 className="font-semibold text-gray-700 mb-3 font-[var(--font-yekan)]">فیلتر سریع</h4>
+        <button
+          onClick={() => setQuickFilter(quickFilter === 'recommended' ? 'all' : 'recommended')}
+          className={`px-4 py-2 rounded-xl text-sm font-medium transition-all font-[var(--font-yekan)] w-full text-right ${
+            quickFilter === 'recommended'
+              ? 'bg-orange-600 text-white'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+          }`}
         >
-          <FiChevronDown className="text-blue-600" />
-        </motion.div>
-      </button>
-      <AnimatePresence>
-        {expandedFilter === filterKey && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3 }}
-            className="pb-4"
-          >
-            {children}
-          </motion.div>
-        )}
-      </AnimatePresence>
+          توصیه شده‌ها
+        </button>
+      </div>
+
+      {/* Categories */}
+      <div className="mb-6">
+        <h4 className="font-semibold text-gray-700 mb-3 font-[var(--font-yekan)]">دسته‌بندی‌ها</h4>
+        <div className="space-y-2">
+          {categories.map((category) => (
+            <label key={category.id} className="flex items-center justify-between cursor-pointer">
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={activeFilters.selectedCategories.includes(category.name)}
+                  onChange={() => handleCategoryFilter(category.name)}
+                  className="rounded border-blue-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-600 font-[var(--font-yekan)]">
+                  {category.name}
+                </span>
+              </div>
+              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                {category.count}
+              </span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      {/* Brands */}
+      <div className="mb-6">
+        <h4 className="font-semibold text-gray-700 mb-3 font-[var(--font-yekan)]">برندها</h4>
+        <div className="space-y-2">
+          {filters.brands.map((brand) => (
+            <label key={brand} className="flex items-center gap-2 cursor-pointer">
+              <input 
+                type="checkbox" 
+                checked={activeFilters.selectedBrands.includes(brand)}
+                onChange={() => handleBrandFilter(brand)}
+                className="rounded border-blue-300 text-blue-600 focus:ring-blue-500" 
+              />
+              <span className="text-sm text-gray-600 font-[var(--font-yekan)]">
+                {brand}
+              </span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      {/* Ratings */}
+      <div>
+        <h4 className="font-semibold text-gray-700 mb-3 font-[var(--font-yekan)]">امتیاز</h4>
+        <div className="space-y-2">
+          {filters.ratings.map((rating) => (
+            <label key={rating} className="flex items-center gap-2 cursor-pointer">
+              <input 
+                type="checkbox" 
+                checked={activeFilters.selectedRatings.includes(rating)}
+                onChange={() => handleRatingFilter(rating)}
+                className="rounded border-blue-300 text-blue-600 focus:ring-blue-500" 
+              />
+              <div className="flex items-center gap-1">
+                {[...Array(5)].map((_, i) => (
+                  <FiStar
+                    key={i}
+                    className={`w-3 h-3 ${i < rating ? 'text-blue-400 fill-blue-400' : 'text-gray-300'}`}
+                  />
+                ))}
+                <span className="text-xs text-gray-500 mr-1">و بالاتر</span>
+              </div>
+            </label>
+          ))}
+        </div>
+      </div>
     </div>
   );
+});
 
-  // Image placeholder component
-  const ProductImage = ({ src, alt, className }: { src: string; alt: string; className: string }) => {
-    const [imageError, setImageError] = useState(false);
+FilterSidebar.displayName = 'FilterSidebar';
+
+// Main Component
+export default function CoffeeCategoryPage() {
+  const { allProducts, loading: productsLoading } = useProducts();
+  const { 
+    filters, 
+    activeFilters, 
+    setActiveFilters, 
+    quickFilter, 
+    setQuickFilter, 
+    filteredProducts 
+  } = useFilteredProducts(allProducts);
+  
+  const [selectedCategoryFromStorage, setSelectedCategoryFromStorage] = useState<string | null>(null);
+  const [categories, setCategories] = useState<Category[]>([
+    { id: "all", name: "همه دسته‌بندی‌ها", count: 0, active: true }
+  ]);
+
+  // Initialize categories from products
+  useEffect(() => {
+    if (allProducts.length === 0) return;
+
+    const categoryProductCounts = new Map();
+    allProducts.forEach(product => {
+      const categoryName = product.category;
+      categoryProductCounts.set(categoryName, (categoryProductCounts.get(categoryName) || 0) + 1);
+    });
+
+    const uniqueCategories = Array.from(categoryProductCounts.entries()).map(([name, count], index) => ({
+      id: `cat-${index}`,
+      name,
+      count,
+      active: false
+    }));
+
+    setCategories([
+      { id: "all", name: "همه دسته‌بندی‌ها", count: allProducts.length, active: true },
+      ...uniqueCategories
+    ]);
+
+    // Check localStorage for saved category
+    const savedCategory = localStorage.getItem('selectedCategory');
+    setSelectedCategoryFromStorage(savedCategory);
     
-    const handleImageError = () => {
-      setImageError(true);
-    };
-
-    if (imageError || !src || src.includes('undefined')) {
-      return (
-        <div className={`${className} bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center`}>
-          <FiCoffee className="text-blue-400 text-2xl" />
-        </div>
-      );
+    if (savedCategory) {
+      const targetCategory = uniqueCategories.find(cat => cat.name === savedCategory);
+      if (targetCategory) {
+        setActiveFilters(prev => ({
+          ...prev,
+          selectedCategories: [targetCategory.name]
+        }));
+        localStorage.removeItem('selectedCategory');
+      }
     }
+  }, [allProducts, setActiveFilters]);
 
+  // Show skeleton immediately for first paint
+  if (productsLoading && allProducts.length === 0) {
     return (
-      <img
-        src={src}
-        alt={alt}
-        className={className}
-        onError={handleImageError}
-      />
-    );
-  };
-
-  // Check if any filters are active
-  const hasActiveFilters = 
-    activeFilters.selectedBrands.length > 0 ||
-    activeFilters.selectedRatings.length > 0 ||
-    activeFilters.selectedCategories.length > 0 ||
-    activeFilters.selectedPriceRange !== "" ||
-    activeFilters.priceRange[0] > 0 ||
-    activeFilters.priceRange[1] < 1000000 ||
-    quickFilter !== 'all';
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white pt-24 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600 font-[var(--font-yekan)]">در حال بارگذاری محصولات...</p>
+      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white pt-34">
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          {/* Breadcrumb Skeleton */}
+          <div className="h-4 bg-blue-100 rounded w-1/4 mb-6 animate-pulse" />
+          
+          <div className="flex flex-col lg:flex-row gap-8">
+            {/* Filter Skeleton */}
+            <div className="lg:w-64 flex-shrink-0 hidden lg:block">
+              <FilterSkeleton />
+            </div>
+            
+            {/* Products Skeleton */}
+            <div className="flex-1">
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 sm:gap-6">
+                {[...Array(6)].map((_, i) => (
+                  <ProductSkeleton key={i} />
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -669,227 +598,36 @@ export default function CoffeeCategoryPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white pt-34">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Breadcrumb */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-sm text-gray-600 mb-6 font-[var(--font-yekan)] mt-8 lg:mt-0"
-        >
-          <span className="hover:text-blue-700 cursor-pointer">خانه</span>
-          <span className="mx-2">/</span>
-          <span>دسته‌بندی کالا ها</span>
+        <div className="text-sm text-gray-600 mb-6 font-[var(--font-yekan)]">
+          <span>خانه / </span>
+          <span>دسته‌بندی کالا‌ها</span>
           {selectedCategoryFromStorage && (
             <>
-              <span className="mx-2">/</span>
+              <span> / </span>
               <span className="text-blue-600">{selectedCategoryFromStorage}</span>
             </>
           )}
-        </motion.div>
-
-        {/* REMOVED: The Active Filters Display section has been removed as requested */}
+        </div>
 
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* Desktop Sidebar Filters */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6 }}
-            className="lg:w-64 flex-shrink-0 hidden lg:block"
-          >
-            <div className="bg-white rounded-2xl shadow-lg border border-blue-200 p-6 sticky top-32">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-2">
-                  <FiFilter className="text-blue-600" />
-                  <h3 className="font-bold text-gray-800 font-[var(--font-yekan)]">فیلترها</h3>
-                </div>
-                {hasActiveFilters && (
-                  <button 
-                    onClick={clearAllFilters}
-                    className="text-red-500 hover:text-red-700 text-sm font-[var(--font-yekan)]"
-                  >
-                    حذف همه
-                  </button>
-                )}
-              </div>
-
-              {/* Categories */}
-              <div className="mb-6">
-                <h4 className="font-semibold text-gray-700 mb-3 font-[var(--font-yekan)]">دسته‌بندی‌ها</h4>
-                <div className="space-y-2">
-                  {categoriesLoading ? (
-                    [...Array(4)].map((_, index) => (
-                      <div key={index} className="flex items-center justify-between animate-pulse">
-                        <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 bg-blue-200 rounded"></div>
-                          <div className="h-4 bg-blue-200 rounded w-24"></div>
-                        </div>
-                        <div className="w-8 h-6 bg-blue-200 rounded-full"></div>
-                      </div>
-                    ))
-                  ) : (
-                    categories.map((category, index) => (
-                      <motion.label
-                        key={category.id}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                        className="flex items-center justify-between cursor-pointer group"
-                      >
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="checkbox"
-                            checked={activeFilters.selectedCategories.includes(category.name)}
-                            onChange={() => handleCategoryFilter(category.id, category.name)}
-                            className="rounded border-blue-300 text-blue-600 focus:ring-blue-500"
-                          />
-                          <span className="text-sm text-gray-600 group-hover:text-blue-700 transition-colors font-[var(--font-yekan)]">
-                            {category.name}
-                          </span>
-                        </div>
-                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
-                          {category.count}
-                        </span>
-                      </motion.label>
-                    ))
-                  )}
-                </div>
-              </div>
-
-              {/* Price Range Filter - REMOVED price range buttons */}
-              <div className="mb-6">
-                <h4 className="font-semibold text-gray-700 mb-4 font-[var(--font-yekan)]">محدوده قیمت</h4>
-
-                {/* REMOVED: Price Range Buttons section */}
-
-                {/* Custom Price Range Input */}
-                <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm text-gray-700 font-[var(--font-yekan)]">قیمت دلخواه</span>
-                    <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full font-[var(--font-yekan)]">
-                      {formatPrice(activeFilters.priceRange[0])} - {formatPrice(activeFilters.priceRange[1])}
-                    </span>
-                  </div>
-                  
-                  <div className="flex gap-2 mb-3">
-                    <div className="flex-1">
-                      <label className="block text-xs text-gray-500 mb-1 font-[var(--font-yekan)]">حداقل</label>
-                      <input
-                        type="text"
-                        value={customMinPrice}
-                        onChange={(e) => handleCustomMinPriceChange(e.target.value)}
-                        placeholder="۰"
-                        className="w-full px-3 py-2 text-sm border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-[var(--font-yekan)] text-left"
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <label className="block text-xs text-gray-500 mb-1 font-[var(--font-yekan)]">حداکثر</label>
-                      <input
-                        type="text"
-                        value={customMaxPrice}
-                        onChange={(e) => handleCustomMaxPriceChange(e.target.value)}
-                        placeholder="۱۰۰۰۰۰۰"
-                        className="w-full px-3 py-2 text-sm border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-[var(--font-yekan)] text-left"
-                      />
-                    </div>
-                  </div>
-                  
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={handleCustomPriceApply}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-medium transition-all font-[var(--font-yekan)]"
-                  >
-                    اعمال محدوده
-                  </motion.button>
-                </div>
-              </div>
-
-              {/* Brands Filter */}
-              <div className="mb-6">
-                <h4 className="font-semibold text-gray-700 mb-3 font-[var(--font-yekan)]">برندها</h4>
-                <div className="space-y-2">
-                  {filters.brands.map((brand, index) => (
-                    <motion.label
-                      key={brand}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="flex items-center gap-2 cursor-pointer group"
-                    >
-                      <input 
-                        type="checkbox" 
-                        checked={activeFilters.selectedBrands.includes(brand)}
-                        onChange={() => handleBrandFilter(brand)}
-                        className="rounded border-blue-300 text-blue-600 focus:ring-blue-500" 
-                      />
-                      <span className="text-sm text-gray-600 group-hover:text-blue-700 transition-colors font-[var(--font-yekan)]">
-                        {brand}
-                      </span>
-                    </motion.label>
-                  ))}
-                </div>
-              </div>
-
-              {/* Ratings Filter */}
-              <div>
-                <h4 className="font-semibold text-gray-700 mb-3 font-[var(--font-yekan)]">امتیاز</h4>
-                <div className="space-y-2">
-                  {filters.ratings.map((rating, index) => (
-                    <motion.label
-                      key={rating}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="flex items-center gap-2 cursor-pointer group"
-                    >
-                      <input 
-                        type="checkbox" 
-                        checked={activeFilters.selectedRatings.includes(rating)}
-                        onChange={() => handleRatingFilter(rating)}
-                        className="rounded border-blue-300 text-blue-600 focus:ring-blue-500" 
-                      />
-                      <div className="flex items-center gap-1">
-                        {[...Array(5)].map((_, i) => (
-                          <FiStar
-                            key={i}
-                            className={`w-3 h-3 ${i < rating ? 'text-blue-400 fill-blue-400' : 'text-gray-300'}`}
-                          />
-                        ))}
-                        <span className="text-xs text-gray-500 mr-1">و بالاتر</span>
-                      </div>
-                    </motion.label>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </motion.div>
+          {/* Desktop Filters */}
+          <div className="lg:w-64 flex-shrink-0 hidden lg:block">
+            <FilterSidebar
+              filters={filters}
+              activeFilters={activeFilters}
+              setActiveFilters={setActiveFilters}
+              quickFilter={quickFilter}
+              setQuickFilter={setQuickFilter}
+              categories={categories}
+            />
+          </div>
 
           {/* Main Content */}
           <div className="flex-1">
-            {/* Mobile Filter Button */}
-            <div className="lg:hidden mb-4">
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setShowMobileFilters(true)}
-                className="w-full bg-white border-2 border-blue-300 rounded-2xl p-4 flex items-center justify-between shadow-lg font-[var(--font-yekan)]"
-              >
-                <div className="flex items-center gap-2">
-                  <FiFilter className="text-blue-600" />
-                  <span className="font-semibold text-gray-800">فیلترها و مرتب‌سازی</span>
-                </div>
-                <FiChevronDown className="text-blue-600" />
-              </motion.button>
-            </div>
-
-            {/* Header with Sort and View Options - Hidden on mobile */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl shadow-lg border border-blue-200 p-6 mb-6 hidden lg:block"
-            >
+            {/* Header */}
+            <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl border border-blue-200 p-6 mb-6">
               <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                   <div className="bg-blue-600 rounded-full p-3">
@@ -905,380 +643,38 @@ export default function CoffeeCategoryPage() {
                   </div>
                 </div>
                 
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-6 py-3 rounded-xl font-semibold transition-all shadow-lg font-[var(--font-yekan)] whitespace-nowrap"
-                >
+                <button className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-6 py-3 rounded-xl font-semibold transition-all shadow-lg font-[var(--font-yekan)]">
                   <FiMessageCircle size={18} />
                   <span>از من بپرس</span>
-                </motion.button>
+                </button>
               </div>
-            </motion.div>
-
-            {/* NEW: Quick Filter Button - Only "Recommended" */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="flex flex-wrap gap-3 mb-6"
-            >
-              <motion.button
-                key="recommended"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.4 }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setQuickFilter(quickFilter === 'recommended' ? 'all' : 'recommended')}
-                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all font-[var(--font-yekan)] ${
-                  quickFilter === 'recommended'
-                    ? 'bg-orange-600 text-white shadow-lg'
-                    : 'bg-white text-gray-700 border border-blue-200 hover:bg-blue-50 hover:text-blue-700'
-                }`}
-              >
-                توصیه شده ها
-              </motion.button>
-            </motion.div>
+            </div>
 
             {/* Results Count */}
             <div className="mb-6">
               <p className="text-gray-600 font-[var(--font-yekan)]">
-                نمایش {coffeeProducts.length} محصول از {allProducts.length} محصول
-                {selectedCategoryFromStorage && (
-                  <span className="text-blue-600 mr-2"> در دسته‌بندی "{selectedCategoryFromStorage}"</span>
-                )}
+                نمایش {filteredProducts.length} محصول از {allProducts.length} محصول
               </p>
             </div>
 
-            {/* Products Grid/List - UPDATED MOBILE LAYOUT */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.8 }}
-              className={`${
-                viewMode === 'grid'
-                  ? 'grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 sm:gap-6' // 2 columns on mobile
-                  : 'space-y-3'
-              }`}
-            >
-              
-              {coffeeProducts.map((product, index) => (
-                <Link 
-                  key={product.id} 
-                  href={`/CoffeeCategoryPage/${product.id}`}
-                  target="_blank" // ✅ Opens in new tab
-                  rel="noopener noreferrer" // ✅ Security best practice
-                  className="block"
-                >
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, delay: index * 0.1 }}
-                    className={`bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-blue-100 overflow-hidden group cursor-pointer ${
-                      viewMode === 'list' ? 'flex' : 'h-full flex flex-col'
-                    }`}
-                  >
-                    {/* Product Image - INCREASED HEIGHT */}
-                    <div className={`relative ${viewMode === 'list' ? 'w-48 flex-shrink-0' : 'h-56 sm:h-64'}`}>
-                      <ProductImage
-                        src={product.image}
-                        alt={product.name}
-                        className={`w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 ${
-                          viewMode === 'list' ? 'rounded-r-2xl' : 'rounded-t-2xl'
-                        }`}
-                      />
-                      
-                      {/* Discount Badge */}
-                      {product.discount > 0 && (
-                        <div className="absolute top-2 left-2 bg-orange-500 text-white text-xs px-2 py-1 rounded-full font-bold">
-                          {product.discount}% تخفیف
-                        </div>
-                      )}
-                      
-                      {/* Status Badge */}
-                      <div className="absolute top-2 right-2">
-                        <span className={`text-xs px-2 py-1 rounded-full font-medium font-[var(--font-yekan)] shadow-md ${getStatusBadgeStyle(product.status)}`}>
-                          {product.status}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Product Info */}
-                    <div className={`p-3 sm:p-4 flex-1 flex flex-col ${viewMode === 'list' ? 'justify-between' : ''}`}>
-                      <div className="flex-1">
-                        <h3 className="font-bold text-gray-800 mb-2 text-sm leading-relaxed font-[var(--font-yekan)] line-clamp-2">
-                          {product.name}
-                        </h3>
-                        
-                        {/* Rating */}
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className="flex items-center gap-1">
-                            {[...Array(5)].map((_, i) => (
-                              <FiStar
-                                key={i}
-                                className={`w-3 h-3 ${i < Math.floor(product.rating) ? 'text-blue-400 fill-blue-400' : 'text-gray-300'}`}
-                              />
-                            ))}
-                          </div>
-                          <span className="text-xs text-gray-500 font-[var(--font-yekan)]">
-                            ({product.reviews})
-                          </span>
-                        </div>
-
-                        {/* Positive Feature */}
-                        <div className="mb-3">
-                          <span className="text-xs text-blue-600 font-medium font-[var(--font-yekan)] line-clamp-1">
-                            {product.positiveFeature}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Price and Actions */}
-                      <div className="space-y-3 mt-auto">
-                        {/* Price Section */}
-                        <div className="space-y-1">
-                          {/* Original Price (if discounted) */}
-                          {product.originalPrice && product.originalPrice > product.price && (
-                            <span className="text-xs text-gray-500 line-through font-[var(--font-yekan)] block">
-                              {formatProductPrice(product.originalPrice)}
-                            </span>
-                          )}
-                          {/* Current Price */}
-                          <span className={`font-bold text-blue-700 font-[var(--font-yekan)] block ${
-                            product.originalPrice && product.originalPrice > product.price ? 'text-base' : 'text-lg'
-                          }`}>
-                            {formatProductPrice(product.price)}
-                          </span>
-                        </div>
-
-                        {/* Buttons Section - REMOVED Smart Consultation Button */}
-                        <div className="flex flex-col gap-2">
-                          {/* REMOVED: Smart Consultation Button */}
-
-                          {/* Buy Button */}
-                          <motion.button
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-2 py-3 rounded-xl font-semibold transition-all shadow-lg font-[var(--font-yekan)] text-sm"
-                            onClick={(e) => {
-                              e.preventDefault();
-                            }}
-                          >
-                            خرید
-                          </motion.button>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                </Link>
+            {/* Products Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 sm:gap-6">
+              {filteredProducts.map((product) => (
+                <ProductCard key={product.id} product={product} />
               ))}
-            </motion.div>
+            </div>
 
-            {/* No Products Message */}
-            {coffeeProducts.length === 0 && !loading && (
+            {/* No Products */}
+            {filteredProducts.length === 0 && !productsLoading && (
               <div className="text-center py-12">
                 <p className="text-gray-600 font-[var(--font-yekan)] text-lg">
                   محصولی با فیلترهای انتخاب شده یافت نشد.
                 </p>
-                <button 
-                  onClick={clearAllFilters}
-                  className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-xl font-[var(--font-yekan)]"
-                >
-                  حذف فیلترها
-                </button>
               </div>
             )}
           </div>
         </div>
       </div>
-
-      {/* Mobile Filters Modal */}
-      <AnimatePresence>
-        {showMobileFilters && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowMobileFilters(false)}
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
-            />
-            
-            <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed top-0 left-0 right-0 bottom-0 bg-white z-50 lg:hidden flex flex-col"
-            >
-              {/* Header - Improved spacing */}
-              <div className="flex items-center justify-between p-5 border-b border-blue-200 bg-blue-50">
-                <h2 className="text-xl font-bold text-blue-800 font-[var(--font-yekan)]">فیلترها و مرتب‌سازی</h2>
-                <button
-                  onClick={() => setShowMobileFilters(false)}
-                  className="p-3 text-gray-600 hover:text-blue-700 rounded-full hover:bg-blue-100"
-                >
-                  <FiX size={24} />
-                </button>
-              </div>
-
-              {/* Filters Content - Improved margins and spacing */}
-              <div className="flex-1 overflow-y-auto px-5 py-4">
-                <div className="bg-white rounded-2xl border border-blue-200 p-5">
-                  {/* Categories */}
-                  <FilterSection title="دسته‌بندی‌ها" filterKey="categories">
-                    <div className="space-y-3 mt-3">
-                      {categoriesLoading ? (
-                        [...Array(4)].map((_, index) => (
-                          <div key={index} className="flex items-center justify-between animate-pulse px-1">
-                            <div className="flex items-center gap-3">
-                              <div className="w-5 h-5 bg-blue-200 rounded"></div>
-                              <div className="h-4 bg-blue-200 rounded w-28"></div>
-                            </div>
-                            <div className="w-10 h-7 bg-blue-200 rounded-full"></div>
-                          </div>
-                        ))
-                      ) : (
-                        categories.map((category) => (
-                          <label key={category.id} className="flex items-center justify-between cursor-pointer group px-1">
-                            <div className="flex items-center gap-3">
-                              <input
-                                type="checkbox"
-                                checked={activeFilters.selectedCategories.includes(category.name)}
-                                onChange={() => handleCategoryFilter(category.id, category.name)}
-                                className="w-5 h-5 rounded border-blue-300 text-blue-600 focus:ring-blue-500"
-                              />
-                              <span className="text-sm text-gray-600 group-hover:text-blue-700 transition-colors font-[var(--font-yekan)]">
-                                {category.name}
-                              </span>
-                            </div>
-                            <span className="text-xs bg-blue-100 text-blue-700 px-2.5 py-1.5 rounded-full">
-                              {category.count}
-                            </span>
-                          </label>
-                        ))
-                      )}
-                    </div>
-                  </FilterSection>
-
-                  {/* Price Range */}
-                  <FilterSection title="محدوده قیمت" filterKey="price">
-                    <div className="space-y-4 mt-3">
-                      {/* REMOVED: Price range buttons */}
-                      
-                      {/* Custom Price Range for Mobile */}
-                      <div className="bg-blue-50 rounded-xl p-5 border border-blue-200">
-                        <div className="flex gap-3 mb-4">
-                          <div className="flex-1">
-                            <label className="block text-xs text-gray-500 mb-2 font-[var(--font-yekan)]">حداقل قیمت</label>
-                            <input
-                              type="text"
-                              value={customMinPrice}
-                              onChange={(e) => handleCustomMinPriceChange(e.target.value)}
-                              placeholder="۰"
-                              className="w-full px-4 py-3 text-sm border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-[var(--font-yekan)] text-left"
-                            />
-                          </div>
-                          <div className="flex-1">
-                            <label className="block text-xs text-gray-500 mb-2 font-[var(--font-yekan)]">حداکثر قیمت</label>
-                            <input
-                              type="text"
-                              value={customMaxPrice}
-                              onChange={(e) => handleCustomMaxPriceChange(e.target.value)}
-                              placeholder="۱۰۰۰۰۰۰"
-                              className="w-full px-4 py-3 text-sm border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-[var(--font-yekan)] text-left"
-                            />
-                          </div>
-                        </div>
-                        <button
-                          onClick={handleCustomPriceApply}
-                          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg text-sm font-medium transition-all font-[var(--font-yekan)]"
-                        >
-                          اعمال محدوده
-                        </button>
-                      </div>
-                    </div>
-                  </FilterSection>
-
-                  {/* Brands */}
-                  <FilterSection title="برندها" filterKey="brands">
-                    <div className="space-y-3 mt-3">
-                      {filters.brands.map((brand) => (
-                        <label key={brand} className="flex items-center gap-3 cursor-pointer group px-1">
-                          <input 
-                            type="checkbox" 
-                            checked={activeFilters.selectedBrands.includes(brand)}
-                            onChange={() => handleBrandFilter(brand)}
-                            className="w-5 h-5 rounded border-blue-300 text-blue-600 focus:ring-blue-500" 
-                          />
-                          <span className="text-sm text-gray-600 group-hover:text-blue-700 transition-colors font-[var(--font-yekan)]">
-                            {brand}
-                          </span>
-                        </label>
-                      ))}
-                    </div>
-                  </FilterSection>
-
-                  {/* Ratings */}
-                  <FilterSection title="امتیاز" filterKey="ratings">
-                    <div className="space-y-3 mt-3">
-                      {filters.ratings.map((rating) => (
-                        <label key={rating} className="flex items-center gap-3 cursor-pointer group px-1">
-                          <input 
-                            type="checkbox" 
-                            checked={activeFilters.selectedRatings.includes(rating)}
-                            onChange={() => handleRatingFilter(rating)}
-                            className="w-5 h-5 rounded border-blue-300 text-blue-600 focus:ring-blue-500" 
-                          />
-                          <div className="flex items-center gap-2">
-                            {[...Array(5)].map((_, i) => (
-                              <FiStar
-                                key={i}
-                                className={`w-4 h-4 ${i < rating ? 'text-blue-400 fill-blue-400' : 'text-gray-300'}`}
-                              />
-                            ))}
-                            <span className="text-xs text-gray-500 mr-1">و بالاتر</span>
-                          </div>
-                        </label>
-                      ))}
-                    </div>
-                  </FilterSection>
-
-                  {/* Quick Filters for Mobile */}
-                  <FilterSection title="فیلترهای سریع" filterKey="quick">
-                    <div className="space-y-3 mt-3">
-                      <label key="recommended" className="flex items-center gap-3 cursor-pointer group px-1">
-                        <input 
-                          type="checkbox"
-                          checked={quickFilter === 'recommended'}
-                          onChange={() => setQuickFilter(quickFilter === 'recommended' ? 'all' : 'recommended')}
-                          className="w-5 h-5 rounded border-blue-300 text-blue-600 focus:ring-blue-500" 
-                        />
-                        <span className="text-sm text-gray-600 group-hover:text-blue-700 transition-colors font-[var(--font-yekan)]">
-                          توصیه شده ها
-                        </span>
-                      </label>
-                    </div>
-                  </FilterSection>
-                </div>
-              </div>
-
-              {/* Apply Button */}
-              <div className="p-5 border-t border-blue-200 bg-white">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => setShowMobileFilters(false)}
-                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 rounded-2xl font-semibold shadow-lg font-[var(--font-yekan)]"
-                >
-                  اعمال فیلترها
-                </motion.button>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
