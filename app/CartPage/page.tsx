@@ -201,9 +201,8 @@ export default function CartPage(): React.ReactElement {
 
   // Calculate prices only when cart has items
   const totalPrice = cart.length > 0 ? cart.reduce((acc, item) => acc + (typeof item.price === 'string' ? parseFloat(item.price) : item.price) * item.quantity, 0) : 0;
-  const shippingCost = cart.length > 0 ? (totalPrice > 500000 ? 0 : 30000) : 0;
   const discountAmount = cart.length > 0 ? (totalPrice * discount) / 100 : 0;
-  const finalPrice = cart.length > 0 ? totalPrice + shippingCost - discountAmount : 0;
+  const finalPrice = cart.length > 0 ? totalPrice - discountAmount : 0;
   const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);
 
   const applyCoupon = () => {
@@ -233,49 +232,73 @@ export default function CartPage(): React.ReactElement {
   const similarProducts = getSimilarProducts();
 
   return (
-    <div dir="rtl" className="min-h-screen bg-gradient-to-b from-amber-50 to-amber-100 pt-54 font-[var(--font-yekan)]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div dir="rtl" className="min-h-screen bg-gradient-to-b from-[#F5F5F5] to-white pt-54 font-[var(--font-yekan)]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-24 md:pb-8"> {/* Added padding-bottom for mobile fixed buttons */}
 
-        {/* PROMOTIONAL BANNER */}
-        <div className="mb-8 bg-gradient-to-r from-amber-500 to-amber-600 rounded-2xl p-6 text-white shadow-lg">
-          <div className="flex items-center justify-center text-center">
-            <div className="flex items-center gap-4">
-              <div className="bg-white bg-opacity-20 p-3 rounded-full">
-                <FiShoppingCart className="text-white" size={32} />
+        {/* STEP INDICATOR - IMPROVED FOR MOBILE */}
+        <div className="mb-8">
+          {/* Desktop View - Horizontal Steps */}
+          <div className="hidden md:flex items-center justify-between text-[#1F2A3F]">
+            {[
+              { id: 1, label: "سبد خرید" },
+              { id: 2, label: "اطلاعات ارسال" },
+              { id: 3, label: "پرداخت" },
+              { id: 4, label: "تایید نهایی" },
+            ].map((step, idx) => (
+              <div key={step.id} className="flex-1 flex flex-col items-center relative">
+                <div className={`w-9 h-9 flex items-center justify-center rounded-full border-2 ${idx === 0 ? "bg-[#3366CC] border-[#3366CC] text-white" : "border-[#A4ABFA] text-[#2F2F2F]"}`}>
+                  {idx === 0 ? <FiCheckCircle /> : step.id}
+                </div>
+                <span className="mt-2 text-sm font-medium text-center px-1">{step.label}</span>
+                {idx < 3 && ( // Changed from idx < 3 to idx < 4 to include connection to step 4
+                  <div className="absolute top-4 left-[60%] right-[-20%]">
+                    <div className="h-[2px] bg-[#A4ABFA] w-full" />
+                  </div>
+                )}
               </div>
-              <div>
-                <h2 className="text-2xl font-bold mb-1">فروش ویژه زمستانه! ❄️</h2>
-                <p className="text-amber-100 text-lg">
-                  تا <span className="font-bold text-white">۵۰٪</span> تخفیف روی تمام محصولات
-                </p>
+            ))}
+          </div>
+
+          {/* Mobile View - Clean Vertical/Collapsed Steps */}
+          <div className="md:hidden">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-[#1F2A3F]">مراحل خرید</h2>
+              <div className="flex items-center gap-2 text-sm text-[#3366CC]">
+                <div className="w-6 h-6 flex items-center justify-center rounded-full bg-[#3366CC] text-white">
+                  1
+                </div>
+                <span>از 4</span>
+              </div>
+            </div>
+            
+            {/* Progress Bar */}
+            <div className="w-full bg-[#A4ABFA] bg-opacity-30 h-2 rounded-full mb-3">
+              <div className="w-1/4 h-full bg-[#3366CC] rounded-full"></div>
+            </div>
+            
+            {/* Step Labels - Compact */}
+            <div className="flex justify-between text-xs text-[#2F2F2F]">
+              <div className="flex flex-col items-center">
+                <span className="font-bold text-[#3366CC]">سبد خرید</span>
+                <span className="mt-1">✓</span>
+              </div>
+              <div className="flex flex-col items-center">
+                <span>اطلاعات ارسال</span>
+                <span className="mt-1">○</span>
+              </div>
+              <div className="flex flex-col items-center">
+                <span>پرداخت</span>
+                <span className="mt-1">○</span>
+              </div>
+              <div className="flex flex-col items-center">
+                <span>تایید نهایی</span>
+                <span className="mt-1">○</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* STEP INDICATOR - FIXED */}
-        <div className="flex items-center justify-between mb-8 text-amber-800">
-          {[
-            { id: 1, label: "سبد خرید" },
-            { id: 2, label: "اطلاعات ارسال" },
-            { id: 3, label: "پرداخت" },
-            { id: 4, label: "تایید نهایی" },
-          ].map((step, idx) => (
-            <div key={step.id} className="flex-1 flex flex-col items-center relative">
-              <div className={`w-9 h-9 flex items-center justify-center rounded-full border-2 ${idx === 0 ? "bg-amber-600 border-amber-600 text-white" : "border-amber-300 text-amber-700"}`}>
-                {idx === 0 ? <FiCheckCircle /> : step.id}
-              </div>
-              <span className="mt-2 text-sm font-medium text-center px-1">{step.label}</span>
-              {idx < 3 && (
-                <div className="absolute top-4 left-[60%] right-[-20%]">
-                  <div className="h-[2px] bg-amber-200 w-full" />
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-
-        <h1 className="text-3xl font-bold mb-6 text-amber-900">سبد خرید</h1>
+        <h1 className="text-3xl font-bold mb-6 text-[#1F2A3F]">سبد خرید</h1>
 
         {/* MAIN GRID: products (span 2) + summary (span 1) on md+ */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -285,10 +308,10 @@ export default function CartPage(): React.ReactElement {
             {/* Cart Items */}
             <div className="space-y-4">
               {cart.length === 0 ? (
-                <div className="bg-white p-12 rounded-2xl border border-amber-200 text-center shadow-sm">
-                  <FiShoppingCart className="mx-auto text-amber-300 mb-4" size={64} />
-                  <h3 className="text-2xl font-bold text-amber-800 mb-3">سبد خرید شما خالی است</h3>
-                  <p className="text-amber-600 text-lg">می‌توانید از محصولات زیر برای افزودن به سبد خرید استفاده کنید</p>
+                <div className="bg-white p-12 rounded-2xl border border-[#A4ABFA] text-center shadow-sm">
+                  <FiShoppingCart className="mx-auto text-[#3366CC] mb-4" size={64} />
+                  <h3 className="text-2xl font-bold text-[#1F2A3F] mb-3">سبد خرید شما خالی است</h3>
+                  <p className="text-[#2F2F2F] text-lg">می‌توانید از محصولات زیر برای افزودن به سبد خرید استفاده کنید</p>
                 </div>
               ) : (
                 cart.map((item) => {
@@ -296,37 +319,37 @@ export default function CartPage(): React.ReactElement {
                   return (
                     <div
                       key={item.id}
-                      className="grid grid-cols-1 md:grid-cols-[150px_1fr_120px] items-center gap-6 bg-white p-6 rounded-2xl border border-amber-200 shadow-sm hover:shadow-md transition"
+                      className="grid grid-cols-1 md:grid-cols-[150px_1fr_120px] items-center gap-6 bg-white p-6 rounded-2xl border border-[#A4ABFA] shadow-sm hover:shadow-md transition"
                     >
                       {/* LEFT: total price per item */}
                       <div className="order-1 md:order-none flex flex-col items-start">
-                        <span className="text-xl font-bold text-amber-900">
+                        <span className="text-xl font-bold text-[#1F2A3F]">
                           {formatCurrency(itemPrice * item.quantity)}
                         </span>
-                        <span className="text-xs text-amber-500 mt-1">جمع آیتم</span>
+                        <span className="text-xs text-[#2F2F2F] mt-1">جمع آیتم</span>
                       </div>
 
                       {/* MIDDLE: product info, qty controls */}
                       <div className="order-3 md:order-none flex flex-col justify-between h-full text-right">
-                        <h3 className="font-bold text-gray-800 text-lg mb-2">{item.name}</h3>
+                        <h3 className="font-bold text-[#1F2A3F] text-lg mb-2">{item.name}</h3>
                         <div className="flex items-center gap-3 mb-4">
-                          <span className="text-sm text-amber-700">قیمت واحد: {formatCurrency(itemPrice)}</span>
+                          <span className="text-sm text-[#3366CC]">قیمت واحد: {formatCurrency(itemPrice)}</span>
                         </div>
 
                         <div className="flex items-center gap-3 mt-auto">
                           <button
                             onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
-                            className="w-10 h-10 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 transition flex items-center justify-center font-bold text-lg"
+                            className="w-10 h-10 bg-[#A4ABFA] text-white rounded-lg hover:bg-[#8B94F7] transition flex items-center justify-center font-bold text-lg"
                             aria-label="decrement"
                           >
                             -
                           </button>
-                          <span className="font-bold text-lg min-w-10 text-center bg-amber-50 py-1 rounded-md">
+                          <span className="font-bold text-lg min-w-10 text-center bg-[#F5F5F5] py-1 rounded-md text-[#1F2A3F]">
                             {item.quantity}
                           </span>
                           <button
                             onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                            className="w-10 h-10 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 transition flex items-center justify-center font-bold text-lg"
+                            className="w-10 h-10 bg-[#A4ABFA] text-white rounded-lg hover:bg-[#8B94F7] transition flex items-center justify-center font-bold text-lg"
                             aria-label="increment"
                           >
                             +
@@ -344,8 +367,8 @@ export default function CartPage(): React.ReactElement {
 
                       {/* RIGHT: Coffee icon instead of image */}
                       <div className="order-2 md:order-none flex justify-center">
-                        <div className="w-20 h-20 bg-gradient-to-br from-amber-100 to-amber-200 rounded-xl flex items-center justify-center">
-                          <FiCoffee className="text-amber-500" size={32} />
+                        <div className="w-20 h-20 bg-gradient-to-br from-[#A4ABFA] to-[#8B94F7] rounded-xl flex items-center justify-center">
+                          <FiCoffee className="text-white" size={32} />
                         </div>
                       </div>
                     </div>
@@ -358,25 +381,25 @@ export default function CartPage(): React.ReactElement {
             {cart.length > 0 && (
               <>
                 {/* Similar Products Section - Full width container with single row horizontal scrolling */}
-                <section className="w-full bg-white p-6 rounded-2xl border border-amber-200 shadow-sm relative">
+                <section className="w-full bg-white p-6 rounded-2xl border border-[#A4ABFA] shadow-sm relative">
                   <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-3">
-                      <FiGift className="text-amber-600 flex-shrink-0" size={24} />
-                      <h2 className="text-2xl font-bold text-amber-900">محصولات مشابه</h2>
+                      <FiGift className="text-[#F3801F] flex-shrink-0" size={24} />
+                      <h2 className="text-2xl font-bold text-[#1F2A3F]">محصولات مشابه</h2>
                     </div>
                     
                     {/* Navigation buttons for Similar Products */}
                     <div className="flex gap-2">
                       <button
                         onClick={scrollSimilarProductsLeft}
-                        className="w-10 h-10 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 transition flex items-center justify-center"
+                        className="w-10 h-10 bg-[#A4ABFA] text-white rounded-lg hover:bg-[#8B94F7] transition flex items-center justify-center"
                         aria-label="Scroll left"
                       >
                         <FiChevronRight size={20} />
                       </button>
                       <button
                         onClick={scrollSimilarProductsRight}
-                        className="w-10 h-10 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 transition flex items-center justify-center"
+                        className="w-10 h-10 bg-[#A4ABFA] text-white rounded-lg hover:bg-[#8B94F7] transition flex items-center justify-center"
                         aria-label="Scroll right"
                       >
                         <FiChevronLeft size={20} />
@@ -385,7 +408,7 @@ export default function CartPage(): React.ReactElement {
                   </div>
                   
                   {loading && (
-                    <div className="text-amber-600 text-center py-8 text-lg">در حال بارگذاری محصولات مشابه...</div>
+                    <div className="text-[#3366CC] text-center py-8 text-lg">در حال بارگذاری محصولات مشابه...</div>
                   )}
                   {error && (
                     <div className="text-red-500 text-center py-8 text-lg">{error}</div>
@@ -394,40 +417,40 @@ export default function CartPage(): React.ReactElement {
                   {/* Single row with horizontal scrolling */}
                   <div 
                     ref={similarProductsRef}
-                    className="w-full flex flex-row gap-6 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-amber-300 scrollbar-track-amber-100"
+                    className="w-full flex flex-row gap-6 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-[#A4ABFA] scrollbar-track-[#F5F5F5]"
                   >
                     {!loading && similarProducts.length > 0 ? (
                       similarProducts.map((p) => (
-                        <div key={p.id} className="flex-none w-72 bg-amber-50 rounded-2xl p-5 border border-amber-100 shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col">
+                        <div key={p.id} className="flex-none w-72 bg-white rounded-2xl p-5 border border-[#A4ABFA] shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col">
                           {/* Coffee icon instead of product image */}
-                          <div className="relative w-full h-48 rounded-xl overflow-hidden mb-4 bg-gradient-to-br from-amber-100 to-amber-200 flex items-center justify-center">
-                            <FiCoffee className="text-amber-500" size={64} />
+                          <div className="relative w-full h-48 rounded-xl overflow-hidden mb-4 bg-gradient-to-br from-[#A4ABFA] to-[#8B94F7] flex items-center justify-center">
+                            <FiCoffee className="text-white" size={64} />
                             {p.badge && (
                               <div className="absolute top-3 left-3">
-                                <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+                                <span className="bg-[#F3801F] text-white text-xs px-2 py-1 rounded-full font-bold">
                                   {p.badge}
                                 </span>
                               </div>
                             )}
                           </div>
                           
-                          <h3 className="font-bold text-base text-amber-900 line-clamp-2 flex-grow mb-3">{p.name}</h3>
+                          <h3 className="font-bold text-base text-[#1F2A3F] line-clamp-2 flex-grow mb-3">{p.name}</h3>
                           
                           {/* Category badge */}
                           {p.categoryName && (
                             <div className="mb-2">
-                              <span className="text-xs bg-amber-200 text-amber-800 px-2 py-1 rounded-full">
+                              <span className="text-xs bg-[#A4ABFA] text-white px-2 py-1 rounded-full">
                                 {p.categoryName}
                               </span>
                             </div>
                           )}
                           
                           <div className="flex items-center justify-between mb-4">
-                            <p className="text-amber-700 text-lg font-bold">
+                            <p className="text-[#1F2A3F] text-lg font-bold">
                               {formatCurrency(p.priceAfterDiscount || p.price)}
                             </p>
                             {p.originalPrice && p.originalPrice > (p.priceAfterDiscount || p.price) && (
-                              <p className="text-gray-500 text-sm line-through">
+                              <p className="text-[#2F2F2F] text-sm line-through">
                                 {formatCurrency(p.originalPrice)}
                               </p>
                             )}
@@ -435,7 +458,7 @@ export default function CartPage(): React.ReactElement {
                           
                           <button
                             onClick={() => addToCart?.(convertToCartProduct(p))}
-                            className="w-full bg-amber-600 text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-3 hover:bg-amber-700 transition text-base"
+                            className="w-full bg-[#F3801F] text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-3 hover:bg-[#E5720C] transition text-base"
                           >
                             <FiShoppingCart />
                             افزودن به سبد خرید
@@ -444,7 +467,7 @@ export default function CartPage(): React.ReactElement {
                       ))
                     ) : (
                       !loading && (
-                        <div className="w-full text-center py-8 text-amber-600">
+                        <div className="w-full text-center py-8 text-[#3366CC]">
                           {products.length === 0 ? "هیچ محصولی در فروشگاه موجود نیست" : "محصول مشابهی یافت نشد"}
                         </div>
                       )
@@ -458,27 +481,27 @@ export default function CartPage(): React.ReactElement {
           {/* RIGHT: Enhanced Order Summary (sidebar) */}
           <aside className="lg:col-span-1 space-y-6">
             {/* Order Summary Box */}
-            <div className="sticky top-28 bg-white p-6 rounded-2xl border border-amber-200 shadow-sm">
-              <h3 className="text-xl font-bold text-amber-900 mb-6 pb-3 border-b border-amber-100 text-center">خلاصه سفارش</h3>
+            <div className="sticky top-28 bg-white p-6 rounded-2xl border border-[#A4ABFA] shadow-sm">
+              <h3 className="text-xl font-bold text-[#1F2A3F] mb-6 pb-3 border-b border-[#A4ABFA] text-center">خلاصه سفارش</h3>
 
               {cart.length === 0 ? (
                 <div className="text-center py-8">
-                  <FiShoppingCart className="mx-auto text-amber-300 mb-4" size={48} />
-                  <p className="text-amber-600">سبد خرید شما خالی است</p>
-                  <p className="text-amber-500 text-sm mt-2">برای مشاهده خلاصه سفارش، محصولی به سبد خرید اضافه کنید</p>
+                  <FiShoppingCart className="mx-auto text-[#3366CC] mb-4" size={48} />
+                  <p className="text-[#2F2F2F]">سبد خرید شما خالی است</p>
+                  <p className="text-[#2F2F2F] text-sm mt-2">برای مشاهده خلاصه سفارش، محصولی به سبد خرید اضافه کنید</p>
                 </div>
               ) : (
                 <>
                   {/* Order Details */}
                   <div className="space-y-4 mb-6">
-                    <div className="flex justify-between items-center p-3 bg-amber-50 rounded-lg">
-                      <span className="text-amber-700">تعداد کالاها</span>
-                      <span className="font-semibold text-amber-900">{totalItems} عدد</span>
+                    <div className="flex justify-between items-center p-3 bg-[#F5F5F5] rounded-lg">
+                      <span className="text-[#2F2F2F]">تعداد کالاها</span>
+                      <span className="font-semibold text-[#1F2A3F]">{totalItems} عدد</span>
                     </div>
                     
                     <div className="flex justify-between items-center">
-                      <span className="text-amber-700">جمع محصولات</span>
-                      <span className="font-semibold text-amber-900">{formatCurrency(totalPrice)}</span>
+                      <span className="text-[#2F2F2F]">جمع محصولات</span>
+                      <span className="font-semibold text-[#1F2A3F]">{formatCurrency(totalPrice)}</span>
                     </div>
                     
                     {discount > 0 && (
@@ -487,67 +510,30 @@ export default function CartPage(): React.ReactElement {
                         <span className="font-semibold text-green-700">-{formatCurrency(discountAmount)}</span>
                       </div>
                     )}
-
-                    <div className="flex justify-between items-center">
-                      <span className="text-amber-700">هزینه ارسال</span>
-                      <span className={`font-semibold ${shippingCost === 0 ? 'text-green-600' : 'text-amber-900'}`}>
-                        {shippingCost === 0 ? 'رایگان' : formatCurrency(shippingCost)}
-                      </span>
-                    </div>
-
-                    {shippingCost > 0 && (
-                      <div className="text-sm text-amber-600 bg-amber-50 p-3 rounded-lg border border-amber-200">
-                        <span className="font-medium">ارسال رایگان برای سفارش‌های بالای </span>
-                        {formatCurrency(500000)}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Discount coupon */}
-                  <div className="mb-6">
-                    <label className="block text-amber-700 text-sm font-medium mb-3">کد تخفیف دارید؟</label>
-                    <div className="flex gap-2 mb-2">
-                      <input 
-                        type="text" 
-                        value={couponCode}
-                        onChange={(e) => setCouponCode(e.target.value)}
-                        placeholder="کد تخفیف را وارد کنید"
-                        className="flex-1 border border-amber-300 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                      />
-                      <button 
-                        onClick={applyCoupon}
-                        className="bg-amber-500 text-white px-4 py-3 rounded-lg text-sm hover:bg-amber-600 transition font-medium min-w-20"
-                      >
-                        اعمال
-                      </button>
-                    </div>
-                    <div className="text-xs text-amber-600">
-                      کدهای تخفیف: <span className="font-mono bg-amber-100 px-2 py-1 rounded">DISCOUNT10</span> - <span className="font-mono bg-amber-100 px-2 py-1 rounded">DISCOUNT20</span>
-                    </div>
                   </div>
 
                   {/* Final Price */}
-                  <div className="flex justify-between items-center mb-6 pt-4 border-t border-amber-200 bg-amber-50 p-4 rounded-lg">
-                    <span className="text-lg font-bold text-amber-900">مبلغ قابل پرداخت</span>
-                    <span className="font-bold text-2xl text-amber-900">{formatCurrency(finalPrice)}</span>
+                  <div className="flex justify-between items-center mb-6 pt-4 border-t border-[#A4ABFA] bg-[#F5F5F5] p-4 rounded-lg">
+                    <span className="text-lg font-bold text-[#1F2A3F]">مبلغ قابل پرداخت</span>
+                    <span className="font-bold text-2xl text-[#1F2A3F]">{formatCurrency(finalPrice)}</span>
                   </div>
 
-                  {/* Action buttons */}
+                  {/* Action buttons - RESTORED for desktop */}
                   <div className="space-y-3">
                     <button 
-                      className="w-full bg-gradient-to-r from-amber-600 to-amber-700 text-white py-4 rounded-xl font-semibold hover:from-amber-700 hover:to-amber-800 transition shadow-md text-lg"
+                      className="w-full bg-gradient-to-r from-[#3366CC] to-[#2A55A3] text-white py-4 rounded-xl font-semibold hover:from-[#2A55A3] hover:to-[#1F2A3F] transition shadow-md text-lg"
                     >
                       ادامه فرایند خرید
                     </button>
 
                     <button 
                       onClick={clearCart} 
-                      className="w-full bg-gray-500 text-white py-3 rounded-lg font-semibold hover:bg-gray-600 transition text-base"
+                      className="w-full bg-[#2F2F2F] text-white py-3 rounded-lg font-semibold hover:bg-[#1F2A3F] transition text-base"
                     >
                       خالی کردن سبد خرید
                     </button>
                     
-                    <button className="w-full border border-amber-300 text-amber-700 py-3 rounded-lg font-semibold hover:bg-amber-50 transition text-base">
+                    <button className="w-full border border-[#3366CC] text-[#3366CC] py-3 rounded-lg font-semibold hover:bg-[#F5F5F5] transition text-base">
                       ادامه خرید در فروشگاه
                     </button>
                   </div>
@@ -555,46 +541,46 @@ export default function CartPage(): React.ReactElement {
               )}
 
               {/* Security notice - Always show */}
-              <div className="mt-6 pt-4 border-t border-amber-100">
-                <div className="flex items-center justify-center gap-2 text-xs text-amber-600 text-center leading-relaxed">
+              <div className="mt-6 pt-4 border-t border-[#A4ABFA]">
+                <div className="flex items-center justify-center gap-2 text-xs text-[#2F2F2F] text-center leading-relaxed">
                   اطلاعات شما نزد ما امن است و مطابق با قوانین حریم خصوصی محافظت می‌شود
                 </div>
               </div>
             </div>
 
             {/* AI Assistance Box */}
-            <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
+            <div className="bg-gradient-to-br from-[#F5F5F5] to-white border border-[#A4ABFA] rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
               <div className="flex items-start gap-4">
-                <div className="bg-green-500 p-3 rounded-full flex-shrink-0">
+                <div className="bg-[#3366CC] p-3 rounded-full flex-shrink-0">
                   <FiZap className="text-white" size={24} />
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
-                    <FiMessageCircle className="text-green-600" size={18} />
-                    <h3 className="font-bold text-green-900 text-lg">دستیار هوش مصنوعی</h3>
+                    <FiMessageCircle className="text-[#3366CC]" size={18} />
+                    <h3 className="font-bold text-[#1F2A3F] text-lg">دستیار هوش مصنوعی</h3>
                   </div>
-                  <p className="text-green-800 text-sm leading-relaxed mb-4">
+                  <p className="text-[#2F2F2F] text-sm leading-relaxed mb-4">
                     برای هر محصولی که می‌خواهید بخرید، می‌توانید از من کمک بگیرید. 
-                    <span className="font-semibold text-green-900"> من اینجام در خدمت شما!</span>
+                    <span className="font-semibold text-[#1F2A3F]"> من اینجام در خدمت شما!</span>
                   </p>
-                  <div className="bg-white rounded-lg p-3 border border-green-200">
-                    <p className="text-green-700 text-xs mb-2 font-medium">من می‌توانم به شما کمک کنم:</p>
-                    <ul className="text-green-600 text-xs space-y-1">
+                  <div className="bg-white rounded-lg p-3 border border-[#A4ABFA]">
+                    <p className="text-[#1F2A3F] text-xs mb-2 font-medium">من می‌توانم به شما کمک کنم:</p>
+                    <ul className="text-[#2F2F2F] text-xs space-y-1">
                       <li className="flex items-center gap-1">
-                        <div className="w-1 h-1 bg-green-400 rounded-full"></div>
+                        <div className="w-1 h-1 bg-[#3366CC] rounded-full"></div>
                         محصولات مشابه را پیشنهاد بدهم
                       </li>
                       <li className="flex items-center gap-1">
-                        <div className="w-1 h-1 bg-green-400 rounded-full"></div>
+                        <div className="w-1 h-1 bg-[#3366CC] rounded-full"></div>
                         در مقایسه محصولات کمک کنم
                       </li>
                       <li className="flex items-center gap-1">
-                        <div className="w-1 h-1 bg-green-400 rounded-full"></div>
+                        <div className="w-1 h-1 bg-[#3366CC] rounded-full"></div>
                         به سوالات شما پاسخ بدم
                       </li>
                     </ul>
                   </div>
-                  <button className="w-full mt-4 bg-green-500 text-white py-2 rounded-lg font-semibold hover:bg-green-600 transition text-sm flex items-center justify-center gap-2">
+                  <button className="w-full mt-4 bg-[#3366CC] text-white py-2 rounded-lg font-semibold hover:bg-[#2A55A3] transition text-sm flex items-center justify-center gap-2">
                     <FiMessageCircle size={16} />
                     گفتگو با دستیار هوشمند
                   </button>
@@ -603,6 +589,41 @@ export default function CartPage(): React.ReactElement {
             </div>
           </aside>
         </div>
+
+        {/* Mobile Fixed Action Buttons - Only shown on mobile and when cart has items */}
+        {cart.length > 0 && (
+          <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#A4ABFA] p-4 shadow-lg z-50 md:hidden">
+            <div className="max-w-7xl mx-auto px-4">
+              <div className="flex flex-col space-y-3">
+                {/* Final Price Display */}
+                <div className="flex justify-between items-center mb-2">
+                  <span className="font-bold text-[#1F2A3F]">مبلغ قابل پرداخت:</span>
+                  <span className="font-bold text-xl text-[#1F2A3F]">{formatCurrency(finalPrice)}</span>
+                </div>
+                
+                {/* Action Buttons */}
+                <button 
+                  className="w-full bg-gradient-to-r from-[#3366CC] to-[#2A55A3] text-white py-4 rounded-xl font-semibold hover:from-[#2A55A3] hover:to-[#1F2A3F] transition shadow-md text-lg"
+                >
+                  ادامه فرایند خرید
+                </button>
+
+                <div className="flex gap-3">
+                  <button 
+                    onClick={clearCart} 
+                    className="flex-1 bg-[#2F2F2F] text-white py-3 rounded-lg font-semibold hover:bg-[#1F2A3F] transition text-base"
+                  >
+                    خالی کردن سبد خرید
+                  </button>
+                  
+                  <button className="flex-1 border border-[#3366CC] text-[#3366CC] py-3 rounded-lg font-semibold hover:bg-[#F5F5F5] transition text-base">
+                    ادامه خرید
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
