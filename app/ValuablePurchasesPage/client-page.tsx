@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { FiFilter, FiStar, FiShoppingCart, FiHeart, FiChevronDown, FiX, FiMessageCircle, FiAward, FiZap, FiClock, FiShield, FiTruck } from "react-icons/fi";
 import { LuCrown } from "react-icons/lu";
 
@@ -76,6 +76,14 @@ interface FilterCategory {
   active: boolean;
 }
 
+interface PriceRange {
+  id: number;
+  label: string;
+  value: string;
+  min: number;
+  max: number;
+}
+
 export default function ClientValuablePurchasesPage({ 
   initialProducts, 
   initialCategories, 
@@ -102,7 +110,8 @@ export default function ClientValuablePurchasesPage({
     initialProducts.length === 0 || initialCategories.length === 0
   );
 
-  const [priceRanges] = useState([
+  // Define price ranges based on product data
+  const [priceRanges, setPriceRanges] = useState<PriceRange[]>([
     { id: 1, label: 'زیر ۵۰۰ هزار تومان', value: '0-500000', min: 0, max: 500000 },
     { id: 2, label: '۵۰۰ هزار تا ۱ میلیون', value: '500000-1000000', min: 500000, max: 1000000 },
     { id: 3, label: 'بالای ۱ میلیون', value: '1000000-5000000', min: 1000000, max: 5000000 },
@@ -152,6 +161,96 @@ export default function ClientValuablePurchasesPage({
     }
   }, [products, allCategories]);
 
+  // Initialize custom price inputs when products are loaded
+  useEffect(() => {
+    if (products.length > 0 && !customMinPrice && !customMaxPrice) {
+      const prices = products.map(p => p.product.priceAfterDiscount || p.product.price);
+      const minPrice = Math.min(...prices);
+      const maxPrice = Math.max(...prices);
+      setCustomMinPrice(minPrice.toString());
+      setCustomMaxPrice(maxPrice.toString());
+    }
+  }, [products, customMinPrice, customMaxPrice]);
+
+  // Generate dynamic price ranges based on actual product prices
+  const generateDynamicPriceRanges = useCallback((products: Product[]) => {
+    if (products.length === 0) return priceRanges;
+    
+    // Get all product prices
+    const prices = products.map(p => p.product.priceAfterDiscount || p.product.price);
+    const minPrice = Math.min(...prices);
+    const maxPrice = Math.max(...prices);
+    
+    // Create dynamic ranges based on actual price distribution
+    const dynamicRanges: PriceRange[] = [];
+    
+    if (maxPrice <= 500000) {
+      // If all prices are below 500,000
+      dynamicRanges.push({
+        id: 1,
+        label: `تا ${formatPrice(maxPrice)}`,
+        value: `0-${maxPrice}`,
+        min: 0,
+        max: maxPrice
+      });
+    } else if (maxPrice <= 1000000) {
+      // If max price is up to 1,000,000
+      const midPoint = Math.round((minPrice + maxPrice) / 2);
+      dynamicRanges.push(
+        {
+          id: 1,
+          label: `تا ${formatPrice(midPoint)}`,
+          value: `0-${midPoint}`,
+          min: 0,
+          max: midPoint
+        },
+        {
+          id: 2,
+          label: `${formatPrice(midPoint)} تا ${formatPrice(maxPrice)}`,
+          value: `${midPoint}-${maxPrice}`,
+          min: midPoint,
+          max: maxPrice
+        }
+      );
+    } else {
+      // For higher price ranges
+      const step = Math.ceil((maxPrice - minPrice) / 3);
+      dynamicRanges.push(
+        {
+          id: 1,
+          label: `${formatPrice(minPrice)} تا ${formatPrice(minPrice + step)}`,
+          value: `${minPrice}-${minPrice + step}`,
+          min: minPrice,
+          max: minPrice + step
+        },
+        {
+          id: 2,
+          label: `${formatPrice(minPrice + step)} تا ${formatPrice(minPrice + step * 2)}`,
+          value: `${minPrice + step}-${minPrice + step * 2}`,
+          min: minPrice + step,
+          max: minPrice + step * 2
+        },
+        {
+          id: 3,
+          label: `${formatPrice(minPrice + step * 2)} تا ${formatPrice(maxPrice)}`,
+          value: `${minPrice + step * 2}-${maxPrice}`,
+          min: minPrice + step * 2,
+          max: maxPrice
+        }
+      );
+    }
+    
+    return dynamicRanges.length > 0 ? dynamicRanges : priceRanges;
+  }, [priceRanges]);
+
+  // Update price ranges when products are loaded
+  useEffect(() => {
+    if (products.length > 0) {
+      const dynamicRanges = generateDynamicPriceRanges(products);
+      setPriceRanges(dynamicRanges);
+    }
+  }, [products, generateDynamicPriceRanges]);
+
   const processCategoriesAndBrands = () => {
     const categoryMap = new Map<string, number>();
     const brandMap = new Map<string, number>();
@@ -193,6 +292,7 @@ export default function ClientValuablePurchasesPage({
   };
 
   const filteredProducts = products.filter(product => {
+    // Filter by categories
     if (filterState.categories.length > 0) {
       const productCategory = allCategories.find(cat => cat._id === product.product.category);
       const categoryName = productCategory?.name || 'دسته‌بندی نشده';
@@ -202,6 +302,7 @@ export default function ClientValuablePurchasesPage({
       }
     }
 
+    // Filter by brands
     if (filterState.brands.length > 0) {
       const brandName = product.product.brand || 'برند مشخص نشده';
       if (!filterState.brands.includes(brandName)) {
@@ -209,15 +310,36 @@ export default function ClientValuablePurchasesPage({
       }
     }
 
+    // Filter by price ranges - FIXED
     if (filterState.priceRanges.length > 0) {
-      const price = product.product.priceAfterDiscount || product.product.price;
-      const matchesPrice = filterState.priceRanges.some(range => {
-        const [min, max] = range.split('-').map(Number);
-        return price >= min && price <= max;
-      });
-      if (!matchesPrice) return false;
+      const productPrice = product.product.priceAfterDiscount || product.product.price;
+      let matchesPriceRange = false;
+      
+      // Check each selected price range
+      for (const priceRangeValue of filterState.priceRanges) {
+        // Find the corresponding price range object
+        const priceRange = priceRanges.find(range => range.value === priceRangeValue);
+        if (priceRange) {
+          if (productPrice >= priceRange.min && productPrice <= priceRange.max) {
+            matchesPriceRange = true;
+            break;
+          }
+        }
+      }
+      
+      if (!matchesPriceRange) return false;
     }
 
+    // Also check custom price range if set
+    const min = customMinPrice ? parseInt(customMinPrice) || 0 : 0;
+    const max = customMaxPrice ? parseInt(customMaxPrice) || Number.MAX_SAFE_INTEGER : Number.MAX_SAFE_INTEGER;
+    const productPrice = product.product.priceAfterDiscount || product.product.price;
+    
+    if (productPrice < min || productPrice > max) {
+      return false;
+    }
+
+    // Filter by special filters
     if (filterState.specialFilters.length > 0 && product.filters) {
       const matchesSpecial = filterState.specialFilters.some(filter => {
         return product.filters!.includes(filter);
@@ -266,28 +388,40 @@ export default function ClientValuablePurchasesPage({
     }));
   };
 
-  // Handle custom price range
-  const handleCustomPriceApply = () => {
-    const min = parseInt(customMinPrice) || 0;
-    const max = parseInt(customMaxPrice) || 1000000;
-    
-    // Validate and ensure min is not greater than max
-    const validatedMin = Math.min(min, max);
-    const validatedMax = Math.max(min, max);
-    
-    setCustomMinPrice(validatedMin.toString());
-    setCustomMaxPrice(validatedMax.toString());
-  };
-
-  // Handle individual custom price input changes
+  // Handle individual custom price input changes - DYNAMIC (no apply button needed)
   const handleCustomMinPriceChange = (value: string) => {
     const numericValue = value.replace(/[^0-9]/g, '');
     setCustomMinPrice(numericValue);
+    
+    // Clear any selected price ranges when using custom price
+    if (numericValue || customMaxPrice) {
+      setFilterState(prev => ({
+        ...prev,
+        priceRanges: []
+      }));
+    }
   };
 
   const handleCustomMaxPriceChange = (value: string) => {
     const numericValue = value.replace(/[^0-9]/g, '');
     setCustomMaxPrice(numericValue);
+    
+    // Clear any selected price ranges when using custom price
+    if (customMinPrice || numericValue) {
+      setFilterState(prev => ({
+        ...prev,
+        priceRanges: []
+      }));
+    }
+  };
+
+  // Handle price range selection - clear custom price when selecting a range
+  const handlePriceRangeChange = (value: string) => {
+    handleFilterChange('priceRanges', value);
+    
+    // Clear custom price inputs when selecting a predefined range
+    setCustomMinPrice("");
+    setCustomMaxPrice("");
   };
 
   // Clear all filters
@@ -299,8 +433,17 @@ export default function ClientValuablePurchasesPage({
       specialFilters: []
     });
     
-    setCustomMinPrice("");
-    setCustomMaxPrice("");
+    // Reset custom price to actual min/max from products
+    if (products.length > 0) {
+      const prices = products.map(p => p.product.priceAfterDiscount || p.product.price);
+      const minPrice = Math.min(...prices);
+      const maxPrice = Math.max(...prices);
+      setCustomMinPrice(minPrice.toString());
+      setCustomMaxPrice(maxPrice.toString());
+    } else {
+      setCustomMinPrice("");
+      setCustomMaxPrice("");
+    }
   };
 
   // Check if any filters are active
@@ -308,7 +451,9 @@ export default function ClientValuablePurchasesPage({
     filterState.categories.length > 0 ||
     filterState.priceRanges.length > 0 ||
     filterState.brands.length > 0 ||
-    filterState.specialFilters.length > 0;
+    filterState.specialFilters.length > 0 ||
+    (customMinPrice && parseInt(customMinPrice) > 0) ||
+    (customMaxPrice && parseInt(customMaxPrice) < Number.MAX_SAFE_INTEGER);
 
   const FilterSection = ({ title, children, filterKey }: { title: string; children: React.ReactNode; filterKey: string }) => (
     <div className="border-b border-blue-200 last:border-b-0">
@@ -425,20 +570,43 @@ export default function ClientValuablePurchasesPage({
                 </div>
               </div>
 
-              {/* Price Range Filter */}
+              {/* Price Range Filter - FIXED & DYNAMIC */}
               <div className="mb-6">
                 <h4 className="font-semibold text-gray-700 mb-4 font-[var(--font-yekan)]">محدوده قیمت</h4>
 
-                {/* Custom Price Range Input */}
+                {/* Price Range Options */}
+                <div className="mb-4">
+                  <h5 className="text-sm text-gray-600 mb-2 font-[var(--font-yekan)]">بازه‌های قیمتی:</h5>
+                  <div className="space-y-2">
+                    {priceRanges.map((range) => (
+                      <label
+                        key={range.id}
+                        className="flex items-center gap-2 cursor-pointer group"
+                      >
+                        <input 
+                          type="checkbox" 
+                          checked={filterState.priceRanges.includes(range.value)}
+                          onChange={() => handlePriceRangeChange(range.value)}
+                          className="rounded border-blue-300 text-blue-600 focus:ring-blue-500" 
+                        />
+                        <span className="text-sm text-gray-600 group-hover:text-blue-700 transition-colors font-[var(--font-yekan)]">
+                          {range.label}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Custom Price Range Input - DYNAMIC (no apply button) */}
                 <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-sm text-gray-700 font-[var(--font-yekan)]">قیمت دلخواه</span>
                     <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full font-[var(--font-yekan)]">
-                      {customMinPrice ? formatPrice(parseInt(customMinPrice) || 0) : '۰'} - {customMaxPrice ? formatPrice(parseInt(customMaxPrice) || 1000000) : '۱۰۰۰۰۰۰'}
+                      {customMinPrice ? formatPrice(parseInt(customMinPrice) || 0) : '۰'} - {customMaxPrice ? formatPrice(parseInt(customMaxPrice) || Number.MAX_SAFE_INTEGER) : 'بدون محدودیت'}
                     </span>
                   </div>
                   
-                  <div className="flex gap-2 mb-3">
+                  <div className="flex gap-2">
                     <div className="flex-1">
                       <label className="block text-xs text-gray-500 mb-1 font-[var(--font-yekan)]">حداقل</label>
                       <input
@@ -455,18 +623,15 @@ export default function ClientValuablePurchasesPage({
                         type="text"
                         value={customMaxPrice}
                         onChange={(e) => handleCustomMaxPriceChange(e.target.value)}
-                        placeholder="۱۰۰۰۰۰۰"
+                        placeholder="بدون محدودیت"
                         className="w-full px-3 py-2 text-sm border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-[var(--font-yekan)] text-left"
                       />
                     </div>
                   </div>
                   
-                  <button
-                    onClick={handleCustomPriceApply}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-medium transition-all font-[var(--font-yekan)]"
-                  >
-                    اعمال محدوده
-                  </button>
+                  <div className="text-xs text-gray-500 mt-2 font-[var(--font-yekan)]">
+                    فیلتر قیمت به صورت خودکار اعمال می‌شود
+                  </div>
                 </div>
               </div>
 
@@ -672,8 +837,14 @@ export default function ClientValuablePurchasesPage({
                     محصولی یافت نشد
                   </h3>
                   <p className="text-gray-600 font-[var(--font-yekan)]">
-                    با فیلترهای فعلی هیچ محصولی matching ندارد. لطفاً فیلترها را تغییر دهید.
+                    با فیلترهای فعلی هیچ محصولی یافت نشد. لطفاً فیلترها را تغییر دهید.
                   </p>
+                  <button 
+                    onClick={clearAllFilters}
+                    className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-xl font-[var(--font-yekan)]"
+                  >
+                    حذف همه فیلترها
+                  </button>
                 </div>
               </div>
             )}
@@ -733,7 +904,27 @@ export default function ClientValuablePurchasesPage({
                 {/* Price Range */}
                 <FilterSection title="محدوده قیمت" filterKey="price">
                   <div className="space-y-4 mt-3">
-                    {/* Custom Price Range for Mobile */}
+                    {/* Price Range Options for Mobile */}
+                    <div>
+                      <h5 className="text-sm text-gray-600 mb-2 font-[var(--font-yekan)]">بازه‌های قیمتی:</h5>
+                      <div className="space-y-2">
+                        {priceRanges.map((range) => (
+                          <label key={range.id} className="flex items-center gap-3 cursor-pointer group px-1">
+                            <input 
+                              type="checkbox" 
+                              checked={filterState.priceRanges.includes(range.value)}
+                              onChange={() => handlePriceRangeChange(range.value)}
+                              className="w-5 h-5 rounded border-blue-300 text-blue-600 focus:ring-blue-500" 
+                            />
+                            <span className="text-sm text-gray-600 group-hover:text-blue-700 transition-colors font-[var(--font-yekan)]">
+                              {range.label}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Custom Price Range for Mobile - DYNAMIC */}
                     <div className="bg-blue-50 rounded-xl p-5 border border-blue-200">
                       <div className="flex gap-3 mb-4">
                         <div className="flex-1">
@@ -752,17 +943,14 @@ export default function ClientValuablePurchasesPage({
                             type="text"
                             value={customMaxPrice}
                             onChange={(e) => handleCustomMaxPriceChange(e.target.value)}
-                            placeholder="۱۰۰۰۰۰۰"
+                            placeholder="بدون محدودیت"
                             className="w-full px-4 py-3 text-sm border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-[var(--font-yekan)] text-left"
                           />
                         </div>
                       </div>
-                      <button
-                        onClick={handleCustomPriceApply}
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg text-sm font-medium transition-all font-[var(--font-yekan)]"
-                      >
-                        اعمال محدوده
-                      </button>
+                      <div className="text-xs text-gray-500 font-[var(--font-yekan)]">
+                        فیلتر قیمت به صورت خودکار اعمال می‌شود
+                      </div>
                     </div>
                   </div>
                 </FilterSection>
