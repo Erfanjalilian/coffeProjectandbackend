@@ -2,7 +2,6 @@
 "use client";
 
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { 
   FiBook, 
@@ -185,32 +184,20 @@ export default function ClientArticlesPage({ initialArticles, error: propError }
     );
   }
 
-  // REST OF YOUR JSX REMAINS EXACTLY THE SAME FROM YOUR ORIGINAL COMPONENT
-  // Copy everything from the return statement below
-  
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50/50 to-white pt-34">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumb */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-sm text-gray-600 mb-6 font-[var(--font-yekan)]"
-        >
+        <div className="text-sm text-gray-600 mb-6 font-[var(--font-yekan)]">
           <Link href="/" className="hover:text-blue-700 cursor-pointer transition-colors">
             خانه
           </Link>
           <span className="mx-2">/</span>
           <span className="text-blue-700 font-semibold">مقالات</span>
-        </motion.div>
+        </div>
 
         {/* Page Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="mb-8"
-        >
+        <div className="mb-8">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div>
               <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2 font-[var(--font-yekan)]">
@@ -228,13 +215,10 @@ export default function ClientArticlesPage({ initialArticles, error: propError }
               </div>
             </div>
           </div>
-        </motion.div>
+        </div>
 
         {/* Consultation Banner - Updated to iKasb colors */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
+        <div
           className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl shadow-lg border border-blue-500 p-6 mb-8 relative overflow-hidden hidden lg:block"
         >
           <div className="absolute top-0 left-0 w-24 h-24 bg-white/10 rounded-full -translate-x-12 -translate-y-12"></div>
@@ -255,34 +239,25 @@ export default function ClientArticlesPage({ initialArticles, error: propError }
               </div>
             </div>
             
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+            <button
               className="flex items-center gap-2 bg-white hover:bg-blue-50 text-blue-700 px-6 py-3 rounded-xl font-semibold transition-all shadow-lg font-[var(--font-yekan)] whitespace-nowrap"
             >
               <FiMessageCircle size={18} />
               <span>مشاوره رایگان</span>
-            </motion.button>
+            </button>
           </div>
-        </motion.div>
+        </div>
 
         {/* Articles Grid */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8 }}
+        <div
           className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6"
         >
           {articles.map((article, index) => {
             const iconData = getRandomIcon(index);
             
             return (
-              <motion.div
+              <div
                 key={article._id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                whileHover={{ y: -8 }}
               >
                 <Link
                   href={`/Articles/${article._id}`}
@@ -342,13 +317,10 @@ export default function ClientArticlesPage({ initialArticles, error: propError }
 
                     {/* Read More Button */}
                     <div className="flex items-center justify-between">
-                      <motion.div
-                        whileHover={{ x: -5 }}
-                        className="flex items-center gap-2 text-blue-600 font-semibold text-sm font-[var(--font-yekan)] group-hover:text-blue-700 transition-colors"
-                      >
+                      <div className="flex items-center gap-2 text-blue-600 font-semibold text-sm font-[var(--font-yekan)] group-hover:text-blue-700 transition-colors">
                         <span>مطالعه مقاله</span>
                         <FiChevronLeft className="group-hover:-translate-x-1 transition-transform" />
-                      </motion.div>
+                      </div>
                       
                       {/* Article Stats */}
                       <div className="flex items-center gap-2">
@@ -361,16 +333,14 @@ export default function ClientArticlesPage({ initialArticles, error: propError }
                     </div>
                   </div>
                 </Link>
-              </motion.div>
+              </div>
             );
           })}
-        </motion.div>
+        </div>
 
         {/* No Articles Message */}
         {articles.length === 0 && !loading && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+          <div
             className="text-center py-12"
           >
             <div className="bg-white rounded-2xl shadow-lg border border-blue-200 p-8 max-w-md mx-auto">
@@ -384,15 +354,12 @@ export default function ClientArticlesPage({ initialArticles, error: propError }
                 در حال حاضر مقاله‌ای برای نمایش وجود ندارد.
               </p>
             </div>
-          </motion.div>
+          </div>
         )}
 
         {/* Pagination (if needed in future) */}
         {totalPages > 1 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
+          <div
             className="mt-8 flex justify-center"
           >
             <div className="flex items-center gap-2 bg-white rounded-xl shadow-lg border border-blue-100 p-2">
@@ -410,15 +377,12 @@ export default function ClientArticlesPage({ initialArticles, error: propError }
                 </button>
               ))}
             </div>
-          </motion.div>
+          </div>
         )}
 
         {/* Featured Articles Section */}
         {articles.filter(a => a.badge === "ویژه").length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
+          <div
             className="mt-12"
           >
             <div className="flex items-center gap-3 mb-6">
@@ -440,11 +404,8 @@ export default function ClientArticlesPage({ initialArticles, error: propError }
                 .filter(article => article.badge === "ویژه")
                 .slice(0, 2) // Show only 2 featured articles
                 .map((featuredArticle, index) => (
-                  <motion.div
+                  <div
                     key={featuredArticle._id}
-                    initial={{ opacity: 0, x: index % 2 === 0 ? -20 : 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.6, delay: index * 0.2 }}
                   >
                     <Link
                       href={`/Articles/${featuredArticle._id}`}
@@ -486,10 +447,10 @@ export default function ClientArticlesPage({ initialArticles, error: propError }
                         </div>
                       </div>
                     </Link>
-                  </motion.div>
+                  </div>
                 ))}
             </div>
-          </motion.div>
+          </div>
         )}
       </div>
     </div>

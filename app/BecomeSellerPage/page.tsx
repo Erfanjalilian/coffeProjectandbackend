@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import { motion } from "framer-motion";
 import { useState } from "react";
 import { FiUser, FiMail, FiPhone, FiMapPin, FiCoffee, FiPackage, FiTruck, FiAward, FiCheck, FiArrowRight } from "react-icons/fi";
 
@@ -64,23 +63,14 @@ export default function BecomeSellerPage() {
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white pt-34">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Breadcrumb - Updated with brand colors */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-sm text-[#333333] mb-8 font-[var(--font-yekan)]"
-        >
+        <div className="text-sm text-[#333333] mb-8 font-[var(--font-yekan)]">
           <span className="hover:text-[#3366FF] cursor-pointer">خانه</span>
           <span className="mx-2">/</span>
           <span className="text-[#3366FF] font-semibold">فروشنده شوید</span>
-        </motion.div>
+        </div>
 
         {/* Hero Section - Updated with brand colors */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl shadow-lg border border-blue-200 p-6 mb-12"
-        >
+        <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl shadow-lg border border-blue-200 p-6 mb-12">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <div className="bg-[#3366FF] rounded-full p-3">
@@ -96,27 +86,20 @@ export default function BecomeSellerPage() {
               </div>
             </div>
             
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+            <button
               className="flex items-center gap-2 bg-[#3366FF] hover:bg-[#194FFF] text-white px-6 py-3 rounded-xl font-semibold transition-all shadow-md font-[var(--font-yekan)] whitespace-nowrap transition-colors duration-200"
             >
               <FiUser size={18} />
               <span>ثبت‌نام فروشنده</span>
-            </motion.button>
+            </button>
           </div>
-        </motion.div>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16">
           {/* Main Content */}
           <div className="lg:col-span-2">
             {/* Benefits Section - Updated with brand colors */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 mb-8"
-            >
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 mb-8">
               <h2 className="text-2xl font-bold text-[#1E2024] mb-6 font-[var(--font-yekan)] flex items-center gap-2">
                 <FiAward className="text-[#3366FF]" />
                 مزایای همکاری با ما
@@ -124,11 +107,8 @@ export default function BecomeSellerPage() {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {benefits.map((benefit, index) => (
-                  <motion.div
+                  <div
                     key={index}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.6, delay: index * 0.1 }}
                     className="flex items-start gap-4 p-4 rounded-xl bg-blue-50 border border-blue-200 hover:border-[#3366FF] transition-all group hover:shadow-md"
                   >
                     <div className="bg-white p-3 rounded-xl shadow-sm group-hover:shadow-md transition-shadow">
@@ -142,48 +122,35 @@ export default function BecomeSellerPage() {
                         {benefit.description}
                       </p>
                     </div>
-                  </motion.div>
+                  </div>
                 ))}
               </div>
-            </motion.div>
+            </div>
 
             {/* Requirements Section - Updated with brand colors */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl shadow-lg border border-blue-200 p-6"
-            >
+            <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl shadow-lg border border-blue-200 p-6">
               <h2 className="text-2xl font-bold text-[#1E2024] mb-6 font-[var(--font-yekan)]">
                 شرایط لازم برای فروشندگی
               </h2>
               
               <div className="space-y-3">
                 {requirements.map((requirement, index) => (
-                  <motion.div
+                  <div
                     key={index}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.6, delay: index * 0.1 }}
                     className="flex items-center gap-3 p-3 rounded-lg bg-white/80 backdrop-blur-sm border border-blue-100"
                   >
                     <div className="bg-blue-100 text-[#3366FF] p-1 rounded-full">
                       <FiCheck size={14} />
                     </div>
                     <span className="text-[#333333] font-[var(--font-yekan)]">{requirement}</span>
-                  </motion.div>
+                  </div>
                 ))}
               </div>
-            </motion.div>
+            </div>
           </div>
 
           {/* Application Form - Updated with brand colors */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 sticky top-32"
-          >
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 sticky top-32">
             <h2 className="text-2xl font-bold text-[#1E2024] mb-6 font-[var(--font-yekan)] text-center">
               درخواست همکاری
             </h2>
@@ -325,15 +292,13 @@ export default function BecomeSellerPage() {
               </div>
 
               {/* Submit Button - Updated with brand colors */}
-              <motion.button
+              <button
                 type="submit"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
                 className="w-full bg-[#3366FF] hover:bg-[#194FFF] text-white py-4 rounded-xl font-semibold transition-all shadow-md font-[var(--font-yekan)] flex items-center justify-center gap-2 transition-colors duration-200"
               >
                 <span>ارسال درخواست</span>
                 <FiArrowRight className="transform rotate-180" />
-              </motion.button>
+              </button>
             </form>
 
             {/* Contact Info - Updated with brand colors */}
@@ -345,16 +310,11 @@ export default function BecomeSellerPage() {
                 ۰۲۱-۱۲۳۴۵۶۷۸
               </p>
             </div>
-          </motion.div>
+          </div>
         </div>
 
         {/* Stats Section - Updated with brand colors */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.6 }}
-          className="bg-gradient-to-r from-[#3366FF] to-blue-700 rounded-2xl shadow-lg p-8 text-white"
-        >
+        <div className="bg-gradient-to-r from-[#3366FF] to-blue-700 rounded-2xl shadow-lg p-8 text-white">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
             <div>
               <div className="text-3xl font-bold mb-2">۵۰۰+</div>
@@ -373,7 +333,7 @@ export default function BecomeSellerPage() {
               <div className="text-blue-100 font-[var(--font-yekan)]">پشتیبانی</div>
             </div>
           </div>
-        </motion.div>
+        </div>
       </div>
     </div>
   );

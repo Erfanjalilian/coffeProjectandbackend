@@ -2,7 +2,6 @@
 "use client";
 
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { FiFilter, FiStar, FiShoppingCart, FiHeart, FiChevronDown, FiX, FiMessageCircle, FiAward, FiZap, FiClock, FiShield, FiTruck } from "react-icons/fi";
 import { LuCrown } from "react-icons/lu";
@@ -318,26 +317,13 @@ export default function ClientValuablePurchasesPage({
         className="w-full py-4 flex items-center justify-between text-right font-[var(--font-yekan)]"
       >
         <span className="font-semibold text-gray-800">{title}</span>
-        <motion.div
-          animate={{ rotate: expandedFilter === filterKey ? 180 : 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          <FiChevronDown className="text-blue-600" />
-        </motion.div>
+        <FiChevronDown className={`text-blue-600 ${expandedFilter === filterKey ? 'rotate-180' : ''}`} />
       </button>
-      <AnimatePresence>
-        {expandedFilter === filterKey && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3 }}
-            className="pb-4"
-          >
-            {children}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {expandedFilter === filterKey && (
+        <div className="pb-4">
+          {children}
+        </div>
+      )}
     </div>
   );
 
@@ -369,31 +355,19 @@ export default function ClientValuablePurchasesPage({
     );
   }
 
-  // REST OF YOUR JSX REMAINS EXACTLY THE SAME FROM YOUR ORIGINAL COMPONENT
-  // Copy everything from the return statement below
-  
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50/50 to-white pt-34">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumb */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-sm text-gray-600 mb-6 font-[var(--font-yekan)]"
-        >
+        <div className="text-sm text-gray-600 mb-6 font-[var(--font-yekan)]">
           <span className="hover:text-blue-700 cursor-pointer">خانه</span>
           <span className="mx-2">/</span>
           <span className="hover:text-blue-700 cursor-pointer">خریدهای باارزش</span>
-        </motion.div>
+        </div>
 
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* Sidebar Filters - UPDATED to match other pages */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6 }}
-            className="lg:w-64 flex-shrink-0 hidden lg:block"
-          >
+          {/* Sidebar Filters */}
+          <div className="lg:w-64 flex-shrink-0 hidden lg:block">
             <div className="bg-white rounded-2xl shadow-lg border border-blue-200 p-6 sticky top-32">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-2">
@@ -423,16 +397,13 @@ export default function ClientValuablePurchasesPage({
                 </div>
               </div>
 
-              {/* Categories - UPDATED layout */}
+              {/* Categories */}
               <div className="mb-6">
                 <h4 className="font-semibold text-gray-700 mb-3 font-[var(--font-yekan)]">دسته‌بندی‌ها</h4>
                 <div className="space-y-2">
                   {categories.map((category, index) => (
-                    <motion.label
+                    <label
                       key={category.id}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.1 }}
                       className="flex items-center justify-between cursor-pointer group"
                     >
                       <div className="flex items-center gap-2">
@@ -449,12 +420,12 @@ export default function ClientValuablePurchasesPage({
                       <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
                         {category.count}
                       </span>
-                    </motion.label>
+                    </label>
                   ))}
                 </div>
               </div>
 
-              {/* Price Range Filter - UPDATED to match other pages */}
+              {/* Price Range Filter */}
               <div className="mb-6">
                 <h4 className="font-semibold text-gray-700 mb-4 font-[var(--font-yekan)]">محدوده قیمت</h4>
 
@@ -490,27 +461,22 @@ export default function ClientValuablePurchasesPage({
                     </div>
                   </div>
                   
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                  <button
                     onClick={handleCustomPriceApply}
                     className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-medium transition-all font-[var(--font-yekan)]"
                   >
                     اعمال محدوده
-                  </motion.button>
+                  </button>
                 </div>
               </div>
 
-              {/* Brands - UPDATED layout */}
+              {/* Brands */}
               <div className="mb-6">
                 <h4 className="font-semibold text-gray-700 mb-3 font-[var(--font-yekan)]">برندها</h4>
                 <div className="space-y-2">
                   {brands.map((brand, index) => (
-                    <motion.label
+                    <label
                       key={brand.id}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.1 }}
                       className="flex items-center gap-2 cursor-pointer group"
                     >
                       <input 
@@ -522,12 +488,12 @@ export default function ClientValuablePurchasesPage({
                       <span className="text-sm text-gray-600 group-hover:text-blue-700 transition-colors font-[var(--font-yekan)]">
                         {brand.name}
                       </span>
-                    </motion.label>
+                    </label>
                   ))}
                 </div>
               </div>
 
-              {/* Special Filters - UPDATED layout */}
+              {/* Special Filters */}
               <div className="mb-6">
                 <h4 className="font-semibold text-gray-700 mb-3 font-[var(--font-yekan)]">فیلترهای ویژه</h4>
                 <div className="space-y-2">
@@ -537,11 +503,8 @@ export default function ClientValuablePurchasesPage({
                     { key: 'topSelling', label: 'پرفروش' },
                     { key: 'freeShipping', label: 'ارسال رایگان' }
                   ].map((filter, index) => (
-                    <motion.label
+                    <label
                       key={filter.key}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.1 }}
                       className="flex items-center gap-2 cursor-pointer group"
                     >
                       <input 
@@ -553,20 +516,18 @@ export default function ClientValuablePurchasesPage({
                       <span className="text-sm text-gray-600 group-hover:text-blue-700 transition-colors font-[var(--font-yekan)]">
                         {filter.label}
                       </span>
-                    </motion.label>
+                    </label>
                   ))}
                 </div>
               </div>
             </div>
-          </motion.div>
+          </div>
 
           {/* Main Content */}
           <div className="flex-1">
             {/* Mobile Filter Button */}
             <div className="lg:hidden mb-4">
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+              <button
                 onClick={() => setShowMobileFilters(true)}
                 className="w-full bg-white border-2 border-blue-300 rounded-2xl p-4 flex items-center justify-between shadow-lg font-[var(--font-yekan)]"
               >
@@ -575,14 +536,11 @@ export default function ClientValuablePurchasesPage({
                   <span className="font-semibold text-gray-800">فیلترها و مرتب‌سازی</span>
                 </div>
                 <FiChevronDown className="text-blue-600" />
-              </motion.button>
+              </button>
             </div>
 
             {/* Consultation Banner - Hidden on mobile */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
+            <div
               className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl shadow-lg border border-blue-500 p-6 mb-6 relative overflow-hidden hidden lg:block"
             >
               <div className="absolute top-0 left-0 w-24 h-24 bg-white/10 rounded-full -translate-x-12 -translate-y-12"></div>
@@ -603,30 +561,22 @@ export default function ClientValuablePurchasesPage({
                   </div>
                 </div>
                 
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                <button
                   className="flex items-center gap-2 bg-white hover:bg-blue-50 text-blue-700 px-6 py-3 rounded-xl font-semibold transition-all shadow-lg font-[var(--font-yekan)] whitespace-nowrap"
                 >
                   <FiMessageCircle size={18} />
                   <span>از من بپرس</span>
-                </motion.button>
+                </button>
               </div>
-            </motion.div>
+            </div>
 
-            {/* Products Grid - Product links updated to open in new tab */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.8 }}
+            {/* Products Grid */}
+            <div
               className="grid grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6"
             >
               {filteredProducts.map((product, index) => (
-                <motion.div
+                <div
                   key={product._id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: index * 0.1 }}
                 >
                   <Link
                     href={`/CoffeeCategoryPage/${product.product._id}`}
@@ -693,31 +643,27 @@ export default function ClientValuablePurchasesPage({
                           </span>
                         </div>
 
-                        {/* Buttons Section - Quick consultation button removed */}
+                        {/* Buttons Section */}
                         <div className="flex flex-col gap-2">
-                          <motion.button
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
+                          <button
                             className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-2 py-1.5 sm:px-3 sm:py-2 rounded-xl font-semibold transition-all shadow-lg font-[var(--font-yekan)] text-xs sm:text-sm"
                             onClick={(e) => {
                               e.preventDefault();
                             }}
                           >
                             خرید
-                          </motion.button>
+                          </button>
                         </div>
                       </div>
                     </div>
                   </Link>
-                </motion.div>
+                </div>
               ))}
-            </motion.div>
+            </div>
 
             {/* No Results Message */}
             {filteredProducts.length === 0 && !loading && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
+              <div
                 className="text-center py-12"
               >
                 <div className="bg-white rounded-2xl shadow-lg border border-blue-200 p-8 max-w-md mx-auto">
@@ -729,166 +675,155 @@ export default function ClientValuablePurchasesPage({
                     با فیلترهای فعلی هیچ محصولی matching ندارد. لطفاً فیلترها را تغییر دهید.
                   </p>
                 </div>
-              </motion.div>
+              </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* Mobile Filters Modal - UPDATED with improved spacing */}
-      <AnimatePresence>
-        {showMobileFilters && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowMobileFilters(false)}
-              className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-            />
-            
-            <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed top-0 left-0 right-0 bottom-0 bg-white z-50 lg:hidden flex flex-col"
-            >
-              {/* Header - Improved spacing */}
-              <div className="flex items-center justify-between p-5 border-b border-blue-200 bg-blue-50">
-                <h2 className="text-xl font-bold text-blue-800 font-[var(--font-yekan)]">فیلترها و مرتب‌سازی</h2>
-                <button
-                  onClick={() => setShowMobileFilters(false)}
-                  className="p-3 text-gray-600 hover:text-blue-700 rounded-full hover:bg-blue-100"
-                >
-                  <FiX size={24} />
-                </button>
-              </div>
+      {/* Mobile Filters Modal */}
+      {showMobileFilters && (
+        <>
+          <div
+            onClick={() => setShowMobileFilters(false)}
+            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          />
+          
+          <div
+            className="fixed top-0 left-0 right-0 bottom-0 bg-white z-50 lg:hidden flex flex-col"
+          >
+            {/* Header - Improved spacing */}
+            <div className="flex items-center justify-between p-5 border-b border-blue-200 bg-blue-50">
+              <h2 className="text-xl font-bold text-blue-800 font-[var(--font-yekan)]">فیلترها و مرتب‌سازی</h2>
+              <button
+                onClick={() => setShowMobileFilters(false)}
+                className="p-3 text-gray-600 hover:text-blue-700 rounded-full hover:bg-blue-100"
+              >
+                <FiX size={24} />
+              </button>
+            </div>
 
-              {/* Filters Content - Improved margins and spacing */}
-              <div className="flex-1 overflow-y-auto px-5 py-4">
-                <div className="bg-white rounded-2xl border border-blue-200 p-5">
-                  {/* Categories */}
-                  <FilterSection title="دسته‌بندی‌ها" filterKey="categories">
-                    <div className="space-y-3 mt-3">
-                      {categories.map((category) => (
-                        <label key={category.id} className="flex items-center justify-between cursor-pointer group px-1">
-                          <div className="flex items-center gap-3">
-                            <input
-                              type="checkbox"
-                              checked={filterState.categories.includes(category.name)}
-                              onChange={() => handleFilterChange('categories', category.name)}
-                              className="w-5 h-5 rounded border-blue-300 text-blue-600 focus:ring-blue-500"
-                            />
-                            <span className="text-sm text-gray-600 group-hover:text-blue-700 transition-colors font-[var(--font-yekan)]">
-                              {category.name}
-                            </span>
-                          </div>
-                          <span className="text-xs bg-blue-100 text-blue-700 px-2.5 py-1.5 rounded-full">
-                            {category.count}
+            {/* Filters Content - Improved margins and spacing */}
+            <div className="flex-1 overflow-y-auto px-5 py-4">
+              <div className="bg-white rounded-2xl border border-blue-200 p-5">
+                {/* Categories */}
+                <FilterSection title="دسته‌بندی‌ها" filterKey="categories">
+                  <div className="space-y-3 mt-3">
+                    {categories.map((category) => (
+                      <label key={category.id} className="flex items-center justify-between cursor-pointer group px-1">
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="checkbox"
+                            checked={filterState.categories.includes(category.name)}
+                            onChange={() => handleFilterChange('categories', category.name)}
+                            className="w-5 h-5 rounded border-blue-300 text-blue-600 focus:ring-blue-500"
+                          />
+                          <span className="text-sm text-gray-600 group-hover:text-blue-700 transition-colors font-[var(--font-yekan)]">
+                            {category.name}
                           </span>
-                        </label>
-                      ))}
-                    </div>
-                  </FilterSection>
-
-                  {/* Price Range */}
-                  <FilterSection title="محدوده قیمت" filterKey="price">
-                    <div className="space-y-4 mt-3">
-                      {/* Custom Price Range for Mobile */}
-                      <div className="bg-blue-50 rounded-xl p-5 border border-blue-200">
-                        <div className="flex gap-3 mb-4">
-                          <div className="flex-1">
-                            <label className="block text-xs text-gray-500 mb-2 font-[var(--font-yekan)]">حداقل قیمت</label>
-                            <input
-                              type="text"
-                              value={customMinPrice}
-                              onChange={(e) => handleCustomMinPriceChange(e.target.value)}
-                              placeholder="۰"
-                              className="w-full px-4 py-3 text-sm border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-[var(--font-yekan)] text-left"
-                            />
-                          </div>
-                          <div className="flex-1">
-                            <label className="block text-xs text-gray-500 mb-2 font-[var(--font-yekan)]">حداکثر قیمت</label>
-                            <input
-                              type="text"
-                              value={customMaxPrice}
-                              onChange={(e) => handleCustomMaxPriceChange(e.target.value)}
-                              placeholder="۱۰۰۰۰۰۰"
-                              className="w-full px-4 py-3 text-sm border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-[var(--font-yekan)] text-left"
-                            />
-                          </div>
                         </div>
-                        <button
-                          onClick={handleCustomPriceApply}
-                          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg text-sm font-medium transition-all font-[var(--font-yekan)]"
-                        >
-                          اعمال محدوده
-                        </button>
+                        <span className="text-xs bg-blue-100 text-blue-700 px-2.5 py-1.5 rounded-full">
+                          {category.count}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </FilterSection>
+
+                {/* Price Range */}
+                <FilterSection title="محدوده قیمت" filterKey="price">
+                  <div className="space-y-4 mt-3">
+                    {/* Custom Price Range for Mobile */}
+                    <div className="bg-blue-50 rounded-xl p-5 border border-blue-200">
+                      <div className="flex gap-3 mb-4">
+                        <div className="flex-1">
+                          <label className="block text-xs text-gray-500 mb-2 font-[var(--font-yekan)]">حداقل قیمت</label>
+                          <input
+                            type="text"
+                            value={customMinPrice}
+                            onChange={(e) => handleCustomMinPriceChange(e.target.value)}
+                            placeholder="۰"
+                            className="w-full px-4 py-3 text-sm border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-[var(--font-yekan)] text-left"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <label className="block text-xs text-gray-500 mb-2 font-[var(--font-yekan)]">حداکثر قیمت</label>
+                          <input
+                            type="text"
+                            value={customMaxPrice}
+                            onChange={(e) => handleCustomMaxPriceChange(e.target.value)}
+                            placeholder="۱۰۰۰۰۰۰"
+                            className="w-full px-4 py-3 text-sm border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-[var(--font-yekan)] text-left"
+                          />
+                        </div>
                       </div>
+                      <button
+                        onClick={handleCustomPriceApply}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg text-sm font-medium transition-all font-[var(--font-yekan)]"
+                      >
+                        اعمال محدوده
+                      </button>
                     </div>
-                  </FilterSection>
+                  </div>
+                </FilterSection>
 
-                  {/* Brands */}
-                  <FilterSection title="برندها" filterKey="brands">
-                    <div className="space-y-3 mt-3">
-                      {brands.map((brand) => (
-                        <label key={brand.id} className="flex items-center gap-3 cursor-pointer group px-1">
-                          <input 
-                            type="checkbox" 
-                            checked={filterState.brands.includes(brand.name)}
-                            onChange={() => handleFilterChange('brands', brand.name)}
-                            className="w-5 h-5 rounded border-blue-300 text-blue-600 focus:ring-blue-500" 
-                          />
-                          <span className="text-sm text-gray-600 group-hover:text-blue-700 transition-colors font-[var(--font-yekan)]">
-                            {brand.name}
-                          </span>
-                        </label>
-                      ))}
-                    </div>
-                  </FilterSection>
+                {/* Brands */}
+                <FilterSection title="برندها" filterKey="brands">
+                  <div className="space-y-3 mt-3">
+                    {brands.map((brand) => (
+                      <label key={brand.id} className="flex items-center gap-3 cursor-pointer group px-1">
+                        <input 
+                          type="checkbox" 
+                          checked={filterState.brands.includes(brand.name)}
+                          onChange={() => handleFilterChange('brands', brand.name)}
+                          className="w-5 h-5 rounded border-blue-300 text-blue-600 focus:ring-blue-500" 
+                        />
+                        <span className="text-sm text-gray-600 group-hover:text-blue-700 transition-colors font-[var(--font-yekan)]">
+                          {brand.name}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </FilterSection>
 
-                  {/* Special Filters */}
-                  <FilterSection title="فیلترهای ویژه" filterKey="special">
-                    <div className="space-y-3 mt-3">
-                      {[
-                        { key: 'economicChoice', label: 'بهترین انتخاب اقتصادی' },
-                        { key: 'bestValue', label: 'بیشترین ارزش' },
-                        { key: 'topSelling', label: 'پرفروش' },
-                        { key: 'freeShipping', label: 'ارسال رایگان' }
-                      ].map((filter) => (
-                        <label key={filter.key} className="flex items-center gap-3 cursor-pointer group px-1">
-                          <input 
-                            type="checkbox" 
-                            checked={filterState.specialFilters.includes(filter.key)}
-                            onChange={() => handleFilterChange('specialFilters', filter.key)}
-                            className="w-5 h-5 rounded border-blue-300 text-blue-600 focus:ring-blue-500" 
-                          />
-                          <span className="text-sm text-gray-600 group-hover:text-blue-700 transition-colors font-[var(--font-yekan)]">
-                            {filter.label}
-                          </span>
-                        </label>
-                      ))}
-                    </div>
-                  </FilterSection>
-                </div>
+                {/* Special Filters */}
+                <FilterSection title="فیلترهای ویژه" filterKey="special">
+                  <div className="space-y-3 mt-3">
+                    {[
+                      { key: 'economicChoice', label: 'بهترین انتخاب اقتصادی' },
+                      { key: 'bestValue', label: 'بیشترین ارزش' },
+                      { key: 'topSelling', label: 'پرفروش' },
+                      { key: 'freeShipping', label: 'ارسال رایگان' }
+                    ].map((filter) => (
+                      <label key={filter.key} className="flex items-center gap-3 cursor-pointer group px-1">
+                        <input 
+                          type="checkbox" 
+                          checked={filterState.specialFilters.includes(filter.key)}
+                          onChange={() => handleFilterChange('specialFilters', filter.key)}
+                          className="w-5 h-5 rounded border-blue-300 text-blue-600 focus:ring-blue-500" 
+                        />
+                        <span className="text-sm text-gray-600 group-hover:text-blue-700 transition-colors font-[var(--font-yekan)]">
+                          {filter.label}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </FilterSection>
               </div>
+            </div>
 
-              {/* Apply Button */}
-              <div className="p-5 border-t border-blue-200 bg-white">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => setShowMobileFilters(false)}
-                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 rounded-2xl font-semibold shadow-lg font-[var(--font-yekan)]"
-                >
-                  اعمال فیلترها
-                </motion.button>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+            {/* Apply Button */}
+            <div className="p-5 border-t border-blue-200 bg-white">
+              <button
+                onClick={() => setShowMobileFilters(false)}
+                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 rounded-2xl font-semibold shadow-lg font-[var(--font-yekan)]"
+              >
+                اعمال فیلترها
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
