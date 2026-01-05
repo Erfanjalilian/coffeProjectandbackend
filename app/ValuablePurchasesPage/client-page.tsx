@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { FiFilter, FiStar, FiShoppingCart, FiHeart, FiChevronDown, FiX, FiMessageCircle, FiAward, FiZap, FiClock, FiShield, FiTruck } from "react-icons/fi";
 import { LuCrown } from "react-icons/lu";
 
@@ -117,64 +117,22 @@ export default function ClientValuablePurchasesPage({
     { id: 3, label: 'بالای ۱ میلیون', value: '1000000-5000000', min: 1000000, max: 5000000 },
   ]);
 
-  // Load additional data client-side if needed
-  useEffect(() => {
-    // Only fetch if initial data is empty
-    if (initialProducts.length === 0 || initialCategories.length === 0) {
-      loadData();
-    } else {
-      // Process filters from initial data
-      processCategoriesAndBrands();
-      setLoading(false);
-    }
-    
-    async function loadData() {
-      try {
-        setLoading(true);
-        const [productsResponse, categoriesResponse] = await Promise.all([
-          fetch('https://coffee-shop-backend-k3un.onrender.com/api/v1/valueBuy'),
-          fetch('https://coffee-shop-backend-k3un.onrender.com/api/v1/category')
-        ]);
+  // Format price helper function - MOVE THIS TO TOP OF COMPONENT
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('fa-IR').format(price) + " تومان";
+  };
 
-        const productsData: ApiResponse = await productsResponse.json();
-        const categoriesData = await categoriesResponse.json();
-
-        if (productsData.success && productsData.data.valueBuys) {
-          setProducts(productsData.data.valueBuys);
-        }
-
-        if (categoriesData.success && categoriesData.data.categories) {
-          setAllCategories(categoriesData.data.categories);
-        }
-      } catch (error) {
-        console.error('Error loading data from API:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-  }, [initialProducts.length, initialCategories.length]);
-
-  // Process filters when data changes
-  useEffect(() => {
-    if (products.length > 0 && allCategories.length > 0) {
-      processCategoriesAndBrands();
-    }
-  }, [products, allCategories]);
-
-  // Initialize custom price inputs when products are loaded
-  useEffect(() => {
-    if (products.length > 0 && !customMinPrice && !customMaxPrice) {
-      const prices = products.map(p => p.product.priceAfterDiscount || p.product.price);
-      const minPrice = Math.min(...prices);
-      const maxPrice = Math.max(...prices);
-      setCustomMinPrice(minPrice.toString());
-      setCustomMaxPrice(maxPrice.toString());
-    }
-  }, [products, customMinPrice, customMaxPrice]);
+  const formatProductPrice = (price: number) => {
+    return new Intl.NumberFormat('fa-IR').format(price) + " تومان";
+  };
 
   // Generate dynamic price ranges based on actual product prices
   const generateDynamicPriceRanges = useCallback((products: Product[]) => {
-    if (products.length === 0) return priceRanges;
+    if (products.length === 0) return [
+      { id: 1, label: 'زیر ۵۰۰ هزار تومان', value: '0-500000', min: 0, max: 500000 },
+      { id: 2, label: '۵۰۰ هزار تا ۱ میلیون', value: '500000-1000000', min: 500000, max: 1000000 },
+      { id: 3, label: 'بالای ۱ میلیون', value: '1000000-5000000', min: 1000000, max: 5000000 },
+    ];
     
     // Get all product prices
     const prices = products.map(p => p.product.priceAfterDiscount || p.product.price);
@@ -240,15 +198,71 @@ export default function ClientValuablePurchasesPage({
       );
     }
     
-    return dynamicRanges.length > 0 ? dynamicRanges : priceRanges;
-  }, [priceRanges]);
+    return dynamicRanges.length > 0 ? dynamicRanges : [
+      { id: 1, label: 'زیر ۵۰۰ هزار تومان', value: '0-500000', min: 0, max: 500000 },
+      { id: 2, label: '۵۰۰ هزار تا ۱ میلیون', value: '500000-1000000', min: 500000, max: 1000000 },
+      { id: 3, label: 'بالای ۱ میلیون', value: '1000000-5000000', min: 1000000, max: 5000000 },
+    ];
+  }, [formatPrice]);
 
-  // Update price ranges when products are loaded
+  // Load additional data client-side if needed
   useEffect(() => {
-    if (products.length > 0) {
-      const dynamicRanges = generateDynamicPriceRanges(products);
-      setPriceRanges(dynamicRanges);
+    // Only fetch if initial data is empty
+    if (initialProducts.length === 0 || initialCategories.length === 0) {
+      loadData();
+    } else {
+      // Process filters from initial data
+      processCategoriesAndBrands();
+      setLoading(false);
     }
+    
+    async function loadData() {
+      try {
+        setLoading(true);
+        const [productsResponse, categoriesResponse] = await Promise.all([
+          fetch('https://coffee-shop-backend-k3un.onrender.com/api/v1/valueBuy'),
+          fetch('https://coffee-shop-backend-k3un.onrender.com/api/v1/category')
+        ]);
+
+        const productsData: ApiResponse = await productsResponse.json();
+        const categoriesData = await categoriesResponse.json();
+
+        if (productsData.success && productsData.data.valueBuys) {
+          setProducts(productsData.data.valueBuys);
+        }
+
+        if (categoriesData.success && categoriesData.data.categories) {
+          setAllCategories(categoriesData.data.categories);
+        }
+      } catch (error) {
+        console.error('Error loading data from API:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+  }, [initialProducts.length, initialCategories.length]);
+
+  // Process filters when data changes
+  useEffect(() => {
+    if (products.length > 0 && allCategories.length > 0) {
+      processCategoriesAndBrands();
+    }
+  }, [products, allCategories]);
+
+  // Initialize custom price inputs when products are loaded
+  useEffect(() => {
+    if (products.length > 0 && !customMinPrice && !customMaxPrice) {
+      const prices = products.map(p => p.product.priceAfterDiscount || p.product.price);
+      const minPrice = Math.min(...prices);
+      const maxPrice = Math.max(...prices);
+      setCustomMinPrice(minPrice.toString());
+      setCustomMaxPrice(maxPrice.toString());
+    }
+  }, [products]);
+
+  // Memoize dynamic price ranges to prevent infinite updates
+  const dynamicPriceRanges = useMemo(() => {
+    return generateDynamicPriceRanges(products);
   }, [products, generateDynamicPriceRanges]);
 
   const processCategoriesAndBrands = () => {
@@ -291,72 +305,66 @@ export default function ClientValuablePurchasesPage({
     setBrands(processedBrands);
   };
 
-  const filteredProducts = products.filter(product => {
-    // Filter by categories
-    if (filterState.categories.length > 0) {
-      const productCategory = allCategories.find(cat => cat._id === product.product.category);
-      const categoryName = productCategory?.name || 'دسته‌بندی نشده';
-      
-      if (!filterState.categories.includes(categoryName)) {
-        return false;
-      }
-    }
-
-    // Filter by brands
-    if (filterState.brands.length > 0) {
-      const brandName = product.product.brand || 'برند مشخص نشده';
-      if (!filterState.brands.includes(brandName)) {
-        return false;
-      }
-    }
-
-    // Filter by price ranges - FIXED
-    if (filterState.priceRanges.length > 0) {
-      const productPrice = product.product.priceAfterDiscount || product.product.price;
-      let matchesPriceRange = false;
-      
-      // Check each selected price range
-      for (const priceRangeValue of filterState.priceRanges) {
-        // Find the corresponding price range object
-        const priceRange = priceRanges.find(range => range.value === priceRangeValue);
-        if (priceRange) {
-          if (productPrice >= priceRange.min && productPrice <= priceRange.max) {
-            matchesPriceRange = true;
-            break;
-          }
+  const filteredProducts = useMemo(() => {
+    return products.filter(product => {
+      // Filter by categories
+      if (filterState.categories.length > 0) {
+        const productCategory = allCategories.find(cat => cat._id === product.product.category);
+        const categoryName = productCategory?.name || 'دسته‌بندی نشده';
+        
+        if (!filterState.categories.includes(categoryName)) {
+          return false;
         }
       }
+
+      // Filter by brands
+      if (filterState.brands.length > 0) {
+        const brandName = product.product.brand || 'برند مشخص نشده';
+        if (!filterState.brands.includes(brandName)) {
+          return false;
+        }
+      }
+
+      // Filter by price ranges - FIXED
+      if (filterState.priceRanges.length > 0) {
+        const productPrice = product.product.priceAfterDiscount || product.product.price;
+        let matchesPriceRange = false;
+        
+        // Check each selected price range
+        for (const priceRangeValue of filterState.priceRanges) {
+          // Find the corresponding price range object
+          const priceRange = dynamicPriceRanges.find(range => range.value === priceRangeValue);
+          if (priceRange) {
+            if (productPrice >= priceRange.min && productPrice <= priceRange.max) {
+              matchesPriceRange = true;
+              break;
+            }
+          }
+        }
+        
+        if (!matchesPriceRange) return false;
+      }
+
+      // Also check custom price range if set
+      const min = customMinPrice ? parseInt(customMinPrice) || 0 : 0;
+      const max = customMaxPrice ? parseInt(customMaxPrice) || Number.MAX_SAFE_INTEGER : Number.MAX_SAFE_INTEGER;
+      const productPrice = product.product.priceAfterDiscount || product.product.price;
       
-      if (!matchesPriceRange) return false;
-    }
+      if (productPrice < min || productPrice > max) {
+        return false;
+      }
 
-    // Also check custom price range if set
-    const min = customMinPrice ? parseInt(customMinPrice) || 0 : 0;
-    const max = customMaxPrice ? parseInt(customMaxPrice) || Number.MAX_SAFE_INTEGER : Number.MAX_SAFE_INTEGER;
-    const productPrice = product.product.priceAfterDiscount || product.product.price;
-    
-    if (productPrice < min || productPrice > max) {
-      return false;
-    }
+      // Filter by special filters
+      if (filterState.specialFilters.length > 0 && product.filters) {
+        const matchesSpecial = filterState.specialFilters.some(filter => {
+          return product.filters!.includes(filter);
+        });
+        if (!matchesSpecial) return false;
+      }
 
-    // Filter by special filters
-    if (filterState.specialFilters.length > 0 && product.filters) {
-      const matchesSpecial = filterState.specialFilters.some(filter => {
-        return product.filters!.includes(filter);
-      });
-      if (!matchesSpecial) return false;
-    }
-
-    return true;
-  });
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('fa-IR').format(price) + " تومان";
-  };
-
-  const formatProductPrice = (price: number) => {
-    return new Intl.NumberFormat('fa-IR').format(price) + " تومان";
-  };
+      return true;
+    });
+  }, [products, allCategories, filterState, dynamicPriceRanges, customMinPrice, customMaxPrice]);
 
   const getStatusBadgeStyle = (product: Product) => {
     if (product.features && product.features.includes("پیشنهاد شده")) return "bg-gradient-to-r from-orange-500 to-orange-600 text-white";
@@ -578,7 +586,7 @@ export default function ClientValuablePurchasesPage({
                 <div className="mb-4">
                   <h5 className="text-sm text-gray-600 mb-2 font-[var(--font-yekan)]">بازه‌های قیمتی:</h5>
                   <div className="space-y-2">
-                    {priceRanges.map((range) => (
+                    {dynamicPriceRanges.map((range) => (
                       <label
                         key={range.id}
                         className="flex items-center gap-2 cursor-pointer group"
@@ -908,7 +916,7 @@ export default function ClientValuablePurchasesPage({
                     <div>
                       <h5 className="text-sm text-gray-600 mb-2 font-[var(--font-yekan)]">بازه‌های قیمتی:</h5>
                       <div className="space-y-2">
-                        {priceRanges.map((range) => (
+                        {dynamicPriceRanges.map((range) => (
                           <label key={range.id} className="flex items-center gap-3 cursor-pointer group px-1">
                             <input 
                               type="checkbox" 
