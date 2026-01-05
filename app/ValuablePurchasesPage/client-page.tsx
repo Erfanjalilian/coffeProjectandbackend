@@ -480,6 +480,13 @@ export default function ClientValuablePurchasesPage({
     </div>
   );
 
+  // Handle Buy button click - redirects to product details page
+  const handleBuyClick = (productId: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    window.open(`/CoffeeCategoryPage/${productId}`, '_blank');
+  };
+
   // Show error if exists
   if (error) {
     return (
@@ -820,9 +827,7 @@ export default function ClientValuablePurchasesPage({
                         <div className="flex flex-col gap-2">
                           <button
                             className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-2 py-1.5 sm:px-3 sm:py-2 rounded-xl font-semibold transition-all shadow-lg font-[var(--font-yekan)] text-xs sm:text-sm"
-                            onClick={(e) => {
-                              e.preventDefault();
-                            }}
+                            onClick={(e) => handleBuyClick(product.product._id, e)}
                           >
                             خرید
                           </button>

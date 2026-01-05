@@ -499,6 +499,13 @@ export default function ClientSpecialDiscountsPage({ initialProducts, error }: P
     );
   };
 
+  // Handle Buy button click - redirects to product details page
+  const handleBuyClick = (productId: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    window.open(`/CoffeeCategoryPage/${productId}`, '_blank');
+  };
+
   const FilterSection = ({ title, children, filterKey }: { title: string; children: React.ReactNode; filterKey: string }) => (
     <div className="border-b border-blue-200 last:border-b-0">
       <button
@@ -854,14 +861,12 @@ export default function ClientSpecialDiscountsPage({ initialProducts, error }: P
 
                         {/* Buttons Section */}
                         <div className="flex flex-col gap-2">
-                          {/* Buy Button */}
+                          {/* Buy Button - CHANGED: Now redirects to product details page */}
                           <button
                             className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-4 py-3 rounded-xl font-semibold transition-all shadow-lg font-[var(--font-yekan)]"
-                            onClick={(e) => {
-                              e.preventDefault();
-                            }}
+                            onClick={(e) => handleBuyClick(product._id, e)}
                           >
-                            افزودن به سبد خرید
+                            خرید
                           </button>
                         </div>
                       </div>
