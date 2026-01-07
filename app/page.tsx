@@ -1,15 +1,16 @@
+// app/page.tsx
 import HomePage from "./HomePage/HomePage";
-
-export const metadata = {
-  other: {
-    enamad: "48702043",
-  },
-};
 
 export default function Home() {
   return (
-    <div>
+    <>
+      <head>
+        <title>صفحه اصلی من</title>
+        <meta name="description" content="توضیح صفحه اصلی سایت" />
+        <meta name="enamad" content="48702043" />
+      </head>
+
       <HomePage />
-    </div>
+    </>
   );
 }
