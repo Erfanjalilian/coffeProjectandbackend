@@ -8,11 +8,25 @@ export default function Footer() {
         
         {/* Brand Section */}
         <div>
-          <h3 className="text-2xl font-bold text-amber-600 mb-4">CoffeeLand</h3>
-          <p className="text-sm leading-7">
+          <h3 className="text-2xl font-bold text-amber-600 mb-4">آی کسب</h3>
+          <p className="text-sm leading-7 mb-4">
             فروشگاه تخصصی قهوه و لوازم جانبی.  
             ارائه‌دهنده‌ی مرغوب‌ترین دانه‌ها و پودرهای قهوه از سراسر جهان.
           </p>
+
+          {/* Enamad Logo */}
+          <a
+            referrerPolicy="origin"
+            target="_blank"
+            href="https://trustseal.enamad.ir/?id=697293&Code=qaEaKdgcORhcapADMloyf1U1tmHn5VrC"
+          >
+            <img
+              referrerPolicy="origin"
+              src="https://trustseal.enamad.ir/logo.aspx?id=697293&Code=qaEaKdgcORhcapADMloyf1U1tmHn5VrC"
+              alt="نماد اعتماد الکترونیکی"
+              style={{ cursor: "pointer" }}
+            />
+          </a>
         </div>
 
         {/* Quick Links */}
