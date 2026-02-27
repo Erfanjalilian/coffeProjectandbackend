@@ -10,6 +10,7 @@ export default async function CoffeeCategoryPage() {
     return <ClientCoffeeCategoryPage initialProducts={initialProducts} />;
   } catch (error) {
     console.error('Server-side fetch error:', error);
+    console.log("hi")
     return (
       <ClientCoffeeCategoryPage 
         initialProducts={[]} 
