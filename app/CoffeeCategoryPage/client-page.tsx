@@ -85,6 +85,7 @@ function useProducts(initialProducts: Product[]) {
       fetchProducts();
       setHasFetched(true);
     }
+    console.log("hello")
     
     async function fetchProducts() {
       try {
